@@ -10,6 +10,7 @@ use tokio::runtime::Runtime;
 
 pub struct App {
     pub path: PathBuf,
+    pub files: Vec<PathBuf>,
     pub cursor: usize,
     pub action: Action,
     pub dialog: Option<Dialog>,
@@ -20,6 +21,7 @@ impl App {
     pub fn new(args: Args) -> App {
         App {
             path: args.path.clone(),
+            files: crate::dir_pathes(args.path),
             cursor: 0,
             action: Action::None,
             dialog: None,

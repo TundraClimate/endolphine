@@ -1,18 +1,40 @@
 use crate::{actions::Action, app::App};
-use crossterm::event::{KeyCode, KeyEvent};
+use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+
+fn is_pending(app: &App) -> bool {
+    if let Action::Pending = &app.action {
+        true
+    } else {
+        false
+    }
+}
 
 pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
     match event.code {
-        KeyCode::Char('q') => {
-            if let Action::Pending = &app.action {
-                false
-            } else {
-                true
-            }
-        }
+        KeyCode::Char('q') => !is_pending(&app),
         KeyCode::Esc => {
             app.action = Action::None;
             app.dialog = None;
+            false
+        }
+        KeyCode::Char('j') => {
+            if !is_pending(&app) {
+                if let KeyModifiers::SHIFT = event.modifiers {
+                    app.action = Action::Next(10);
+                } else {
+                    app.action = Action::Next(1);
+                }
+            }
+            false
+        }
+        KeyCode::Char('k') => {
+            if !is_pending(&app) {
+                if let KeyModifiers::SHIFT = event.modifiers {
+                    app.action = Action::Previous(10);
+                } else {
+                    app.action = Action::Previous(1);
+                }
+            }
             false
         }
         KeyCode::Enter => {
@@ -35,8 +57,20 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
 
 pub fn handle_action(app: &mut App, action: Action) {
     match action {
-        Action::Previous(i) => {}
-        Action::Next(i) => {}
+        Action::Previous(i) => {
+            let cursor = app.cursor;
+            if cursor - i > 0 {
+                app.cursor = cursor - i;
+            } else {
+                app.cursor = 0;
+            }
+        }
+        Action::Next(i) => {
+            let cursor = app.cursor;
+            if cursor + i < app.files.len() {
+                app.cursor = app.files.len() - 1;
+            }
+        }
         Action::Create(ctype) => {}
         Action::Delete(path) => {}
         Action::Cut(from) => {}
