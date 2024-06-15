@@ -1,19 +1,30 @@
 use crossterm::{
+    event::{KeyCode, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
 use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
 
-pub fn render_mode() -> Result<(), Box<dyn Error>> {
+pub async fn render_mode() -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     execute!(io::stdout(), EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+    let (mut rc, shatdown) = crossterm_keyreader::spawn();
 
     loop {
         terminal.draw(ui)?;
+        if let Ok(event) = rc.try_recv() {
+            if event.kind == KeyEventKind::Press {
+                match event.code {
+                    KeyCode::Char('q') => break,
+                    _ => {}
+                }
+            }
+        }
     }
 
+    shatdown.send(()).ok();
     disable_raw_mode()?;
     execute!(io::stdout(), LeaveAlternateScreen)?;
     Ok(())

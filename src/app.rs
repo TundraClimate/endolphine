@@ -1,5 +1,6 @@
 use crate::{ui, Args};
 use std::{error::Error, path::PathBuf};
+use tokio::runtime::Runtime;
 
 pub struct App {
     opened_path: PathBuf,
@@ -19,7 +20,10 @@ impl App {
     }
 
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
-        ui::render_mode()?;
+        Runtime::new()?.block_on(async {
+            ui::render_mode().await?;
+            Ok::<(), Box<dyn Error>>(())
+        })?;
         Ok(())
     }
 }
