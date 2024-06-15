@@ -1,4 +1,4 @@
-use crate::Args;
+use crate::{ui, Args};
 use std::{error::Error, path::PathBuf};
 
 pub struct App {
@@ -19,6 +19,7 @@ impl App {
     }
 
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
+        ui::render_mode()?;
         Ok(())
     }
 }
