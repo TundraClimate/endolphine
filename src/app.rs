@@ -1,20 +1,29 @@
-use crate::{actions::Action, handler, ui, Args};
+use crate::{
+    actions::Action,
+    handler,
+    ui::{self, Dialog},
+    Args,
+};
 use crossterm::event::KeyEventKind;
 use std::{error::Error, path::PathBuf};
 use tokio::runtime::Runtime;
 
 pub struct App {
-    opened_path: PathBuf,
-    current_path: PathBuf,
+    pub path: PathBuf,
+    pub cursor: usize,
     pub action: Action,
+    pub dialog: Option<Dialog>,
+    pub register: String,
 }
 
 impl App {
     pub fn new(args: Args) -> App {
         App {
-            opened_path: args.path.clone(),
-            current_path: args.path.clone(),
+            path: args.path.clone(),
+            cursor: 0,
             action: Action::None,
+            dialog: None,
+            register: String::new(),
         }
     }
 

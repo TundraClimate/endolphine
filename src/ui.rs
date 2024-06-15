@@ -1,3 +1,4 @@
+use crate::actions::Action;
 use crossterm::{
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
@@ -23,3 +24,8 @@ pub fn render_mode<F: FnMut() -> bool>(mut looper: F) -> Result<(), Box<dyn Erro
 }
 
 fn ui(frame: &mut Frame) {}
+
+pub struct Dialog {
+    pub input: String,
+    pub action: Action,
+}

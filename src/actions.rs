@@ -1,12 +1,15 @@
 use std::path::PathBuf;
 
 pub enum Action {
-    Previous(i32),
-    Next(i32),
+    Previous(usize),
+    Next(usize),
     Create(CreateType),
     Delete(PathBuf),
-    Move(PathBuf),
+    Cut(PathBuf),
+    Copy(PathBuf),
     Rename(PathBuf),
+    Pending,
+    Confirm,
     None,
 }
 
