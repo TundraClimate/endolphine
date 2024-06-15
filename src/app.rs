@@ -1,10 +1,12 @@
-use crate::{ui, Args};
+use crate::{actions::Action, handler, ui, Args};
+use crossterm::event::KeyEventKind;
 use std::{error::Error, path::PathBuf};
 use tokio::runtime::Runtime;
 
 pub struct App {
     opened_path: PathBuf,
     current_path: PathBuf,
+    action: Action,
 }
 
 impl App {
@@ -12,6 +14,7 @@ impl App {
         App {
             opened_path: args.path.clone(),
             current_path: args.path.clone(),
+            action: Action::None,
         }
     }
 
@@ -21,7 +24,17 @@ impl App {
 
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
         Runtime::new()?.block_on(async {
-            ui::render_mode().await?;
+            let (mut rc, shatdown) = crossterm_keyreader::spawn();
+            ui::render_mode(|| {
+                if let Ok(event) = rc.try_recv() {
+                    if event.kind == KeyEventKind::Press && handler::handle_keys(event) {
+                        return true;
+                    }
+                }
+                false
+            })
+            .await?;
+            shatdown.send(()).ok();
             Ok::<(), Box<dyn Error>>(())
         })?;
         Ok(())
