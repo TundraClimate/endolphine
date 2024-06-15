@@ -1,9 +1,13 @@
+use crate::{actions::Action, app::App};
 use crossterm::event::{KeyCode, KeyEvent};
 
-pub fn handle_keys(event: KeyEvent) -> bool {
+pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
     match event.code {
         KeyCode::Char('q') => true,
-        KeyCode::Esc => false,
+        KeyCode::Esc => {
+            app.action = Action::None;
+            false
+        }
         _ => false,
     }
 }

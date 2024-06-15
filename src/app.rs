@@ -6,7 +6,7 @@ use tokio::runtime::Runtime;
 pub struct App {
     opened_path: PathBuf,
     current_path: PathBuf,
-    action: Action,
+    pub action: Action,
 }
 
 impl App {
@@ -23,11 +23,12 @@ impl App {
     }
 
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
+        let mut app = self;
         Runtime::new()?.block_on(async {
             let (mut rc, shatdown) = crossterm_keyreader::spawn();
             ui::render_mode(|| {
                 if let Ok(event) = rc.try_recv() {
-                    if event.kind == KeyEventKind::Press && handler::handle_keys(event) {
+                    if event.kind == KeyEventKind::Press && handler::handle_keys(&mut app, event) {
                         return true;
                     }
                 }
