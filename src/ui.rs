@@ -5,7 +5,7 @@ use crossterm::{
 use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
 
-pub async fn render_mode<F: FnMut() -> bool>(mut looper: F) -> Result<(), Box<dyn Error>> {
+pub fn render_mode<F: FnMut() -> bool>(mut looper: F) -> Result<(), Box<dyn Error>> {
     enable_raw_mode()?;
     execute!(io::stdout(), EnterAlternateScreen)?;
     let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;

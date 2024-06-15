@@ -33,8 +33,7 @@ impl App {
                     }
                 }
                 false
-            })
-            .await?;
+            })?;
             shatdown.send(()).ok();
             Ok::<(), Box<dyn Error>>(())
         })?;
