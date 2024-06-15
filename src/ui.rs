@@ -1,5 +1,5 @@
 use crossterm::{
-    event::{KeyCode, KeyEventKind},
+    event::{KeyCode, KeyEvent, KeyEventKind},
     execute,
     terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
 };
@@ -15,11 +15,8 @@ pub async fn render_mode() -> Result<(), Box<dyn Error>> {
     loop {
         terminal.draw(ui)?;
         if let Ok(event) = rc.try_recv() {
-            if event.kind == KeyEventKind::Press {
-                match event.code {
-                    KeyCode::Char('q') => break,
-                    _ => {}
-                }
+            if event.kind == KeyEventKind::Press && handle_keys(event) {
+                break;
             }
         }
     }
@@ -29,4 +26,12 @@ pub async fn render_mode() -> Result<(), Box<dyn Error>> {
     execute!(io::stdout(), LeaveAlternateScreen)?;
     Ok(())
 }
+
+fn handle_keys(event: KeyEvent) -> bool {
+    match event.code {
+        KeyCode::Char('q') => true,
+        _ => false,
+    }
+}
+
 fn ui(frame: &mut Frame) {}
