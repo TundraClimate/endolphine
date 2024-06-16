@@ -43,6 +43,7 @@ impl App {
                         return true;
                     }
                 }
+                handler::handle_action(&mut app);
                 false
             })?;
             shatdown.send(()).ok();

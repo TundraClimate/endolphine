@@ -55,7 +55,8 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
     }
 }
 
-pub fn handle_action(app: &mut App, action: Action) {
+pub fn handle_action(app: &mut App) {
+    let action = &app.action;
     match action {
         Action::Previous(i) => {
             let cursor = app.cursor;
