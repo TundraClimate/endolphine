@@ -15,6 +15,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
         KeyCode::Esc => {
             app.action = Action::None;
             app.dialog = None;
+            app.selected.clear();
             false
         }
         KeyCode::Char('j') => {
@@ -34,6 +35,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                 } else {
                     app.action = Action::Previous(1);
                 }
+            }
+            false
+        }
+        KeyCode::Char('v') => {
+            if !is_pending(&app) {
+                app.selected.push(app.cursor);
             }
             false
         }
@@ -80,5 +87,11 @@ pub fn handle_action(app: &mut App) {
         Action::Pending => {}
         Action::Confirm => {}
         Action::None => {}
+    }
+}
+
+pub fn auto_selector(app: &mut App) {
+    if !app.selected.is_empty() && !app.selected.contains(&app.cursor) {
+        app.selected.push(app.cursor);
     }
 }

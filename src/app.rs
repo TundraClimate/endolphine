@@ -15,6 +15,7 @@ pub struct App {
     pub action: Action,
     pub dialog: Option<Dialog>,
     pub register: Vec<PathBuf>,
+    pub selected: Vec<usize>,
 }
 
 impl App {
@@ -26,6 +27,7 @@ impl App {
             action: Action::None,
             dialog: None,
             register: vec![],
+            selected: vec![],
         }
     }
 
@@ -44,6 +46,7 @@ impl App {
                     }
                 }
                 handler::handle_action(&mut app);
+                handler::auto_selector(&mut app);
                 false
             })?;
             shatdown.send(()).ok();
