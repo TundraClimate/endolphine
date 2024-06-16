@@ -14,7 +14,7 @@ pub struct App {
     pub cursor: usize,
     pub action: Action,
     pub dialog: Option<Dialog>,
-    pub register: String,
+    pub register: Vec<PathBuf>,
 }
 
 impl App {
@@ -25,7 +25,7 @@ impl App {
             cursor: 0,
             action: Action::None,
             dialog: None,
-            register: String::new(),
+            register: vec![],
         }
     }
 
