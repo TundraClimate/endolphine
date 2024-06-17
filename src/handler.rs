@@ -79,7 +79,7 @@ pub fn handle_action(app: &mut App) {
     match action {
         Action::Previous(i) => {
             let cursor = app.cursor;
-            if cursor - i > 0 {
+            if cursor >= *i {
                 app.cursor = cursor - i;
             } else {
                 app.cursor = 0;
