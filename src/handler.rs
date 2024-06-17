@@ -20,21 +20,25 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
         }
         KeyCode::Char('j') => {
             if !is_pending(&app) {
-                if let KeyModifiers::SHIFT = event.modifiers {
-                    app.action = Action::Next(10);
-                } else {
-                    app.action = Action::Next(1);
-                }
+                app.action = Action::Next(1);
+            }
+            false
+        }
+        KeyCode::Char('J') => {
+            if !is_pending(&app) {
+                app.action = Action::Next(10);
             }
             false
         }
         KeyCode::Char('k') => {
             if !is_pending(&app) {
-                if let KeyModifiers::SHIFT = event.modifiers {
-                    app.action = Action::Previous(10);
-                } else {
-                    app.action = Action::Previous(1);
-                }
+                app.action = Action::Previous(1);
+            }
+            false
+        }
+        KeyCode::Char('K') => {
+            if !is_pending(&app) {
+                app.action = Action::Previous(10);
             }
             false
         }
