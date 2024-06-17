@@ -50,6 +50,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('y') => {
+            if !is_pending(&app) {
+                app.action = Action::Copy;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
@@ -91,6 +97,9 @@ pub fn handle_action(app: &mut App) {
         Action::Delete(path) => {}
         Action::Cut => {
             app.is_cut = true;
+            app.action = Action::Copy;
+        }
+        Action::Copy => {
             if app.selected.is_empty() {
                 let file = app.files[app.cursor].clone();
                 app.register.push(file);
@@ -101,7 +110,6 @@ pub fn handle_action(app: &mut App) {
             }
             app.action = Action::None;
         }
-        Action::Copy(from) => {}
         Action::Rename(path) => {}
         Action::Pending => {}
         Action::Confirm => {}

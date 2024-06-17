@@ -6,7 +6,7 @@ pub enum Action {
     Create(CreateType),
     Delete(PathBuf),
     Cut,
-    Copy(PathBuf),
+    Copy,
     Rename(PathBuf),
     Pending,
     Confirm,
