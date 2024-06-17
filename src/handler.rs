@@ -51,7 +51,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             false
         }
         KeyCode::Enter => {
-            if let Action::Pending = &app.action {
+            if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
                     if dialog.input.is_empty() {
                         app.action = Action::None;
