@@ -44,6 +44,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('c') => {
+            if !is_pending(&app) {
+                app.action = Action::Cut;
+            }
+            false
+        }
         KeyCode::Enter => {
             if let Action::Pending = &app.action {
                 if let Some(dialog) = &app.dialog {
@@ -81,7 +87,17 @@ pub fn handle_action(app: &mut App) {
         }
         Action::Create(ctype) => {}
         Action::Delete(path) => {}
-        Action::Cut(from) => {}
+        Action::Cut => {
+            app.is_cut = true;
+            if app.selected.is_empty() {
+                let file = app.files[app.cursor].clone();
+                app.register.push(file);
+            } else {
+                app.selected
+                    .iter()
+                    .for_each(|i| app.register.push(app.files[*i].clone()));
+            }
+        }
         Action::Copy(from) => {}
         Action::Rename(path) => {}
         Action::Pending => {}

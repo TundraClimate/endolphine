@@ -16,6 +16,7 @@ pub struct App {
     pub dialog: Option<Dialog>,
     pub register: Vec<PathBuf>,
     pub selected: Vec<usize>,
+    pub is_cut: bool,
 }
 
 impl App {
@@ -28,6 +29,7 @@ impl App {
             dialog: None,
             register: vec![],
             selected: vec![],
+            is_cut: false,
         }
     }
 
