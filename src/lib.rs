@@ -1,6 +1,7 @@
 pub mod actions;
 pub mod app;
 pub mod handler;
+pub mod shell;
 pub mod ui;
 
 use clap::Parser;
