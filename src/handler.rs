@@ -78,12 +78,14 @@ pub fn handle_action(app: &mut App) {
             } else {
                 app.cursor = 0;
             }
+            app.action = Action::None;
         }
         Action::Next(i) => {
             let cursor = app.cursor;
             if cursor + i < app.files.len() {
                 app.cursor = app.files.len() - 1;
             }
+            app.action = Action::None;
         }
         Action::Create(ctype) => {}
         Action::Delete(path) => {}
@@ -97,6 +99,7 @@ pub fn handle_action(app: &mut App) {
                     .iter()
                     .for_each(|i| app.register.push(app.files[*i].clone()));
             }
+            app.action = Action::None;
         }
         Action::Copy(from) => {}
         Action::Rename(path) => {}
