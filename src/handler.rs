@@ -1,5 +1,5 @@
-use crate::{actions::Action, app::App};
-use crossterm::event::{KeyCode, KeyEvent, KeyModifiers};
+use crate::{actions::Action, app::App, shell};
+use crossterm::event::{KeyCode, KeyEvent};
 
 fn is_pending(app: &App) -> bool {
     if let Action::Pending = &app.action {
@@ -57,6 +57,24 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
         KeyCode::Char('y') => {
             if !is_pending(&app) {
                 app.action = Action::Copy;
+            }
+            false
+        }
+        KeyCode::Char('p') => {
+            if !is_pending(&app) {
+                let register = &mut app.register;
+                let current_dir = &app.path;
+                if app.is_cut {
+                    register.iter().for_each(|p| {
+                        shell::mv(p.clone(), current_dir.clone());
+                    });
+                    register.clear();
+                    app.is_cut = false;
+                } else {
+                    register.iter().for_each(|p| {
+                        shell::cp(p.clone(), current_dir.clone());
+                    });
+                }
             }
             false
         }
