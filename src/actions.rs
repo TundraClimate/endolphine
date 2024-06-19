@@ -3,7 +3,7 @@ use std::path::PathBuf;
 pub enum Action {
     Previous(usize),
     Next(usize),
-    Create(CreateType),
+    Create,
     Delete(PathBuf),
     Cut,
     Copy,
@@ -11,9 +11,4 @@ pub enum Action {
     Pending,
     Confirm,
     None,
-}
-
-pub enum CreateType {
-    File,
-    Directory,
 }

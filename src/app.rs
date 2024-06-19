@@ -43,6 +43,7 @@ impl App {
             let (mut rc, shatdown) = event::spawn();
             ui::render_mode(|| {
                 if let Ok(event) = rc.try_recv() {
+                    handler::handle_dialog(&mut app, &event);
                     if let Event::Key(event) = event {
                         if event.kind == KeyEventKind::Press
                             && handler::handle_keys(&mut app, event)

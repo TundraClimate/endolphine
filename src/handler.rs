@@ -1,5 +1,15 @@
-use crate::{actions::Action, app::App, shell};
-use crossterm::event::{KeyCode, KeyEvent};
+use crate::{
+    actions::Action,
+    app::App,
+    shell,
+    ui::{self, Dialog},
+};
+use crossterm::{
+    event::{Event, KeyCode, KeyEvent},
+    execute,
+};
+use std::io;
+use tui_input::backend::crossterm::EventHandler;
 
 fn is_pending(app: &App) -> bool {
     if let Action::Pending = &app.action {
@@ -16,6 +26,11 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             app.action = Action::None;
             app.dialog = None;
             app.selected.clear();
+            execute!(
+                io::stdout(),
+                crossterm::terminal::Clear(crossterm::terminal::ClearType::CurrentLine)
+            )
+            .unwrap();
             false
         }
         KeyCode::Char('j') => {
@@ -78,16 +93,26 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('a') => {
+            if !is_pending(&app) {
+                app.action = Action::Create;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
-                    if dialog.input.is_empty() {
+                    if dialog.input.value().is_empty() {
                         app.action = Action::None;
-                        app.dialog = None;
-                        return false;
                     } else {
                         app.action = Action::Confirm;
                     }
+                    execute!(
+                        io::stdout(),
+                        crossterm::terminal::Clear(crossterm::terminal::ClearType::CurrentLine)
+                    )
+                    .unwrap();
+                    app.dialog = None;
                 }
             }
             false
@@ -115,7 +140,16 @@ pub fn handle_action(app: &mut App) {
             }
             app.action = Action::None;
         }
-        Action::Create(ctype) => {}
+        Action::Create => {
+            app.dialog = Some(Dialog {
+                action: Action::Create,
+                input: "".into(),
+            });
+            if let Some(ref dialog) = app.dialog {
+                ui::write_backend(dialog, "New file/directory:").unwrap();
+            }
+            app.action = Action::Pending;
+        }
         Action::Delete(path) => {}
         Action::Cut => {
             app.is_cut = true;
@@ -136,6 +170,20 @@ pub fn handle_action(app: &mut App) {
         Action::Pending => {}
         Action::Confirm => {}
         Action::None => {}
+    }
+}
+
+pub fn handle_dialog(app: &mut App, event: &Event) {
+    if is_pending(&app) {
+        if let Some(ref mut dialog) = app.dialog {
+            let text = match dialog.action {
+                Action::Create => "New file/directory:",
+                _ => "",
+            };
+            if dialog.input.handle_event(&event).is_some() {
+                ui::write_backend(&dialog, text).unwrap();
+            }
+        }
     }
 }
 
