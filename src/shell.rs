@@ -45,6 +45,15 @@ pub fn create(path: PathBuf) {
     }
 }
 
+pub fn mkdir(path: PathBuf) {
+    if let Some(path) = path.to_str() {
+        Command::new("mkdir")
+            .args([path])
+            .spawn()
+            .expect(format!("Directory create failed -> {}", path).as_str());
+    }
+}
+
 pub fn clip(pathes: Vec<PathBuf>) {
     let pathes = pathes
         .iter()

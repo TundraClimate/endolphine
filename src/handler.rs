@@ -104,6 +104,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                 if let Some(dialog) = &app.dialog {
                     if dialog.input.value().is_empty() {
                         app.action = Action::None;
+                        app.dialog = None;
                     } else {
                         app.action = Action::Confirm;
                     }
@@ -112,7 +113,6 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                         crossterm::terminal::Clear(crossterm::terminal::ClearType::CurrentLine)
                     )
                     .unwrap();
-                    app.dialog = None;
                 }
             }
             false
@@ -168,7 +168,24 @@ pub fn handle_action(app: &mut App) {
         }
         Action::Rename(path) => {}
         Action::Pending => {}
-        Action::Confirm => {}
+        Action::Confirm => {
+            if let Some(Dialog { action, input }) = &app.dialog {
+                let value = input.value();
+                match action {
+                    Action::Create => {
+                        if let Some(suff) = value.chars().last() {
+                            if suff == '/' {
+                                shell::mkdir(app.path.join(value));
+                            } else {
+                                shell::create(app.path.join(value));
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
+            app.action = Action::None;
+        }
         Action::None => {}
     }
 }
