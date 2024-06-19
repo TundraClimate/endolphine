@@ -5,8 +5,10 @@ use crate::{
     ui::{self, Dialog},
 };
 use crossterm::{
+    cursor::MoveTo,
     event::{Event, KeyCode, KeyEvent},
     execute,
+    terminal::{self, Clear, ClearType},
 };
 use std::io;
 use tui_input::backend::crossterm::EventHandler;
@@ -26,11 +28,9 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             app.action = Action::None;
             app.dialog = None;
             app.selected.clear();
-            execute!(
-                io::stdout(),
-                crossterm::terminal::Clear(crossterm::terminal::ClearType::CurrentLine)
-            )
-            .unwrap();
+            let (cols, _) = terminal::size().unwrap();
+            execute!(io::stdout(), MoveTo(0, cols)).unwrap();
+            execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
             false
         }
         KeyCode::Char('j') => {
@@ -120,11 +120,9 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                     } else {
                         app.action = Action::Confirm;
                     }
-                    execute!(
-                        io::stdout(),
-                        crossterm::terminal::Clear(crossterm::terminal::ClearType::CurrentLine)
-                    )
-                    .unwrap();
+                    let (cols, _) = terminal::size().unwrap();
+                    execute!(io::stdout(), MoveTo(0, cols)).unwrap();
+                    execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
                 }
             }
             false

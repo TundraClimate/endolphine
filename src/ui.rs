@@ -2,8 +2,11 @@ use crate::actions::Action;
 use crossterm::{
     cursor::MoveTo,
     execute,
-    style::Print,
-    terminal::{disable_raw_mode, enable_raw_mode, EnterAlternateScreen, LeaveAlternateScreen},
+    style::{Color, Print, ResetColor, SetBackgroundColor},
+    terminal::{
+        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
+        LeaveAlternateScreen,
+    },
 };
 use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
@@ -26,7 +29,14 @@ pub fn render_mode<F: FnMut() -> bool>(mut looper: F) -> Result<(), Box<dyn Erro
     Ok(())
 }
 
-fn ui(frame: &mut Frame) {}
+fn ui(frame: &mut Frame) {
+    let (cols, rows) = terminal::size().unwrap();
+    execute!(io::stdout(), MoveTo(0, rows - 2)).unwrap();
+    execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
+    execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
+    execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
+    execute!(io::stdout(), ResetColor).unwrap();
+}
 
 pub struct Dialog {
     pub input: Input,
