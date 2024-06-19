@@ -22,7 +22,7 @@ pub fn spawn() -> (Receiver<Event>, Sender<()>) {
             if let Ok(_) = sd_signal.try_recv() {
                 break;
             }
-            thread::sleep(Duration::from_millis(100));
+            thread::sleep(Duration::from_millis(10));
         }
     });
 
