@@ -1,10 +1,10 @@
 use crate::{
     actions::Action,
-    handler,
+    event, handler,
     ui::{self, Dialog},
     Args,
 };
-use crossterm::event::KeyEventKind;
+use crossterm::event::{Event, KeyEventKind};
 use std::{error::Error, path::PathBuf};
 use tokio::runtime::Runtime;
 
@@ -40,11 +40,15 @@ impl App {
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
         let mut app = self;
         Runtime::new()?.block_on(async {
-            let (mut rc, shatdown) = crossterm_keyreader::spawn();
+            let (mut rc, shatdown) = event::spawn();
             ui::render_mode(|| {
                 if let Ok(event) = rc.try_recv() {
-                    if event.kind == KeyEventKind::Press && handler::handle_keys(&mut app, event) {
-                        return true;
+                    if let Event::Key(event) = event {
+                        if event.kind == KeyEventKind::Press
+                            && handler::handle_keys(&mut app, event)
+                        {
+                            return true;
+                        }
                     }
                 }
                 handler::handle_action(&mut app);

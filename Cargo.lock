@@ -220,15 +220,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "crossterm-keyreader"
-version = "0.1.0"
-source = "git+https://github.com/TundraClimate/crossterm-keyreader#559b54a5d37b8bb3c483fca3e67697562faa74ba"
-dependencies = [
- "crossterm",
- "tokio",
-]
-
-[[package]]
 name = "crossterm_winapi"
 version = "0.9.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -270,7 +261,6 @@ version = "1.0.0"
 dependencies = [
  "clap",
  "crossterm",
- "crossterm-keyreader",
  "dirs",
  "ratatui",
  "tokio",
