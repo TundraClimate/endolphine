@@ -54,6 +54,7 @@ impl App {
                 }
                 handler::handle_action(&mut app);
                 handler::auto_selector(&mut app);
+                app.files = crate::dir_pathes(app.path.clone());
                 false
             })?;
             shatdown.send(()).ok();

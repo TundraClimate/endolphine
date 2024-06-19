@@ -4,7 +4,7 @@ pub enum Action {
     Previous(usize),
     Next(usize),
     Create,
-    Delete(PathBuf),
+    Delete,
     Cut,
     Copy,
     Rename(PathBuf),

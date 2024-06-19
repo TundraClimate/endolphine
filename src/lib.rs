@@ -24,3 +24,7 @@ pub fn dir_pathes(dir: PathBuf) -> Vec<PathBuf> {
     }
     vec
 }
+
+pub fn filename(path: &PathBuf) -> &str {
+    path.file_name().unwrap().to_str().unwrap()
+}

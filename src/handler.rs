@@ -99,6 +99,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('d') => {
+            if !is_pending(&app) {
+                app.action = Action::Delete;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
@@ -150,7 +156,30 @@ pub fn handle_action(app: &mut App) {
             }
             app.action = Action::Pending;
         }
-        Action::Delete(path) => {}
+        Action::Delete => {
+            app.dialog = Some(Dialog {
+                action: Action::Delete,
+                input: "".into(),
+            });
+            if let Some(ref dialog) = app.dialog {
+                if app.selected.is_empty() {
+                    ui::write_backend(
+                        dialog,
+                        format!(
+                            "Delete \"{}\" ? (y/N)",
+                            crate::filename(&app.files[app.cursor])
+                        )
+                        .as_str(),
+                    )
+                    .unwrap();
+                } else {
+                    let len = app.selected.len();
+                    ui::write_backend(dialog, format!("Delete {} items? (y/N)", len).as_str())
+                        .unwrap();
+                }
+            }
+            app.action = Action::Pending;
+        }
         Action::Cut => {
             app.is_cut = true;
             app.action = Action::Copy;
@@ -181,9 +210,21 @@ pub fn handle_action(app: &mut App) {
                             }
                         }
                     }
+                    Action::Delete => {
+                        if value == "y" || value == "Y" {
+                            if app.selected.is_empty() {
+                                shell::trash_file(app.files[app.cursor].clone());
+                            } else {
+                                app.selected
+                                    .iter()
+                                    .for_each(|i| shell::trash_file(app.files[*i].clone()));
+                            }
+                        }
+                    }
                     _ => {}
                 }
             }
+            app.dialog = None;
             app.action = Action::None;
         }
         Action::None => {}
@@ -194,11 +235,22 @@ pub fn handle_dialog(app: &mut App, event: &Event) {
     if is_pending(&app) {
         if let Some(ref mut dialog) = app.dialog {
             let text = match dialog.action {
-                Action::Create => "New file/directory:",
-                _ => "",
+                Action::Create => "New file/directory:".to_string(),
+                Action::Delete => {
+                    if app.selected.is_empty() {
+                        format!(
+                            "Delete \"{}\" ? (y/N)",
+                            crate::filename(&app.files[app.cursor])
+                        )
+                    } else {
+                        let len = app.selected.len();
+                        format!("Delete {} items? (y/N)", len)
+                    }
+                }
+                _ => String::new(),
             };
             if dialog.input.handle_event(&event).is_some() {
-                ui::write_backend(&dialog, text).unwrap();
+                ui::write_backend(&dialog, text.as_str()).unwrap();
             }
         }
     }
