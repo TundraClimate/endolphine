@@ -1,5 +1,3 @@
-use std::path::PathBuf;
-
 pub enum Action {
     Previous(usize),
     Next(usize),
@@ -7,7 +5,7 @@ pub enum Action {
     Delete,
     Cut,
     Copy,
-    Rename(PathBuf),
+    Rename,
     Pending,
     Confirm,
     None,

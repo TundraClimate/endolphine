@@ -105,6 +105,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('r') => {
+            if !is_pending(&app) {
+                app.action = Action::Rename;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
@@ -195,7 +201,20 @@ pub fn handle_action(app: &mut App) {
             }
             app.action = Action::None;
         }
-        Action::Rename(path) => {}
+        Action::Rename => {
+            app.dialog = Some(Dialog {
+                action: Action::Rename,
+                input: crate::filename(&app.files[app.cursor]).into(),
+            });
+            if let Some(ref dialog) = app.dialog {
+                ui::write_backend(
+                    dialog,
+                    format!("Rename \"{}\" :", crate::filename(&app.files[app.cursor])).as_str(),
+                )
+                .unwrap();
+            }
+            app.action = Action::Pending;
+        }
         Action::Pending => {}
         Action::Confirm => {
             if let Some(Dialog { action, input }) = &app.dialog {
@@ -220,6 +239,9 @@ pub fn handle_action(app: &mut App) {
                                     .for_each(|i| shell::trash_file(app.files[*i].clone()));
                             }
                         }
+                    }
+                    Action::Rename => {
+                        shell::mv(app.files[app.cursor].clone(), app.path.join(value));
                     }
                     _ => {}
                 }
@@ -246,6 +268,9 @@ pub fn handle_dialog(app: &mut App, event: &Event) {
                         let len = app.selected.len();
                         format!("Delete {} items? (y/N)", len)
                     }
+                }
+                Action::Rename => {
+                    format!("Rename \"{}\" :", crate::filename(&app.files[app.cursor]))
                 }
                 _ => String::new(),
             };
