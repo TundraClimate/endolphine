@@ -81,13 +81,21 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                 let current_dir = &app.path;
                 if app.is_cut {
                     register.iter().for_each(|p| {
-                        shell::mv(p.clone(), current_dir.clone());
+                        if let Some(parent) = p.parent() {
+                            if &parent.to_path_buf() != current_dir {
+                                shell::mv(p.clone(), current_dir.clone());
+                            }
+                        }
                     });
                     register.clear();
                     app.is_cut = false;
                 } else {
                     register.iter().for_each(|p| {
-                        shell::cp(p.clone(), current_dir.clone());
+                        if let Some(parent) = p.parent() {
+                            if &parent.to_path_buf() != current_dir {
+                                shell::cp(p.clone(), current_dir.clone());
+                            }
+                        }
                     });
                 }
             }
