@@ -169,6 +169,8 @@ pub fn handle_action(app: &mut App) {
         Action::Back => {
             if let Some(parent) = app.path.parent() {
                 app.path = parent.to_path_buf();
+                app.cursor = 0;
+                app.selected.clear();
             }
             app.action = Action::None;
         }

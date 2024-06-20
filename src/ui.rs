@@ -63,7 +63,7 @@ impl App {
         for p in 0..rows - 4 {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2)).unwrap();
-            if self.files.len() - buf > i {
+            if self.files.len() >= buf && self.files.len() - buf > i {
                 let file_names = crate::filename(&self.files[i + buf])
                     .chars()
                     .take(65)
