@@ -2,7 +2,7 @@ use crate::{actions::Action, app::App};
 use crossterm::{
     cursor::MoveTo,
     execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor},
+    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::{
         self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
         LeaveAlternateScreen,
@@ -76,7 +76,17 @@ impl App {
                     io::stdout(),
                     Print(if self.cursor == i + buf { "> " } else { "  " }),
                     Print(" | "),
+                    SetForegroundColor(if file.is_symlink() {
+                        Color::Magenta
+                    } else if file.is_dir() {
+                        Color::Green
+                    } else if file.is_file() {
+                        Color::Yellow
+                    } else {
+                        Color::Red
+                    }),
                     Print(&file_names),
+                    ResetColor,
                     Print(" ".repeat(65 - file_names.len())),
                     Print("| "),
                 )

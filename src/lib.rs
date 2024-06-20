@@ -19,7 +19,7 @@ pub fn dir_pathes(dir: PathBuf) -> Vec<PathBuf> {
     let mut vec = vec![];
     for entry in dir.read_dir().unwrap() {
         if let Ok(entry) = entry {
-            vec.push(entry.path().canonicalize().unwrap_or(PathBuf::from("")));
+            vec.push(entry.path());
         }
     }
     vec.sort();
