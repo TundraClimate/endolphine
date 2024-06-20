@@ -35,8 +35,11 @@ impl App {
 
     fn ui(&self, frame: &mut Frame) {
         let (cols, rows) = terminal::size().unwrap();
+        let path = self.path.to_str().unwrap();
         execute!(io::stdout(), MoveTo(2, 0)).unwrap();
-        execute!(io::stdout(), Print(self.path.to_str().unwrap())).unwrap();
+        execute!(io::stdout(), Print(path)).unwrap();
+        execute!(io::stdout(), MoveTo(path.len() as u16 + 2, 0)).unwrap();
+        execute!(io::stdout(), Print(" ".repeat(cols as usize - path.len()))).unwrap();
         execute!(io::stdout(), MoveTo(cols - 16, 0)).unwrap();
         let len = self.files.len();
         let max = (rows - 4) as usize;
