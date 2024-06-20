@@ -74,12 +74,11 @@ impl App {
                 let file_names = crate::filename(&file).chars().take(65).collect::<String>();
                 execute!(
                     io::stdout(),
-                    Print(format!(
-                        "{} | {}{}|",
-                        if self.cursor == i + buf { "> " } else { "  " },
-                        file_names,
-                        " ".repeat(65 - file_names.len()),
-                    ))
+                    Print(if self.cursor == i + buf { "> " } else { "  " }),
+                    Print(" | "),
+                    Print(&file_names),
+                    Print(" ".repeat(65 - file_names.len())),
+                    Print("| "),
                 )
                 .unwrap();
             } else {
