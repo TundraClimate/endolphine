@@ -39,7 +39,7 @@ impl App {
         execute!(io::stdout(), Print(self.path.to_str().unwrap())).unwrap();
         execute!(io::stdout(), MoveTo(cols - 16, 0)).unwrap();
         let len = self.files.len();
-        let max = (cols - 4) as usize;
+        let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
         let page_size = if len % max == 0 {
             len / max
