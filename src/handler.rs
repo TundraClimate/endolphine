@@ -119,6 +119,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('h') => {
+            if !is_pending(&app) {
+                app.action = Action::Back;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
@@ -159,6 +165,16 @@ pub fn handle_action(app: &mut App) {
                 app.cursor = app.files.len() - 1;
             }
             app.action = Action::None;
+        }
+        Action::Back => {
+            if let Some(parent) = app.path.parent() {
+                app.path = parent.to_path_buf();
+            }
+            app.action = Action::None;
+        }
+        Action::Open => {
+            let cur_position = &app.files[app.cursor];
+            if cur_position.is_dir() {}
         }
         Action::Create => {
             app.dialog = Some(Dialog {
