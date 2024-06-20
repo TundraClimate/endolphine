@@ -67,10 +67,8 @@ impl App {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2)).unwrap();
             if self.files.len() >= buf && self.files.len() - buf > i {
-                let file_names = crate::filename(&self.files[i + buf])
-                    .chars()
-                    .take(65)
-                    .collect::<String>();
+                let file = &self.files[i + buf];
+                let file_names = crate::filename(&file).chars().take(65).collect::<String>();
                 execute!(
                     io::stdout(),
                     Print(format!(
