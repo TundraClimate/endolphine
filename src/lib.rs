@@ -22,6 +22,7 @@ pub fn dir_pathes(dir: PathBuf) -> Vec<PathBuf> {
             vec.push(entry.path().canonicalize().unwrap_or(PathBuf::from("")));
         }
     }
+    vec.sort();
     vec
 }
 

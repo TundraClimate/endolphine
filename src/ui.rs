@@ -58,6 +58,39 @@ impl App {
         execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
         execute!(io::stdout(), ResetColor).unwrap();
 
+        let buf = page - 1;
+        let buf = buf * max;
+        for i in 0..rows - 4 {
+            execute!(io::stdout(), MoveTo(0, i + 2)).unwrap();
+            if self.files.len() - buf > i as usize {
+                execute!(
+                    io::stdout(),
+                    Print(format!(
+                        "{} | {}{}|",
+                        if self.cursor == (i as usize) + buf {
+                            "> "
+                        } else {
+                            "  "
+                        },
+                        crate::filename(&self.files[i as usize + buf])
+                            .chars()
+                            .take(65)
+                            .collect::<String>(),
+                        " ".repeat(
+                            65 - crate::filename(&self.files[i as usize + buf])
+                                .chars()
+                                .take(65)
+                                .collect::<String>()
+                                .len()
+                        ),
+                    ))
+                )
+                .unwrap();
+            } else {
+                execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
+            }
+        }
+
         execute!(io::stdout(), MoveTo(0, rows - 2)).unwrap();
         execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
         execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
