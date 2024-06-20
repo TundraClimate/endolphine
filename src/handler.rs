@@ -146,6 +146,8 @@ pub fn handle_action(app: &mut App) {
         Action::Next(i) => {
             let cursor = app.cursor;
             if cursor + i < app.files.len() {
+                app.cursor = cursor + i;
+            } else {
                 app.cursor = app.files.len() - 1;
             }
             app.action = Action::None;
