@@ -241,7 +241,9 @@ pub fn handle_action(app: &mut App) {
                         }
                     }
                     Action::Rename => {
-                        shell::mv(app.files[app.cursor].clone(), app.path.join(value));
+                        if crate::filename(&app.files[app.cursor]) != value {
+                            shell::mv(app.files[app.cursor].clone(), app.path.join(value));
+                        }
                     }
                     _ => {}
                 }
