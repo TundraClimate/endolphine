@@ -60,29 +60,21 @@ impl App {
 
         let buf = page - 1;
         let buf = buf * max;
-        for i in 0..rows - 4 {
-            execute!(io::stdout(), MoveTo(0, i + 2)).unwrap();
-            if self.files.len() - buf > i as usize {
+        for p in 0..rows - 4 {
+            let i = p as usize;
+            execute!(io::stdout(), MoveTo(0, p + 2)).unwrap();
+            if self.files.len() - buf > i {
+                let file_names = crate::filename(&self.files[i + buf])
+                    .chars()
+                    .take(65)
+                    .collect::<String>();
                 execute!(
                     io::stdout(),
                     Print(format!(
                         "{} | {}{}|",
-                        if self.cursor == (i as usize) + buf {
-                            "> "
-                        } else {
-                            "  "
-                        },
-                        crate::filename(&self.files[i as usize + buf])
-                            .chars()
-                            .take(65)
-                            .collect::<String>(),
-                        " ".repeat(
-                            65 - crate::filename(&self.files[i as usize + buf])
-                                .chars()
-                                .take(65)
-                                .collect::<String>()
-                                .len()
-                        ),
+                        if self.cursor == i + buf { "> " } else { "  " },
+                        file_names,
+                        " ".repeat(65 - file_names.len()),
                     ))
                 )
                 .unwrap();
