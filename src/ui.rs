@@ -72,8 +72,18 @@ impl App {
             if self.files.len() >= buf && self.files.len() - buf > i {
                 let file = &self.files[i + buf];
                 let file_names = crate::filename(&file).chars().take(65).collect::<String>();
+                let select = if self.selected.contains(&i) {
+                    Color::Rgb {
+                        r: 100,
+                        g: 100,
+                        b: 100,
+                    }
+                } else {
+                    Color::Reset
+                };
                 execute!(
                     io::stdout(),
+                    SetBackgroundColor(select),
                     Print(if self.cursor == i + buf { "> " } else { "  " }),
                     Print(" | "),
                     SetForegroundColor(if file.is_symlink() {
@@ -87,12 +97,13 @@ impl App {
                     }),
                     Print(&file_names),
                     ResetColor,
+                    SetBackgroundColor(select),
                     Print(" ".repeat(65 - file_names.len())),
                     Print("| "),
                 )
                 .unwrap();
             } else {
-                execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
+                execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize))).unwrap();
             }
         }
 
