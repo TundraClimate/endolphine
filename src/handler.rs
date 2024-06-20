@@ -310,7 +310,11 @@ pub fn handle_dialog(app: &mut App, event: &Event) {
 }
 
 pub fn auto_selector(app: &mut App) {
-    if !app.selected.is_empty() && !app.selected.contains(&app.cursor) {
-        app.selected.push(app.cursor);
+    if !app.selected.is_empty() {
+        if app.selected[0] <= app.cursor {
+            app.selected = (app.selected[0]..=app.cursor).collect();
+        } else {
+            app.selected = (app.cursor..=app.selected[0]).rev().collect();
+        }
     }
 }
