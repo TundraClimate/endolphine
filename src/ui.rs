@@ -36,15 +36,6 @@ impl App {
     fn ui(&self, frame: &mut Frame) {
         let (cols, rows) = terminal::size().unwrap();
         let path = self.path.to_str().unwrap();
-        execute!(
-            io::stdout(),
-            MoveTo(2, 0),
-            Print(path),
-            MoveTo(path.len() as u16 + 2, 0),
-            Print(" ".repeat(cols as usize - path.len())),
-            MoveTo(cols - 16, 0)
-        )
-        .unwrap();
         let len = self.files.len();
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
@@ -55,6 +46,10 @@ impl App {
         };
         execute!(
             io::stdout(),
+            MoveTo(2, 0),
+            Print(path),
+            Print(" ".repeat(cols as usize - path.len())),
+            MoveTo(cols - 16, 0),
             Print(format!("page {} / {}", page, page_size))
         )
         .unwrap();
