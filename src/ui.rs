@@ -36,11 +36,15 @@ impl App {
     fn ui(&self, frame: &mut Frame) {
         let (cols, rows) = terminal::size().unwrap();
         let path = self.path.to_str().unwrap();
-        execute!(io::stdout(), MoveTo(2, 0)).unwrap();
-        execute!(io::stdout(), Print(path)).unwrap();
-        execute!(io::stdout(), MoveTo(path.len() as u16 + 2, 0)).unwrap();
-        execute!(io::stdout(), Print(" ".repeat(cols as usize - path.len()))).unwrap();
-        execute!(io::stdout(), MoveTo(cols - 16, 0)).unwrap();
+        execute!(
+            io::stdout(),
+            MoveTo(2, 0),
+            Print(path),
+            MoveTo(path.len() as u16 + 2, 0),
+            Print(" ".repeat(cols as usize - path.len())),
+            MoveTo(cols - 16, 0)
+        )
+        .unwrap();
         let len = self.files.len();
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
@@ -55,11 +59,15 @@ impl App {
         )
         .unwrap();
 
-        execute!(io::stdout(), MoveTo(0, 1)).unwrap();
-        execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
-        execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
-        execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
-        execute!(io::stdout(), ResetColor).unwrap();
+        execute!(
+            io::stdout(),
+            MoveTo(0, 1),
+            SetBackgroundColor(Color::Grey),
+            Clear(ClearType::CurrentLine),
+            Print(" ".repeat(cols as usize)),
+            ResetColor
+        )
+        .unwrap();
 
         let buf = page - 1;
         let buf = buf * max;
@@ -84,11 +92,15 @@ impl App {
             }
         }
 
-        execute!(io::stdout(), MoveTo(0, rows - 2)).unwrap();
-        execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
-        execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
-        execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
-        execute!(io::stdout(), ResetColor).unwrap();
+        execute!(
+            io::stdout(),
+            MoveTo(0, rows - 2),
+            SetBackgroundColor(Color::Grey),
+            Clear(ClearType::CurrentLine),
+            Print(" ".repeat(cols as usize)),
+            ResetColor
+        )
+        .unwrap();
     }
 }
 
