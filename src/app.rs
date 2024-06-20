@@ -1,9 +1,4 @@
-use crate::{
-    actions::Action,
-    event, handler,
-    ui::{self, Dialog},
-    Args,
-};
+use crate::{actions::Action, event, handler, ui::Dialog, Args};
 use crossterm::event::{Event, KeyEventKind};
 use std::{error::Error, path::PathBuf};
 use tokio::runtime::Runtime;
@@ -41,7 +36,7 @@ impl App {
         let mut app = self;
         Runtime::new()?.block_on(async {
             let (mut rc, shatdown) = event::spawn();
-            ui::render_mode(|| {
+            let looper = |mut app: &mut App| {
                 if let Ok(event) = rc.try_recv() {
                     handler::handle_dialog(&mut app, &event);
                     if let Event::Key(event) = event {
@@ -56,7 +51,8 @@ impl App {
                 handler::auto_selector(&mut app);
                 app.files = crate::dir_pathes(app.path.clone());
                 false
-            })?;
+            };
+            app.render_mode(looper)?;
             shatdown.send(()).ok();
             Ok::<(), Box<dyn Error>>(())
         })?;

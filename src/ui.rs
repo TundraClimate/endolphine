@@ -1,4 +1,4 @@
-use crate::actions::Action;
+use crate::{actions::Action, app::App};
 use crossterm::{
     cursor::MoveTo,
     execute,
@@ -12,30 +12,58 @@ use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
 use tui_input::{backend::crossterm as backend, Input};
 
-pub fn render_mode<F: FnMut() -> bool>(mut looper: F) -> Result<(), Box<dyn Error>> {
-    enable_raw_mode()?;
-    execute!(io::stdout(), EnterAlternateScreen)?;
-    let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
+impl App {
+    pub fn render_mode<F: FnMut(&mut App) -> bool>(
+        &mut self,
+        mut looper: F,
+    ) -> Result<(), Box<dyn Error>> {
+        enable_raw_mode()?;
+        execute!(io::stdout(), EnterAlternateScreen)?;
+        let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
-    loop {
-        terminal.draw(ui)?;
-        if looper() {
-            break;
+        loop {
+            terminal.draw(|f| self.ui(f))?;
+            if looper(self) {
+                break;
+            }
         }
+
+        disable_raw_mode()?;
+        execute!(io::stdout(), LeaveAlternateScreen)?;
+        Ok(())
     }
 
-    disable_raw_mode()?;
-    execute!(io::stdout(), LeaveAlternateScreen)?;
-    Ok(())
-}
+    fn ui(&self, frame: &mut Frame) {
+        let (cols, rows) = terminal::size().unwrap();
+        execute!(io::stdout(), MoveTo(2, 0)).unwrap();
+        execute!(io::stdout(), Print(self.path.to_str().unwrap())).unwrap();
+        execute!(io::stdout(), MoveTo(cols - 16, 0)).unwrap();
+        let len = self.files.len();
+        let max = (cols - 4) as usize;
+        let page = (self.cursor / max) + 1;
+        let page_size = if len % max == 0 {
+            len / max
+        } else {
+            (len / max) + 1
+        };
+        execute!(
+            io::stdout(),
+            Print(format!("page {} / {}", page, page_size))
+        )
+        .unwrap();
 
-fn ui(frame: &mut Frame) {
-    let (cols, rows) = terminal::size().unwrap();
-    execute!(io::stdout(), MoveTo(0, rows - 2)).unwrap();
-    execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
-    execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
-    execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
-    execute!(io::stdout(), ResetColor).unwrap();
+        execute!(io::stdout(), MoveTo(0, 1)).unwrap();
+        execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
+        execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
+        execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
+        execute!(io::stdout(), ResetColor).unwrap();
+
+        execute!(io::stdout(), MoveTo(0, rows - 2)).unwrap();
+        execute!(io::stdout(), SetBackgroundColor(Color::Grey)).unwrap();
+        execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
+        execute!(io::stdout(), Print(" ".repeat(cols as usize))).unwrap();
+        execute!(io::stdout(), ResetColor).unwrap();
+    }
 }
 
 pub struct Dialog {
