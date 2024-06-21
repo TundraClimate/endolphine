@@ -191,7 +191,9 @@ pub fn handle_action(app: &mut App) {
                 let mut file = std::fs::File::open(cur_position).unwrap();
                 let mut buffer = [0; 1024];
                 let read = file.read(&mut buffer).unwrap();
-                if std::str::from_utf8(&buffer[..read]).is_ok() {}
+                if std::str::from_utf8(&buffer[..read]).is_ok() {
+                    app.editor = true;
+                }
             }
             app.action = Action::None;
         }

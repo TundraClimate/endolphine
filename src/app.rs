@@ -1,4 +1,10 @@
-use crate::{actions::Action, event, handler, ui::Dialog, Args};
+use crate::{
+    actions::Action,
+    event::{self, Signal},
+    handler,
+    ui::Dialog,
+    Args,
+};
 use crossterm::event::{Event, KeyEventKind};
 use std::{error::Error, path::PathBuf};
 use tokio::runtime::Runtime;
@@ -12,6 +18,7 @@ pub struct App {
     pub register: Vec<PathBuf>,
     pub selected: Vec<usize>,
     pub is_cut: bool,
+    pub editor: bool,
 }
 
 impl App {
@@ -25,6 +32,7 @@ impl App {
             register: vec![],
             selected: vec![],
             is_cut: false,
+            editor: false,
         }
     }
 
@@ -35,7 +43,7 @@ impl App {
     pub fn run_app(self) -> Result<(), Box<dyn Error>> {
         let mut app = self;
         Runtime::new()?.block_on(async {
-            let (mut rc, shatdown) = event::spawn();
+            let (mut rc, sender) = event::spawn();
             let looper = |mut app: &mut App| {
                 if let Ok(event) = rc.try_recv() {
                     handler::handle_dialog(&mut app, &event);
@@ -52,8 +60,8 @@ impl App {
                 app.files = crate::dir_pathes(app.path.clone());
                 false
             };
-            app.render_mode(looper)?;
-            shatdown.send(()).ok();
+            app.render_mode(looper, &sender).await?;
+            sender.send(Signal::Shatdown).await?;
             Ok::<(), Box<dyn Error>>(())
         })?;
         Ok(())

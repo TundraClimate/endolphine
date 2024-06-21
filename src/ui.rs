@@ -1,4 +1,4 @@
-use crate::{actions::Action, app::App};
+use crate::{actions::Action, app::App, event::Signal, shell};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -11,21 +11,31 @@ use crossterm::{
 };
 use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
+use tokio::sync::mpsc::Sender;
 use tui_input::{backend::crossterm as backend, Input};
 
 impl App {
-    pub fn render_mode<F: FnMut(&mut App) -> bool>(
+    pub async fn render_mode<F: FnMut(&mut App) -> bool>(
         &mut self,
         mut looper: F,
+        sender: &Sender<Signal>,
     ) -> Result<(), Box<dyn Error>> {
         enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen)?;
         let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
         loop {
-            terminal.draw(|f| self.ui(f))?;
-            if looper(self) {
-                break;
+            if self.editor {
+                sender.send(Signal::Pause).await?;
+                shell::nvim(self.files[self.cursor].clone()).await;
+                sender.send(Signal::Pause).await?;
+                execute!(io::stdout(), EnterAlternateScreen)?;
+                self.editor = false;
+            } else {
+                terminal.draw(|f| self.ui(f))?;
+                if looper(self) {
+                    break;
+                }
             }
         }
 

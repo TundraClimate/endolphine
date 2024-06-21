@@ -3,6 +3,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
 };
+use tokio::process::Command as TokioCommand;
 
 pub fn trash_file(path: PathBuf) {
     let home = dirs::home_dir().unwrap();
@@ -75,4 +76,15 @@ pub fn clip(pathes: Vec<PathBuf>) {
     if let Some(mut stdin) = xclip.stdin {
         stdin.write_all(&echo.stdout).unwrap();
     }
+}
+
+pub async fn nvim(path: PathBuf) {
+    TokioCommand::new("nvim")
+        .args([path])
+        .stdin(Stdio::inherit())
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .status()
+        .await
+        .unwrap();
 }
