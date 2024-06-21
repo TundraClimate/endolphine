@@ -9,7 +9,6 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use ratatui::{backend::CrosstermBackend, prelude::*, terminal::Terminal};
 use std::{error::Error, io};
 use tokio::sync::mpsc::Sender;
 use tui_input::{backend::crossterm as backend, Input};
@@ -22,7 +21,6 @@ impl App {
     ) -> Result<(), Box<dyn Error>> {
         enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen)?;
-        let mut terminal = Terminal::new(CrosstermBackend::new(io::stdout()))?;
 
         loop {
             if self.editor {
@@ -32,7 +30,7 @@ impl App {
                 execute!(io::stdout(), EnterAlternateScreen)?;
                 self.editor = false;
             } else {
-                terminal.draw(|f| self.ui(f))?;
+                self.ui();
                 if looper(self) {
                     break;
                 }
@@ -44,7 +42,7 @@ impl App {
         Ok(())
     }
 
-    fn ui(&self, frame: &mut Frame) {
+    fn ui(&self) {
         let (cols, rows) = terminal::size().unwrap();
         let path = self.path.to_str().unwrap();
         let len = self.files.len();
