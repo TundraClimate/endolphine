@@ -141,8 +141,13 @@ pub struct Dialog {
 }
 
 pub fn write_backend(dialog: &Dialog, text: &str) -> io::Result<()> {
-    execute!(io::stdout(), MoveTo(0, 40)).unwrap();
-    execute!(io::stdout(), Print(text)).unwrap();
+    execute!(
+        io::stdout(),
+        MoveTo(0, 40),
+        Clear(ClearType::CurrentLine),
+        Print(text)
+    )
+    .unwrap();
     backend::write(
         &mut io::stdout(),
         dialog.input.value(),
@@ -150,4 +155,14 @@ pub fn write_backend(dialog: &Dialog, text: &str) -> io::Result<()> {
         ((text.len() + 1) as u16, 40),
         30,
     )
+}
+
+pub fn log(text: String) -> io::Result<()> {
+    execute!(
+        io::stdout(),
+        MoveTo(1, 40),
+        Clear(ClearType::CurrentLine),
+        Print(text)
+    )?;
+    Ok(())
 }

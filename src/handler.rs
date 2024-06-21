@@ -87,6 +87,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                             }
                         }
                     });
+                    ui::log(format!("{} items pasted", register.len())).unwrap();
                     register.clear();
                     app.is_cut = false;
                 } else {
@@ -97,6 +98,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
                             }
                         }
                     });
+                    ui::log(format!("{} items pasted", register.len())).unwrap();
                 }
             }
             false
@@ -238,8 +240,10 @@ pub fn handle_action(app: &mut App) {
         Action::Copy => {
             if app.selected.is_empty() {
                 let file = app.files[app.cursor].clone();
+                ui::log(format!("\"{}\" copied", crate::filename(&file))).unwrap();
                 app.register.push(file);
             } else {
+                ui::log(format!("{} items copied", app.selected.len())).unwrap();
                 app.selected
                     .iter()
                     .for_each(|i| app.register.push(app.files[*i].clone()));
@@ -272,13 +276,17 @@ pub fn handle_action(app: &mut App) {
                             } else {
                                 shell::create(app.path.join(value));
                             }
+                            ui::log(format!("\"{}\" created", value)).unwrap();
                         }
                     }
                     Action::Delete => {
                         if value == "y" || value == "Y" {
                             if app.selected.is_empty() {
-                                shell::trash_file(app.files[app.cursor].clone());
+                                let file = &app.files[app.cursor];
+                                ui::log(format!("\"{}\" deleted", crate::filename(&file))).unwrap();
+                                shell::trash_file(file.clone());
                             } else {
+                                ui::log(format!("{} items deleted", app.selected.len())).unwrap();
                                 app.selected
                                     .iter()
                                     .for_each(|i| shell::trash_file(app.files[*i].clone()));
@@ -287,7 +295,10 @@ pub fn handle_action(app: &mut App) {
                     }
                     Action::Rename => {
                         if crate::filename(&app.files[app.cursor]) != value {
-                            shell::mv(app.files[app.cursor].clone(), app.path.join(value));
+                            let file = &app.files[app.cursor];
+                            ui::log(format!("{} renamed \"{}\"", crate::filename(&file), value))
+                                .unwrap();
+                            shell::mv(file.clone(), app.path.join(value));
                         }
                     }
                     _ => {}
