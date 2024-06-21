@@ -25,12 +25,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
     match event.code {
         KeyCode::Char('Q') => !is_pending(&app),
         KeyCode::Esc => {
-            app.action = Action::None;
-            app.dialog = None;
-            app.selected.clear();
-            let (cols, _) = terminal::size().unwrap();
-            execute!(io::stdout(), MoveTo(0, cols)).unwrap();
-            execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
+            app.action = Action::Clean;
             false
         }
         KeyCode::Char('j') => {
@@ -77,29 +72,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
         }
         KeyCode::Char('p') => {
             if !is_pending(&app) {
-                let register = &mut app.register;
-                let current_dir = &app.path;
-                if app.is_cut {
-                    register.iter().for_each(|p| {
-                        if let Some(parent) = p.parent() {
-                            if &parent.to_path_buf() != current_dir {
-                                shell::mv(p.clone(), current_dir.clone());
-                            }
-                        }
-                    });
-                    ui::log(format!("{} items pasted", register.len())).unwrap();
-                    register.clear();
-                    app.is_cut = false;
-                } else {
-                    register.iter().for_each(|p| {
-                        if let Some(parent) = p.parent() {
-                            if &parent.to_path_buf() != current_dir {
-                                shell::cp(p.clone(), current_dir.clone());
-                            }
-                        }
-                    });
-                    ui::log(format!("{} items pasted", register.len())).unwrap();
-                }
+                app.action = Action::Paste;
             }
             false
         }
@@ -135,17 +108,7 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
         }
         KeyCode::Enter => {
             if is_pending(&app) {
-                if let Some(dialog) = &app.dialog {
-                    if dialog.input.value().is_empty() {
-                        app.action = Action::None;
-                        app.dialog = None;
-                    } else {
-                        app.action = Action::Confirm;
-                    }
-                    let (cols, _) = terminal::size().unwrap();
-                    execute!(io::stdout(), MoveTo(0, cols)).unwrap();
-                    execute!(io::stdout(), Clear(ClearType::CurrentLine)).unwrap();
-                }
+                app.action = Action::PreConfirm;
             }
             false
         }
@@ -250,6 +213,32 @@ pub fn handle_action(app: &mut App) {
             }
             app.action = Action::None;
         }
+        Action::Paste => {
+            let register = &mut app.register;
+            let current_dir = &app.path;
+            if app.is_cut {
+                register.iter().for_each(|p| {
+                    if let Some(parent) = p.parent() {
+                        if &parent.to_path_buf() != current_dir {
+                            shell::mv(p.clone(), current_dir.clone());
+                        }
+                    }
+                });
+                ui::log(format!("{} items pasted", register.len())).unwrap();
+                register.clear();
+                app.is_cut = false;
+            } else {
+                register.iter().for_each(|p| {
+                    if let Some(parent) = p.parent() {
+                        if &parent.to_path_buf() != current_dir {
+                            shell::cp(p.clone(), current_dir.clone());
+                        }
+                    }
+                });
+                ui::log(format!("{} items pasted", register.len())).unwrap();
+            }
+            app.action = Action::None;
+        }
         Action::Rename => {
             app.dialog = Some(Dialog {
                 action: Action::Rename,
@@ -265,6 +254,18 @@ pub fn handle_action(app: &mut App) {
             app.action = Action::Pending;
         }
         Action::Pending => {}
+        Action::PreConfirm => {
+            if let Some(dialog) = &app.dialog {
+                if dialog.input.value().is_empty() {
+                    app.action = Action::None;
+                    app.dialog = None;
+                } else {
+                    app.action = Action::Confirm;
+                }
+                let (_, rows) = terminal::size().unwrap();
+                execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
+            }
+        }
         Action::Confirm => {
             if let Some(Dialog { action, input }) = &app.dialog {
                 let value = input.value();
@@ -305,6 +306,13 @@ pub fn handle_action(app: &mut App) {
                 }
             }
             app.dialog = None;
+            app.action = Action::None;
+        }
+        Action::Clean => {
+            let (_, rows) = terminal::size().unwrap();
+            execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
+            app.dialog = None;
+            app.selected.clear();
             app.action = Action::None;
         }
         Action::None => {}

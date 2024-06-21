@@ -7,8 +7,11 @@ pub enum Action {
     Delete,
     Cut,
     Copy,
+    Paste,
     Rename,
     Pending,
+    PreConfirm,
     Confirm,
+    Clean,
     None,
 }
