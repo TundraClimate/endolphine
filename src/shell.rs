@@ -6,8 +6,17 @@ use std::{
 use tokio::process::Command as TokioCommand;
 
 pub fn trash_file(path: PathBuf) {
+    let name = crate::filename(&path);
     let home = dirs::home_dir().unwrap();
     if let (Some(path), Some(home)) = (path.to_str(), home.to_str()) {
+        let trashed = PathBuf::from(format!("{home}/.local/share/Trash/files/{name}"));
+        if trashed.exists() {
+            if trashed.is_dir() {
+                std::fs::remove_dir_all(&trashed).unwrap();
+            } else if trashed.is_file() {
+                std::fs::remove_file(&trashed).unwrap();
+            }
+        }
         Command::new("mv")
             .args([
                 "-f",
