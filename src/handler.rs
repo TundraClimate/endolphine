@@ -125,6 +125,12 @@ pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
             }
             false
         }
+        KeyCode::Char('l') => {
+            if !is_pending(&app) {
+                app.action = Action::Open;
+            }
+            false
+        }
         KeyCode::Enter => {
             if is_pending(&app) {
                 if let Some(dialog) = &app.dialog {
@@ -176,7 +182,18 @@ pub fn handle_action(app: &mut App) {
         }
         Action::Open => {
             let cur_position = &app.files[app.cursor];
-            if cur_position.is_dir() {}
+            if cur_position.is_dir() {
+                app.path = cur_position.clone();
+                app.cursor = 0;
+                app.selected.clear();
+            } else {
+                use std::io::Read;
+                let mut file = std::fs::File::open(cur_position).unwrap();
+                let mut buffer = [0; 1024];
+                let read = file.read(&mut buffer).unwrap();
+                if std::str::from_utf8(&buffer[..read]).is_ok() {}
+            }
+            app.action = Action::None;
         }
         Action::Create => {
             app.dialog = Some(Dialog {
