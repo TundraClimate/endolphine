@@ -1,4 +1,5 @@
 use crate::{actions::Action, app::App};
+use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
     execute,
@@ -81,6 +82,9 @@ impl App {
                 } else {
                     Color::Reset
                 };
+                let modified = file.metadata().unwrap().modified().unwrap();
+                let datetime = DateTime::<Local>::from(modified);
+                let mod_time = datetime.format("%Y/%m/%d %H:%M").to_string();
                 execute!(
                     io::stdout(),
                     SetBackgroundColor(select),
@@ -98,8 +102,10 @@ impl App {
                     Print(&file_names),
                     ResetColor,
                     SetBackgroundColor(select),
-                    Print(" ".repeat(65 - file_names.len())),
+                    Print(" ".repeat(cols as usize - file_names.len() - mod_time.len() - 9)),
                     Print("| "),
+                    Print(mod_time),
+                    Print(" |"),
                 )
                 .unwrap();
             } else {
