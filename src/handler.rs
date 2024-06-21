@@ -23,7 +23,7 @@ fn is_pending(app: &App) -> bool {
 
 pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
     match event.code {
-        KeyCode::Char('q') => !is_pending(&app),
+        KeyCode::Char('Q') => !is_pending(&app),
         KeyCode::Esc => {
             app.action = Action::None;
             app.dialog = None;
