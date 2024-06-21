@@ -1,7 +1,7 @@
 use crate::{actions::Action, app::App, event::Signal, shell};
 use chrono::{DateTime, Local};
 use crossterm::{
-    cursor::MoveTo,
+    cursor::{Hide, MoveTo, Show},
     execute,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::{
@@ -20,14 +20,14 @@ impl App {
         sender: &Sender<Signal>,
     ) -> Result<(), Box<dyn Error>> {
         enable_raw_mode()?;
-        execute!(io::stdout(), EnterAlternateScreen)?;
+        execute!(io::stdout(), EnterAlternateScreen, Hide)?;
 
         loop {
             if self.editor {
                 sender.send(Signal::Pause).await?;
                 shell::nvim(self.files[self.cursor].clone()).await;
                 sender.send(Signal::Pause).await?;
-                execute!(io::stdout(), EnterAlternateScreen)?;
+                execute!(io::stdout(), EnterAlternateScreen, Hide)?;
                 self.editor = false;
             } else {
                 self.ui();
@@ -38,7 +38,7 @@ impl App {
         }
 
         disable_raw_mode()?;
-        execute!(io::stdout(), LeaveAlternateScreen)?;
+        execute!(io::stdout(), LeaveAlternateScreen, Show)?;
         Ok(())
     }
 
