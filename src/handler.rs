@@ -211,6 +211,7 @@ pub fn handle_action(app: &mut App) {
                     .iter()
                     .for_each(|i| app.register.push(app.files[*i].clone()));
             }
+            shell::clip(&app.register);
             app.action = Action::None;
         }
         Action::Paste => {

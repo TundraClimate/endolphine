@@ -64,7 +64,7 @@ pub fn mkdir(path: &PathBuf) {
     }
 }
 
-pub fn clip(pathes: Vec<&PathBuf>) {
+pub fn clip(pathes: &Vec<PathBuf>) {
     let pathes = pathes
         .iter()
         .map(|p| format!("file://{}", p.to_str().unwrap()))
