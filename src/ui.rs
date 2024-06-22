@@ -82,9 +82,12 @@ impl App {
                 } else {
                     Color::Reset
                 };
-                let modified = file.metadata().unwrap().modified().unwrap();
-                let datetime = DateTime::<Local>::from(modified);
-                let mod_time = datetime.format("%Y/%m/%d %H:%M").to_string();
+                let mod_time = if let Ok(meta) = file.metadata() {
+                    let datetime = DateTime::<Local>::from(meta.modified()?);
+                    datetime.format("%Y/%m/%d %H:%M").to_string()
+                } else {
+                    String::from("       N/A      ")
+                };
                 execute!(
                     io::stdout(),
                     SetBackgroundColor(select),

@@ -77,17 +77,24 @@ impl App {
             }
             Action::Open => {
                 let cur_position = &self.files[self.cursor];
-                if cur_position.is_dir() {
-                    self.path = cur_position.clone();
-                    self.cursor = 0;
-                    self.selected.clear();
-                } else {
-                    let mut file = File::open(cur_position)?;
-                    let mut buffer = [0; 1024];
-                    let read = file.read(&mut buffer)?;
-                    if std::str::from_utf8(&buffer[..read]).is_ok() {
-                        self.editor = true;
+                if cur_position.exists() {
+                    if cur_position.is_dir() {
+                        self.path = cur_position.clone();
+                        self.cursor = 0;
+                        self.selected.clear();
+                    } else {
+                        let mut file = File::open(cur_position)?;
+                        let mut buffer = [0; 1024];
+                        let read = file.read(&mut buffer)?;
+                        if std::str::from_utf8(&buffer[..read]).is_ok() {
+                            self.editor = true;
+                        }
                     }
+                } else {
+                    ui::log(format!(
+                        "\"{}\" is not exists",
+                        crate::filename(&cur_position),
+                    ))?;
                 }
                 Action::None
             }
