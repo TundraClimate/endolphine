@@ -25,7 +25,7 @@ impl App {
     pub fn new(args: Args) -> App {
         App {
             path: args.path.canonicalize().unwrap().clone(),
-            files: crate::dir_pathes(args.path),
+            files: crate::dir_pathes(&args.path),
             cursor: 0,
             action: Action::None,
             dialog: None,
@@ -57,7 +57,7 @@ impl App {
                 }
                 handler::handle_action(&mut app);
                 handler::auto_selector(&mut app);
-                app.files = crate::dir_pathes(app.path.clone());
+                app.files = crate::dir_pathes(&app.path);
                 false
             };
             app.render_mode(looper, &sender).await?;

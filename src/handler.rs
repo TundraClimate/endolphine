@@ -220,7 +220,7 @@ pub fn handle_action(app: &mut App) {
                 register.iter().for_each(|p| {
                     if let Some(parent) = p.parent() {
                         if &parent.to_path_buf() != current_dir {
-                            shell::mv(p.clone(), current_dir.clone());
+                            shell::mv(p, current_dir);
                         }
                     }
                 });
@@ -231,7 +231,7 @@ pub fn handle_action(app: &mut App) {
                 register.iter().for_each(|p| {
                     if let Some(parent) = p.parent() {
                         if &parent.to_path_buf() != current_dir {
-                            shell::cp(p.clone(), current_dir.clone());
+                            shell::cp(p, current_dir);
                         }
                     }
                 });
@@ -273,9 +273,9 @@ pub fn handle_action(app: &mut App) {
                     Action::Create => {
                         if let Some(suff) = value.chars().last() {
                             if suff == '/' {
-                                shell::mkdir(app.path.join(value));
+                                shell::mkdir(&app.path.join(value));
                             } else {
-                                shell::create(app.path.join(value));
+                                shell::create(&app.path.join(value));
                             }
                             ui::log(format!("\"{}\" created", value)).unwrap();
                         }
@@ -285,12 +285,12 @@ pub fn handle_action(app: &mut App) {
                             if app.selected.is_empty() {
                                 let file = &app.files[app.cursor];
                                 ui::log(format!("\"{}\" deleted", crate::filename(&file))).unwrap();
-                                shell::trash_file(file.clone());
+                                shell::trash_file(&file);
                             } else {
                                 ui::log(format!("{} items deleted", app.selected.len())).unwrap();
                                 app.selected
                                     .iter()
-                                    .for_each(|i| shell::trash_file(app.files[*i].clone()));
+                                    .for_each(|i| shell::trash_file(&app.files[*i]));
                             }
                         }
                     }
@@ -299,7 +299,7 @@ pub fn handle_action(app: &mut App) {
                             let file = &app.files[app.cursor];
                             ui::log(format!("{} renamed \"{}\"", crate::filename(&file), value))
                                 .unwrap();
-                            shell::mv(file.clone(), app.path.join(value));
+                            shell::mv(&file, &app.path.join(value));
                         }
                     }
                     _ => {}

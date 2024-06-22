@@ -5,7 +5,7 @@ use std::{
 };
 use tokio::process::Command as TokioCommand;
 
-pub fn trash_file(path: PathBuf) {
+pub fn trash_file(path: &PathBuf) {
     let name = crate::filename(&path);
     let home = dirs::home_dir().unwrap();
     if let (Some(path), Some(home)) = (path.to_str(), home.to_str()) {
@@ -28,7 +28,7 @@ pub fn trash_file(path: PathBuf) {
     }
 }
 
-pub fn mv(from: PathBuf, to: PathBuf) {
+pub fn mv(from: &PathBuf, to: &PathBuf) {
     if let (Some(from), Some(to)) = (from.to_str(), to.to_str()) {
         Command::new("mv")
             .args(["-f", from, to])
@@ -37,7 +37,7 @@ pub fn mv(from: PathBuf, to: PathBuf) {
     }
 }
 
-pub fn cp(from: PathBuf, to: PathBuf) {
+pub fn cp(from: &PathBuf, to: &PathBuf) {
     if let (Some(from), Some(to)) = (from.to_str(), to.to_str()) {
         Command::new("cp")
             .args(["-f", "-r", from, to])
@@ -46,7 +46,7 @@ pub fn cp(from: PathBuf, to: PathBuf) {
     }
 }
 
-pub fn create(path: PathBuf) {
+pub fn create(path: &PathBuf) {
     if let Some(path) = path.to_str() {
         Command::new("touch")
             .args([path])
@@ -55,7 +55,7 @@ pub fn create(path: PathBuf) {
     }
 }
 
-pub fn mkdir(path: PathBuf) {
+pub fn mkdir(path: &PathBuf) {
     if let Some(path) = path.to_str() {
         Command::new("mkdir")
             .args([path])
@@ -64,7 +64,7 @@ pub fn mkdir(path: PathBuf) {
     }
 }
 
-pub fn clip(pathes: Vec<PathBuf>) {
+pub fn clip(pathes: Vec<&PathBuf>) {
     let pathes = pathes
         .iter()
         .map(|p| format!("file://{}", p.to_str().unwrap()))
@@ -87,7 +87,7 @@ pub fn clip(pathes: Vec<PathBuf>) {
     }
 }
 
-pub async fn nvim(path: PathBuf) {
+pub async fn nvim(path: &PathBuf) {
     TokioCommand::new("nvim")
         .args([path])
         .stdin(Stdio::inherit())

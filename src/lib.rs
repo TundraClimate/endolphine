@@ -15,7 +15,7 @@ pub struct Args {
     pub path: PathBuf,
 }
 
-pub fn dir_pathes(dir: PathBuf) -> Vec<PathBuf> {
+pub fn dir_pathes(dir: &PathBuf) -> Vec<PathBuf> {
     let mut vec = vec![];
     for entry in dir.read_dir().unwrap() {
         if let Ok(entry) = entry {
