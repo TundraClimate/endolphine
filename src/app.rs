@@ -1,7 +1,6 @@
 use crate::{
     actions::Action,
     event::{self, Signal},
-    handler,
     ui::Dialog,
     Args,
 };
@@ -48,16 +47,17 @@ impl App {
             let (mut rc, sender) = event::spawn();
             let looper = |app: &mut App| {
                 if let Ok(event) = rc.try_recv() {
-                    app.handle_dialog(&event);
+                    app.handle_dialog(&event)?;
                     if let Event::Key(event) = event {
                         if event.kind == KeyEventKind::Press {
                             app.handle_keys(event);
                         }
                     }
                 }
-                app.handle_action();
+                app.handle_action()?;
                 app.auto_selector();
                 app.files = crate::dir_pathes(&app.path);
+                Ok(())
             };
             app.render_mode(looper, &sender).await?;
             sender.send(Signal::Shatdown).await?;

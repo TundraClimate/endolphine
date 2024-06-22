@@ -11,6 +11,7 @@ use crossterm::{
     terminal::{self, Clear, ClearType},
 };
 use std::{
+    error::Error,
     fs::File,
     io::{self, Read},
 };
@@ -48,7 +49,7 @@ impl App {
         }
     }
 
-    pub fn handle_action(&mut self) {
+    pub fn handle_action(&mut self) -> Result<(), Box<dyn Error>> {
         let action = &self.action;
         self.action = match action {
             Action::Previous(i) => {
@@ -81,9 +82,9 @@ impl App {
                     self.cursor = 0;
                     self.selected.clear();
                 } else {
-                    let mut file = File::open(cur_position).unwrap();
+                    let mut file = File::open(cur_position)?;
                     let mut buffer = [0; 1024];
-                    let read = file.read(&mut buffer).unwrap();
+                    let read = file.read(&mut buffer)?;
                     if std::str::from_utf8(&buffer[..read]).is_ok() {
                         self.editor = true;
                     }
@@ -92,24 +93,20 @@ impl App {
             }
             Action::Create => {
                 let dialog = Dialog::from(Action::Create);
-                dialog.write_backend("New file/directory:").unwrap();
+                dialog.write_backend("New file/directory:")?;
                 self.dialog = Some(dialog);
                 Action::Pending
             }
             Action::Delete => {
                 let dialog = Dialog::from(Action::Delete);
                 if self.selected.is_empty() {
-                    dialog
-                        .write_backend(format!(
-                            "Delete \"{}\" ? (y/N)",
-                            crate::filename(&self.files[self.cursor])
-                        ))
-                        .unwrap();
+                    dialog.write_backend(format!(
+                        "Delete \"{}\" ? (y/N)",
+                        crate::filename(&self.files[self.cursor])
+                    ))?;
                 } else {
                     let len = self.selected.len();
-                    dialog
-                        .write_backend(format!("Delete {} items? (y/N)", len))
-                        .unwrap();
+                    dialog.write_backend(format!("Delete {} items? (y/N)", len))?;
                 }
                 self.dialog = Some(dialog);
                 Action::Pending
@@ -121,10 +118,10 @@ impl App {
             Action::Copy => {
                 if self.selected.is_empty() {
                     let file = self.files[self.cursor].clone();
-                    ui::log(format!("\"{}\" copied", crate::filename(&file))).unwrap();
+                    ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
                     self.register.push(file);
                 } else {
-                    ui::log(format!("{} items copied", self.selected.len())).unwrap();
+                    ui::log(format!("{} items copied", self.selected.len()))?;
                     self.selected
                         .iter()
                         .for_each(|i| self.register.push(self.files[*i].clone()));
@@ -145,7 +142,7 @@ impl App {
                     }
                 });
 
-                ui::log(format!("{} items pasted", register.len())).unwrap();
+                ui::log(format!("{} items pasted", register.len()))?;
 
                 if self.is_cut {
                     register.clear();
@@ -159,17 +156,15 @@ impl App {
                     action: Action::Rename,
                     input: name.into(),
                 };
-                dialog
-                    .write_backend(format!("Rename \"{}\" :", name))
-                    .unwrap();
+                dialog.write_backend(format!("Rename \"{}\" :", name))?;
                 self.dialog = Some(dialog);
                 Action::Pending
             }
             Action::Pending => Action::Pending,
             Action::PreConfirm => {
                 if let Some(dialog) = &self.dialog {
-                    let (_, rows) = terminal::size().unwrap();
-                    execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
+                    let (_, rows) = terminal::size()?;
+                    execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
                     if dialog.input.value().is_empty() {
                         self.dialog = None;
                         Action::None
@@ -192,19 +187,17 @@ impl App {
                                     shell::create
                                 };
                                 operate(&self.path.join(value));
-                                ui::log(format!("\"{}\" created", value)).unwrap();
+                                ui::log(format!("\"{}\" created", value))?;
                             }
                         }
                         Action::Delete => {
                             if value == "y" || value == "Y" {
                                 if self.selected.is_empty() {
                                     let file = &self.files[self.cursor];
-                                    ui::log(format!("\"{}\" deleted", crate::filename(&file)))
-                                        .unwrap();
+                                    ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
                                     shell::trash_file(&file);
                                 } else {
-                                    ui::log(format!("{} items deleted", self.selected.len()))
-                                        .unwrap();
+                                    ui::log(format!("{} items deleted", self.selected.len()))?;
                                     self.selected
                                         .iter()
                                         .for_each(|i| shell::trash_file(&self.files[*i]));
@@ -219,8 +212,7 @@ impl App {
                                     "{} renamed \"{}\"",
                                     crate::filename(&file),
                                     value
-                                ))
-                                .unwrap();
+                                ))?;
                                 shell::mv(&file, &self.path.join(value));
                             }
                         }
@@ -231,17 +223,18 @@ impl App {
                 Action::None
             }
             Action::Clean => {
-                let (_, rows) = terminal::size().unwrap();
-                execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
+                let (_, rows) = terminal::size()?;
+                execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
                 self.dialog = None;
                 self.selected.clear();
                 Action::None
             }
             Action::None => Action::None,
-        }
+        };
+        Ok(())
     }
 
-    pub fn handle_dialog(&mut self, event: &Event) {
+    pub fn handle_dialog(&mut self, event: &Event) -> Result<(), Box<dyn Error>> {
         if is_pending(&self) {
             if let Some(ref mut dialog) = self.dialog {
                 let text = match dialog.action {
@@ -263,10 +256,11 @@ impl App {
                     _ => String::new(),
                 };
                 if dialog.input.handle_event(&event).is_some() {
-                    dialog.write_backend(text).unwrap();
+                    dialog.write_backend(text)?;
                 }
             }
         }
+        Ok(())
     }
 
     pub fn auto_selector(&mut self) {
