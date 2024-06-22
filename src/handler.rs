@@ -21,98 +21,83 @@ fn is_pending(app: &App) -> bool {
     }
 }
 
-pub fn handle_keys(app: &mut App, event: KeyEvent) -> bool {
+pub fn handle_keys(app: &mut App, event: KeyEvent) {
     match event.code {
-        KeyCode::Char('Q') => !is_pending(&app),
+        KeyCode::Char('Q') => app.quit = !is_pending(&app),
         KeyCode::Esc => {
             app.action = Action::Clean;
-            false
         }
         KeyCode::Char('j') => {
             if !is_pending(&app) {
                 app.action = Action::Next(1);
             }
-            false
         }
         KeyCode::Char('J') => {
             if !is_pending(&app) {
                 app.action = Action::Next(10);
             }
-            false
         }
         KeyCode::Char('k') => {
             if !is_pending(&app) {
                 app.action = Action::Previous(1);
             }
-            false
         }
         KeyCode::Char('K') => {
             if !is_pending(&app) {
                 app.action = Action::Previous(10);
             }
-            false
         }
         KeyCode::Char('v') => {
             if !is_pending(&app) {
                 app.selected.push(app.cursor);
             }
-            false
         }
         KeyCode::Char('c') => {
             if !is_pending(&app) {
                 app.action = Action::Cut;
             }
-            false
         }
         KeyCode::Char('y') => {
             if !is_pending(&app) {
                 app.action = Action::Copy;
             }
-            false
         }
         KeyCode::Char('p') => {
             if !is_pending(&app) {
                 app.action = Action::Paste;
             }
-            false
         }
         KeyCode::Char('a') => {
             if !is_pending(&app) {
                 app.action = Action::Create;
             }
-            false
         }
         KeyCode::Char('d') => {
             if !is_pending(&app) {
                 app.action = Action::Delete;
             }
-            false
         }
         KeyCode::Char('r') => {
             if !is_pending(&app) {
                 app.action = Action::Rename;
             }
-            false
         }
         KeyCode::Char('h') => {
             if !is_pending(&app) {
                 app.action = Action::Back;
             }
-            false
         }
         KeyCode::Char('l') => {
             if !is_pending(&app) {
                 app.action = Action::Open;
             }
-            false
         }
         KeyCode::Enter => {
             if is_pending(&app) {
                 app.action = Action::PreConfirm;
             }
-            false
         }
-        _ => false,
+        _ => {}
     }
 }
 
@@ -211,6 +196,7 @@ pub fn handle_action(app: &mut App) {
                     .iter()
                     .for_each(|i| app.register.push(app.files[*i].clone()));
             }
+            app.selected.clear();
             shell::clip(&app.register);
             app.action = Action::None;
         }
@@ -292,6 +278,7 @@ pub fn handle_action(app: &mut App) {
                                 app.selected
                                     .iter()
                                     .for_each(|i| shell::trash_file(&app.files[*i]));
+                                app.selected.clear();
                             }
                         }
                     }

@@ -19,6 +19,7 @@ pub struct App {
     pub selected: Vec<usize>,
     pub is_cut: bool,
     pub editor: bool,
+    pub quit: bool,
 }
 
 impl App {
@@ -33,6 +34,7 @@ impl App {
             selected: vec![],
             is_cut: false,
             editor: false,
+            quit: false,
         }
     }
 
@@ -48,17 +50,14 @@ impl App {
                 if let Ok(event) = rc.try_recv() {
                     handler::handle_dialog(&mut app, &event);
                     if let Event::Key(event) = event {
-                        if event.kind == KeyEventKind::Press
-                            && handler::handle_keys(&mut app, event)
-                        {
-                            return true;
+                        if event.kind == KeyEventKind::Press {
+                            handler::handle_keys(&mut app, event);
                         }
                     }
                 }
                 handler::handle_action(&mut app);
                 handler::auto_selector(&mut app);
                 app.files = crate::dir_pathes(&app.path);
-                false
             };
             app.render_mode(looper, &sender).await?;
             sender.send(Signal::Shatdown).await?;

@@ -14,7 +14,7 @@ use tokio::sync::mpsc::Sender;
 use tui_input::{backend::crossterm as backend, Input};
 
 impl App {
-    pub async fn render_mode<F: FnMut(&mut App) -> bool>(
+    pub async fn render_mode<F: FnMut(&mut App) -> ()>(
         &mut self,
         mut looper: F,
         sender: &Sender<Signal>,
@@ -31,7 +31,8 @@ impl App {
                 self.editor = false;
             } else {
                 self.ui();
-                if looper(self) {
+                looper(self);
+                if self.quit {
                     break;
                 }
             }
