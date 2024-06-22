@@ -6,7 +6,7 @@ pub mod shell;
 pub mod ui;
 
 use clap::Parser;
-use std::path::PathBuf;
+use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -27,5 +27,8 @@ pub fn dir_pathes(dir: &PathBuf) -> Vec<PathBuf> {
 }
 
 pub fn filename(path: &PathBuf) -> &str {
-    path.file_name().unwrap().to_str().unwrap()
+    path.file_name()
+        .unwrap_or(OsStr::new("*unknown file*").into())
+        .to_str()
+        .unwrap_or("*Not compatible with UTF-8*")
 }
