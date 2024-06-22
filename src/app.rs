@@ -46,17 +46,17 @@ impl App {
         let mut app = self;
         Runtime::new()?.block_on(async {
             let (mut rc, sender) = event::spawn();
-            let looper = |mut app: &mut App| {
+            let looper = |app: &mut App| {
                 if let Ok(event) = rc.try_recv() {
-                    handler::handle_dialog(&mut app, &event);
+                    app.handle_dialog(&event);
                     if let Event::Key(event) = event {
                         if event.kind == KeyEventKind::Press {
-                            handler::handle_keys(&mut app, event);
+                            app.handle_keys(event);
                         }
                     }
                 }
-                handler::handle_action(&mut app);
-                handler::auto_selector(&mut app);
+                app.handle_action();
+                app.auto_selector();
                 app.files = crate::dir_pathes(&app.path);
             };
             app.render_mode(looper, &sender).await?;
