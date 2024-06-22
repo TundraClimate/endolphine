@@ -34,7 +34,7 @@ impl App {
             KeyCode::Char('J') if !is_pending(&self) => self.action = Action::Next(10),
             KeyCode::Char('k') if !is_pending(&self) => self.action = Action::Previous(1),
             KeyCode::Char('K') if !is_pending(&self) => self.action = Action::Previous(10),
-            KeyCode::Char('v') if !is_pending(&self) => self.selected.push(self.cursor),
+            KeyCode::Char('V') if !is_pending(&self) => self.selected.push(self.cursor),
             KeyCode::Char('c') if !is_pending(&self) => self.action = Action::Cut,
             KeyCode::Char('y') if !is_pending(&self) => self.action = Action::Copy,
             KeyCode::Char('p') if !is_pending(&self) => self.action = Action::Paste,
