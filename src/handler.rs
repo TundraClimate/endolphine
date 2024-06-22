@@ -25,79 +25,22 @@ impl App {
     pub fn handle_keys(&mut self, event: KeyEvent) {
         match event.code {
             KeyCode::Char('Q') => self.quit = !is_pending(&self),
-            KeyCode::Esc => {
-                self.action = Action::Clean;
-            }
-            KeyCode::Char('j') => {
-                if !is_pending(&self) {
-                    self.action = Action::Next(1);
-                }
-            }
-            KeyCode::Char('J') => {
-                if !is_pending(&self) {
-                    self.action = Action::Next(10);
-                }
-            }
-            KeyCode::Char('k') => {
-                if !is_pending(&self) {
-                    self.action = Action::Previous(1);
-                }
-            }
-            KeyCode::Char('K') => {
-                if !is_pending(&self) {
-                    self.action = Action::Previous(10);
-                }
-            }
-            KeyCode::Char('v') => {
-                if !is_pending(&self) {
-                    self.selected.push(self.cursor);
-                }
-            }
-            KeyCode::Char('c') => {
-                if !is_pending(&self) {
-                    self.action = Action::Cut;
-                }
-            }
-            KeyCode::Char('y') => {
-                if !is_pending(&self) {
-                    self.action = Action::Copy;
-                }
-            }
-            KeyCode::Char('p') => {
-                if !is_pending(&self) {
-                    self.action = Action::Paste;
-                }
-            }
-            KeyCode::Char('a') => {
-                if !is_pending(&self) {
-                    self.action = Action::Create;
-                }
-            }
-            KeyCode::Char('d') => {
-                if !is_pending(&self) {
-                    self.action = Action::Delete;
-                }
-            }
-            KeyCode::Char('r') => {
-                if !is_pending(&self) {
-                    self.action = Action::Rename;
-                }
-            }
-            KeyCode::Char('h') => {
-                if !is_pending(&self) {
-                    self.action = Action::Back;
-                }
-            }
-            KeyCode::Char('l') => {
-                if !is_pending(&self) {
-                    self.action = Action::Open;
-                }
-            }
-            KeyCode::Enter => {
-                if is_pending(&self) {
-                    self.action = Action::PreConfirm;
-                }
-            }
+            KeyCode::Esc => self.action = Action::Clean,
+            KeyCode::Char('j') if !is_pending(&self) => self.action = Action::Next(1),
+            KeyCode::Char('J') if !is_pending(&self) => self.action = Action::Next(10),
+            KeyCode::Char('k') if !is_pending(&self) => self.action = Action::Previous(1),
+            KeyCode::Char('K') if !is_pending(&self) => self.action = Action::Previous(10),
+            KeyCode::Char('v') if !is_pending(&self) => self.selected.push(self.cursor),
+            KeyCode::Char('c') if !is_pending(&self) => self.action = Action::Cut,
+            KeyCode::Char('y') if !is_pending(&self) => self.action = Action::Copy,
+            KeyCode::Char('p') if !is_pending(&self) => self.action = Action::Paste,
+            KeyCode::Char('a') if !is_pending(&self) => self.action = Action::Create,
+            KeyCode::Char('d') if !is_pending(&self) => self.action = Action::Delete,
+            KeyCode::Char('r') if !is_pending(&self) => self.action = Action::Rename,
+            KeyCode::Char('h') if !is_pending(&self) => self.action = Action::Back,
+            KeyCode::Char('l') if !is_pending(&self) => self.action = Action::Open,
+            KeyCode::Enter if is_pending(&self) => self.action = Action::PreConfirm,
+
             _ => {}
         }
     }
