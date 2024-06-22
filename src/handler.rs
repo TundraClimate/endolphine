@@ -10,7 +10,10 @@ use crossterm::{
     execute,
     terminal::{self, Clear, ClearType},
 };
-use std::io;
+use std::{
+    fs::File,
+    io::{self, Read},
+};
 use tui_input::backend::crossterm::EventHandler;
 
 fn is_pending(app: &App) -> bool {
@@ -50,20 +53,17 @@ impl App {
         self.action = match action {
             Action::Previous(i) => {
                 let cursor = self.cursor;
-                if cursor >= *i {
-                    self.cursor = cursor - i;
-                } else {
-                    self.cursor = 0;
-                }
+                self.cursor = if cursor >= *i { cursor - i } else { 0 };
                 Action::None
             }
             Action::Next(i) => {
                 let cursor = self.cursor;
-                if cursor + i < self.files.len() {
-                    self.cursor = cursor + i;
+                let len = self.files.len();
+                self.cursor = if cursor + i < len {
+                    cursor + i
                 } else {
-                    self.cursor = self.files.len() - 1;
-                }
+                    len - 1
+                };
                 Action::None
             }
             Action::Back => {
@@ -81,8 +81,7 @@ impl App {
                     self.cursor = 0;
                     self.selected.clear();
                 } else {
-                    use std::io::Read;
-                    let mut file = std::fs::File::open(cur_position).unwrap();
+                    let mut file = File::open(cur_position).unwrap();
                     let mut buffer = [0; 1024];
                     let read = file.read(&mut buffer).unwrap();
                     if std::str::from_utf8(&buffer[..read]).is_ok() {
@@ -92,37 +91,27 @@ impl App {
                 Action::None
             }
             Action::Create => {
-                self.dialog = Some(Dialog {
-                    action: Action::Create,
-                    input: "".into(),
-                });
-                if let Some(ref dialog) = self.dialog {
-                    ui::write_backend(dialog, "New file/directory:").unwrap();
-                }
+                let dialog = Dialog::from(Action::Create);
+                dialog.write_backend("New file/directory:").unwrap();
+                self.dialog = Some(dialog);
                 Action::Pending
             }
             Action::Delete => {
-                self.dialog = Some(Dialog {
-                    action: Action::Delete,
-                    input: "".into(),
-                });
-                if let Some(ref dialog) = self.dialog {
-                    if self.selected.is_empty() {
-                        ui::write_backend(
-                            dialog,
-                            format!(
-                                "Delete \"{}\" ? (y/N)",
-                                crate::filename(&self.files[self.cursor])
-                            )
-                            .as_str(),
-                        )
+                let dialog = Dialog::from(Action::Delete);
+                if self.selected.is_empty() {
+                    dialog
+                        .write_backend(format!(
+                            "Delete \"{}\" ? (y/N)",
+                            crate::filename(&self.files[self.cursor])
+                        ))
                         .unwrap();
-                    } else {
-                        let len = self.selected.len();
-                        ui::write_backend(dialog, format!("Delete {} items? (y/N)", len).as_str())
-                            .unwrap();
-                    }
+                } else {
+                    let len = self.selected.len();
+                    dialog
+                        .write_backend(format!("Delete {} items? (y/N)", len))
+                        .unwrap();
                 }
+                self.dialog = Some(dialog);
                 Action::Pending
             }
             Action::Cut => {
@@ -139,50 +128,41 @@ impl App {
                     self.selected
                         .iter()
                         .for_each(|i| self.register.push(self.files[*i].clone()));
+                    self.selected.clear();
                 }
-                self.selected.clear();
                 shell::clip(&self.register);
                 Action::None
             }
             Action::Paste => {
                 let register = &mut self.register;
                 let current_dir = &self.path;
-                if self.is_cut {
-                    register.iter().for_each(|p| {
-                        if let Some(parent) = p.parent() {
-                            if &parent.to_path_buf() != current_dir {
-                                shell::mv(p, current_dir);
-                            }
+                let operate = if self.is_cut { shell::mv } else { shell::cp };
+                register.iter().for_each(|p| {
+                    if let Some(parent) = p.parent() {
+                        if &parent != current_dir {
+                            operate(p, current_dir);
                         }
-                    });
-                    ui::log(format!("{} items pasted", register.len())).unwrap();
+                    }
+                });
+
+                ui::log(format!("{} items pasted", register.len())).unwrap();
+
+                if self.is_cut {
                     register.clear();
                     self.is_cut = false;
-                } else {
-                    register.iter().for_each(|p| {
-                        if let Some(parent) = p.parent() {
-                            if &parent.to_path_buf() != current_dir {
-                                shell::cp(p, current_dir);
-                            }
-                        }
-                    });
-                    ui::log(format!("{} items pasted", register.len())).unwrap();
                 }
                 Action::None
             }
             Action::Rename => {
-                self.dialog = Some(Dialog {
+                let name = crate::filename(&self.files[self.cursor]);
+                let dialog = Dialog {
                     action: Action::Rename,
-                    input: crate::filename(&self.files[self.cursor]).into(),
-                });
-                if let Some(ref dialog) = self.dialog {
-                    ui::write_backend(
-                        dialog,
-                        format!("Rename \"{}\" :", crate::filename(&self.files[self.cursor]))
-                            .as_str(),
-                    )
+                    input: name.into(),
+                };
+                dialog
+                    .write_backend(format!("Rename \"{}\" :", name))
                     .unwrap();
-                }
+                self.dialog = Some(dialog);
                 Action::Pending
             }
             Action::Pending => Action::Pending,
@@ -206,11 +186,12 @@ impl App {
                     match action {
                         Action::Create => {
                             if let Some(suff) = value.chars().last() {
-                                if suff == '/' {
-                                    shell::mkdir(&self.path.join(value));
+                                let operate = if suff == '/' {
+                                    shell::mkdir
                                 } else {
-                                    shell::create(&self.path.join(value));
-                                }
+                                    shell::create
+                                };
+                                operate(&self.path.join(value));
                                 ui::log(format!("\"{}\" created", value)).unwrap();
                             }
                         }
@@ -232,8 +213,8 @@ impl App {
                             }
                         }
                         Action::Rename => {
-                            if crate::filename(&self.files[self.cursor]) != value {
-                                let file = &self.files[self.cursor];
+                            let file = &self.files[self.cursor];
+                            if crate::filename(&file) != value {
                                 ui::log(format!(
                                     "{} renamed \"{}\"",
                                     crate::filename(&file),
@@ -282,7 +263,7 @@ impl App {
                     _ => String::new(),
                 };
                 if dialog.input.handle_event(&event).is_some() {
-                    ui::write_backend(&dialog, text.as_str()).unwrap();
+                    dialog.write_backend(text).unwrap();
                 }
             }
         }

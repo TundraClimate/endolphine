@@ -139,21 +139,33 @@ pub struct Dialog {
     pub action: Action,
 }
 
-pub fn write_backend(dialog: &Dialog, text: &str) -> io::Result<()> {
-    execute!(
-        io::stdout(),
-        MoveTo(0, 40),
-        Clear(ClearType::CurrentLine),
-        Print(text)
-    )
-    .unwrap();
-    backend::write(
-        &mut io::stdout(),
-        dialog.input.value(),
-        dialog.input.cursor(),
-        ((text.len() + 1) as u16, 40),
-        30,
-    )
+impl From<Action> for Dialog {
+    fn from(value: Action) -> Self {
+        Dialog {
+            action: value,
+            input: "".into(),
+        }
+    }
+}
+
+impl Dialog {
+    pub fn write_backend<S: AsRef<str>>(&self, text: S) -> io::Result<()> {
+        let text = text.as_ref();
+        execute!(
+            io::stdout(),
+            MoveTo(0, 40),
+            Clear(ClearType::CurrentLine),
+            Print(text)
+        )
+        .unwrap();
+        backend::write(
+            &mut io::stdout(),
+            self.input.value(),
+            self.input.cursor(),
+            ((text.len() + 1) as u16, 40),
+            30,
+        )
+    }
 }
 
 pub fn log(text: String) -> io::Result<()> {
