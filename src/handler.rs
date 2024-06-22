@@ -271,10 +271,12 @@ impl App {
 
     pub fn auto_selector(&mut self) {
         if !self.selected.is_empty() {
-            if self.selected[0] <= self.cursor {
-                self.selected = (self.selected[0]..=self.cursor).collect();
+            let base = self.selected[0];
+            let cursor = self.cursor;
+            if base <= cursor {
+                self.selected = (base..=cursor).collect();
             } else {
-                self.selected = (self.cursor..=self.selected[0]).rev().collect();
+                self.selected = (cursor..=base).rev().collect();
             }
         }
     }
