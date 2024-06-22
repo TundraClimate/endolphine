@@ -30,7 +30,7 @@ impl App {
                 execute!(io::stdout(), EnterAlternateScreen, Hide)?;
                 self.editor = false;
             } else {
-                self.ui();
+                self.ui()?;
                 looper(self)?;
                 if self.quit {
                     break;
@@ -43,9 +43,9 @@ impl App {
         Ok(())
     }
 
-    fn ui(&self) {
-        let (cols, rows) = terminal::size().unwrap();
-        let path = self.path.to_str().unwrap();
+    fn ui(&self) -> Result<(), Box<dyn Error>> {
+        let (cols, rows) = terminal::size()?;
+        let path = self.path.to_str().unwrap_or("/");
         let len = self.files.len();
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
@@ -61,24 +61,15 @@ impl App {
             Print(" ".repeat(cols as usize - path.len())),
             MoveTo(cols - 16, 0),
             Print(format!("page {} / {}", page, page_size))
-        )
-        .unwrap();
+        )?;
 
-        execute!(
-            io::stdout(),
-            MoveTo(0, 1),
-            SetBackgroundColor(Color::Grey),
-            Clear(ClearType::CurrentLine),
-            Print(" ".repeat(cols as usize)),
-            ResetColor
-        )
-        .unwrap();
+        render_line((cols, 1), Color::Grey)?;
 
         let buf = page - 1;
         let buf = buf * max;
         for p in 0..rows - 4 {
             let i = p as usize;
-            execute!(io::stdout(), MoveTo(0, p + 2)).unwrap();
+            execute!(io::stdout(), MoveTo(0, p + 2))?;
             if self.files.len() >= buf && self.files.len() - buf > i {
                 let file = &self.files[i + buf];
                 let file_names = crate::filename(&file).chars().take(65).collect::<String>();
@@ -115,23 +106,27 @@ impl App {
                     Print("| "),
                     Print(mod_time),
                     Print(" |"),
-                )
-                .unwrap();
+                )?;
             } else {
-                execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize))).unwrap();
+                execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
             }
         }
 
-        execute!(
-            io::stdout(),
-            MoveTo(0, rows - 2),
-            SetBackgroundColor(Color::Grey),
-            Clear(ClearType::CurrentLine),
-            Print(" ".repeat(cols as usize)),
-            ResetColor
-        )
-        .unwrap();
+        render_line((cols, rows - 2), Color::Grey)?;
+        Ok(())
     }
+}
+
+fn render_line((cols, rows): (u16, u16), color: Color) -> Result<(), Box<dyn Error>> {
+    execute!(
+        io::stdout(),
+        MoveTo(0, rows),
+        SetBackgroundColor(color),
+        Clear(ClearType::CurrentLine),
+        Print(" ".repeat(cols as usize)),
+        ResetColor
+    )?;
+    Ok(())
 }
 
 pub struct Dialog {
@@ -156,8 +151,7 @@ impl Dialog {
             MoveTo(0, 40),
             Clear(ClearType::CurrentLine),
             Print(text)
-        )
-        .unwrap();
+        )?;
         backend::write(
             &mut io::stdout(),
             self.input.value(),
