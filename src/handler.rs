@@ -47,7 +47,7 @@ impl App {
 
     pub fn handle_action(&mut self) {
         let action = &self.action;
-        match action {
+        self.action = match action {
             Action::Previous(i) => {
                 let cursor = self.cursor;
                 if cursor >= *i {
@@ -55,7 +55,7 @@ impl App {
                 } else {
                     self.cursor = 0;
                 }
-                self.action = Action::None;
+                Action::None
             }
             Action::Next(i) => {
                 let cursor = self.cursor;
@@ -64,7 +64,7 @@ impl App {
                 } else {
                     self.cursor = self.files.len() - 1;
                 }
-                self.action = Action::None;
+                Action::None
             }
             Action::Back => {
                 if let Some(parent) = self.path.parent() {
@@ -72,7 +72,7 @@ impl App {
                     self.cursor = 0;
                     self.selected.clear();
                 }
-                self.action = Action::None;
+                Action::None
             }
             Action::Open => {
                 let cur_position = &self.files[self.cursor];
@@ -89,7 +89,7 @@ impl App {
                         self.editor = true;
                     }
                 }
-                self.action = Action::None;
+                Action::None
             }
             Action::Create => {
                 self.dialog = Some(Dialog {
@@ -99,7 +99,7 @@ impl App {
                 if let Some(ref dialog) = self.dialog {
                     ui::write_backend(dialog, "New file/directory:").unwrap();
                 }
-                self.action = Action::Pending;
+                Action::Pending
             }
             Action::Delete => {
                 self.dialog = Some(Dialog {
@@ -123,11 +123,11 @@ impl App {
                             .unwrap();
                     }
                 }
-                self.action = Action::Pending;
+                Action::Pending
             }
             Action::Cut => {
                 self.is_cut = true;
-                self.action = Action::Copy;
+                Action::Copy
             }
             Action::Copy => {
                 if self.selected.is_empty() {
@@ -142,7 +142,7 @@ impl App {
                 }
                 self.selected.clear();
                 shell::clip(&self.register);
-                self.action = Action::None;
+                Action::None
             }
             Action::Paste => {
                 let register = &mut self.register;
@@ -168,7 +168,7 @@ impl App {
                     });
                     ui::log(format!("{} items pasted", register.len())).unwrap();
                 }
-                self.action = Action::None;
+                Action::None
             }
             Action::Rename => {
                 self.dialog = Some(Dialog {
@@ -183,19 +183,21 @@ impl App {
                     )
                     .unwrap();
                 }
-                self.action = Action::Pending;
+                Action::Pending
             }
-            Action::Pending => {}
+            Action::Pending => Action::Pending,
             Action::PreConfirm => {
                 if let Some(dialog) = &self.dialog {
-                    if dialog.input.value().is_empty() {
-                        self.action = Action::None;
-                        self.dialog = None;
-                    } else {
-                        self.action = Action::Confirm;
-                    }
                     let (_, rows) = terminal::size().unwrap();
                     execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
+                    if dialog.input.value().is_empty() {
+                        self.dialog = None;
+                        Action::None
+                    } else {
+                        Action::Confirm
+                    }
+                } else {
+                    Action::PreConfirm
                 }
             }
             Action::Confirm => {
@@ -245,16 +247,16 @@ impl App {
                     }
                 }
                 self.dialog = None;
-                self.action = Action::None;
+                Action::None
             }
             Action::Clean => {
                 let (_, rows) = terminal::size().unwrap();
                 execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine)).unwrap();
                 self.dialog = None;
                 self.selected.clear();
-                self.action = Action::None;
+                Action::None
             }
-            Action::None => {}
+            Action::None => Action::None,
         }
     }
 
