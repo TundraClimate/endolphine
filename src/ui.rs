@@ -158,7 +158,7 @@ impl Dialog {
         let text = text.as_ref();
         execute!(
             io::stdout(),
-            MoveTo(0, 40),
+            MoveTo(1, 40),
             Clear(ClearType::CurrentLine),
             Print(text)
         )?;
@@ -166,7 +166,7 @@ impl Dialog {
             &mut io::stdout(),
             self.input.value(),
             self.input.cursor(),
-            ((text.len() + 1) as u16, 40),
+            ((text.len() + 2) as u16, 40),
             30,
         )
     }
