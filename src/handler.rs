@@ -123,6 +123,7 @@ impl App {
                 Action::Copy
             }
             Action::Copy => {
+                self.register.clear();
                 if self.selected.is_empty() {
                     let file = self.files[self.cursor].clone();
                     ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
