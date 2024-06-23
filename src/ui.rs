@@ -65,6 +65,8 @@ impl App {
 
         let color = if !self.selected.is_empty() {
             Color::DarkBlue
+        } else if self.dialog.is_some() {
+            Color::Green
         } else {
             Color::Grey
         };
