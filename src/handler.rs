@@ -143,8 +143,12 @@ impl App {
                 let operate = if self.is_cut { shell::mv } else { shell::cp };
                 register.iter().for_each(|p| {
                     if let Some(parent) = p.parent() {
-                        if &parent != current_dir {
+                        if parent != current_dir {
                             operate(p, current_dir);
+                        } else {
+                            let mut modif = current_dir.clone();
+                            modif.push(format!("{}(Copy)", crate::filename(&p)));
+                            operate(p, &modif);
                         }
                     }
                 });
