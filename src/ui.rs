@@ -65,8 +65,6 @@ impl App {
 
         let color = if !self.selected.is_empty() {
             Color::DarkBlue
-        } else if !self.register.is_empty() {
-            Color::DarkYellow
         } else {
             Color::Grey
         };
