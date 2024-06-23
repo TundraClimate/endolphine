@@ -63,7 +63,15 @@ impl App {
             Print(format!("page {} / {}", page, page_size))
         )?;
 
-        render_line((cols, 1), Color::Grey)?;
+        let color = if !self.selected.is_empty() {
+            Color::DarkBlue
+        } else if !self.register.is_empty() {
+            Color::DarkYellow
+        } else {
+            Color::Grey
+        };
+        render_line((cols, 1), color)?;
+        render_line((cols, rows - 2), color)?;
 
         let buf = page - 1;
         let buf = buf * max;
@@ -115,7 +123,6 @@ impl App {
             }
         }
 
-        render_line((cols, rows - 2), Color::Grey)?;
         Ok(())
     }
 }
