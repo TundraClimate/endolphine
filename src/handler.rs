@@ -1,20 +1,9 @@
 use crate::{
-    actions::Action,
+    action::{self, Action},
     app::App,
-    shell,
-    ui::{self, Dialog},
 };
-use crossterm::{
-    cursor::MoveTo,
-    event::{Event, KeyCode, KeyEvent},
-    execute,
-    terminal::{self, Clear, ClearType},
-};
-use std::{
-    error::Error,
-    fs::File,
-    io::{self, Read},
-};
+use crossterm::event::{Event, KeyCode, KeyEvent};
+use std::error::Error;
 use tui_input::backend::crossterm::EventHandler;
 
 fn is_pending(app: &App) -> bool {
@@ -52,195 +41,20 @@ impl App {
     pub fn handle_action(&mut self) -> Result<(), Box<dyn Error>> {
         let action = &self.action;
         self.action = match action {
-            Action::Previous(i) => {
-                let cursor = self.cursor;
-                self.cursor = if cursor >= *i { cursor - i } else { 0 };
-                Action::None
-            }
-            Action::Next(i) => {
-                let cursor = self.cursor;
-                let len = self.files.len();
-                self.cursor = if cursor + i < len {
-                    cursor + i
-                } else {
-                    len - 1
-                };
-                Action::None
-            }
-            Action::Back => {
-                if let Some(parent) = self.path.parent() {
-                    self.path = parent.to_path_buf();
-                    self.cursor = 0;
-                    self.selected.clear();
-                }
-                Action::None
-            }
-            Action::Open => {
-                let cur_position = self.cur_file();
-                if cur_position.exists() {
-                    if cur_position.is_dir() {
-                        self.path = cur_position.clone();
-                        self.cursor = 0;
-                        self.selected.clear();
-                    } else {
-                        let mut file = File::open(cur_position)?;
-                        let mut buffer = [0; 1024];
-                        let read = file.read(&mut buffer)?;
-                        if std::str::from_utf8(&buffer[..read]).is_ok() {
-                            self.editor = true;
-                        }
-                    }
-                } else {
-                    ui::log(format!(
-                        "\"{}\" is not exists",
-                        crate::filename(&cur_position),
-                    ))?;
-                }
-                Action::None
-            }
-            Action::Create => {
-                let dialog = Dialog::from(Action::Create);
-                dialog.write_backend("New file/directory:")?;
-                self.dialog = Some(dialog);
-                Action::Pending
-            }
-            Action::Delete => {
-                let dialog = Dialog::from(Action::Delete);
-                if self.selected.is_empty() {
-                    dialog.write_backend(format!(
-                        "Delete \"{}\" ? (y/N)",
-                        crate::filename(self.cur_file())
-                    ))?;
-                } else {
-                    let len = self.selected.len();
-                    dialog.write_backend(format!("Delete {} items? (y/N)", len))?;
-                }
-                self.dialog = Some(dialog);
-                Action::Pending
-            }
-            Action::Cut => {
-                self.is_cut = true;
-                Action::Copy
-            }
-            Action::Copy => {
-                self.register.clear();
-                if self.selected.is_empty() {
-                    let file = self.cur_file().clone();
-                    ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
-                    self.register.push(file);
-                } else {
-                    ui::log(format!("{} items copied", self.selected.len()))?;
-                    self.selected
-                        .iter()
-                        .for_each(|i| self.register.push(self.files[*i].clone()));
-                    self.selected.clear();
-                }
-                shell::clip(&self.register)?;
-                Action::None
-            }
-            Action::Paste => {
-                let register = &mut self.register;
-                let current_dir = &self.path;
-                let operate = if self.is_cut { shell::mv } else { shell::cp };
-                register.iter().for_each(|p| {
-                    if let Some(parent) = p.parent() {
-                        if parent != current_dir {
-                            operate(p, current_dir);
-                        } else {
-                            let mut modif = current_dir.clone();
-                            modif.push(format!("{}(Copy)", crate::filename(&p)));
-                            operate(p, &modif);
-                        }
-                    }
-                });
-
-                ui::log(format!("{} items pasted", register.len()))?;
-
-                if self.is_cut {
-                    register.clear();
-                    self.is_cut = false;
-                }
-                Action::None
-            }
-            Action::Rename => {
-                let name = crate::filename(self.cur_file());
-                let dialog = Dialog {
-                    action: Action::Rename,
-                    input: name.into(),
-                };
-                dialog.write_backend(format!("Rename \"{}\" :", name))?;
-                self.dialog = Some(dialog);
-                Action::Pending
-            }
+            Action::Previous(i) => action::previous(self, *i),
+            Action::Next(i) => action::next(self, *i),
+            Action::Back => action::back(self),
+            Action::Open => action::open(self)?,
+            Action::Create => action::create(self)?,
+            Action::Delete => action::delete(self)?,
+            Action::Cut => action::cut(self),
+            Action::Copy => action::copy(self)?,
+            Action::Paste => action::paste(self)?,
+            Action::Rename => action::rename(self)?,
             Action::Pending => Action::Pending,
-            Action::PreConfirm => {
-                if let Some(dialog) = &self.dialog {
-                    let (_, rows) = terminal::size()?;
-                    execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
-                    if dialog.input.value().is_empty() {
-                        self.dialog = None;
-                        Action::None
-                    } else {
-                        Action::Confirm
-                    }
-                } else {
-                    Action::PreConfirm
-                }
-            }
-            Action::Confirm => {
-                if let Some(Dialog { action, input }) = &self.dialog {
-                    let value = input.value();
-                    match action {
-                        Action::Create => {
-                            if let Some(suff) = value.chars().last() {
-                                let operate = if suff == '/' {
-                                    shell::mkdir
-                                } else {
-                                    shell::create
-                                };
-                                operate(&self.path.join(value));
-                                ui::log(format!("\"{}\" created", value))?;
-                            }
-                        }
-                        Action::Delete => {
-                            if value == "y" || value == "Y" {
-                                if self.selected.is_empty() {
-                                    let file = self.cur_file();
-                                    ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
-                                    shell::trash_file(&file);
-                                } else {
-                                    ui::log(format!("{} items deleted", self.selected.len()))?;
-                                    self.selected
-                                        .iter()
-                                        .for_each(|i| shell::trash_file(&self.files[*i]));
-                                    self.selected.clear();
-                                }
-                            }
-                        }
-                        Action::Rename => {
-                            let file = self.cur_file();
-                            if crate::filename(&file) != value {
-                                ui::log(format!(
-                                    "{} renamed \"{}\"",
-                                    crate::filename(&file),
-                                    value
-                                ))?;
-                                shell::mv(&file, &self.path.join(value));
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-                self.dialog = None;
-                Action::None
-            }
-            Action::Clean => {
-                let (_, rows) = terminal::size()?;
-                execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
-                self.dialog = None;
-                self.selected.clear();
-                Action::None
-            }
+            Action::PreConfirm => action::pre_confirm(self)?,
+            Action::Confirm => action::confirm(self)?,
+            Action::Clean => action::clean(self)?,
             Action::None => Action::None,
         };
         Ok(())

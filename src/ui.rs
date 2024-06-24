@@ -1,4 +1,4 @@
-use crate::{actions::Action, app::App, event::Signal, shell};
+use crate::{action::Action, app::App, event::Signal, shell};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},

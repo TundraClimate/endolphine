@@ -1,5 +1,5 @@
 use crate::{
-    actions::Action,
+    action::Action,
     event::{self, Signal},
     ui::Dialog,
     Args,

@@ -1,4 +1,4 @@
-pub mod actions;
+pub mod action;
 pub mod app;
 pub mod event;
 pub mod handler;
