@@ -1,5 +1,5 @@
 use std::{
-    io::Write,
+    io::{self, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -64,7 +64,7 @@ pub fn mkdir(path: &PathBuf) {
     }
 }
 
-pub fn clip(pathes: &Vec<PathBuf>) {
+pub fn clip(pathes: &Vec<PathBuf>) -> io::Result<()> {
     let pathes = pathes
         .iter()
         .map(|p| format!("file://{}", p.to_str().unwrap()))
@@ -73,27 +73,26 @@ pub fn clip(pathes: &Vec<PathBuf>) {
     let echo = Command::new("echo")
         .args(["-e", pathes.as_str()])
         .stdout(Stdio::piped())
-        .spawn()
-        .unwrap()
-        .wait_with_output()
-        .unwrap();
+        .spawn()?
+        .wait_with_output()?;
     let xclip = Command::new("xclip")
         .args(["-selection", "clipboard", "-t", "text/uri-list"])
         .stdin(Stdio::piped())
         .spawn()
-        .unwrap();
+        .expect("Failed file copy to clipboard");
     if let Some(mut stdin) = xclip.stdin {
-        stdin.write_all(&echo.stdout).unwrap();
+        stdin.write_all(&echo.stdout)?;
     }
+    Ok(())
 }
 
-pub async fn nvim(path: &PathBuf) {
+pub async fn nvim(path: &PathBuf) -> io::Result<()> {
     TokioCommand::new("nvim")
         .args([path])
         .stdin(Stdio::inherit())
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .status()
-        .await
-        .unwrap();
+        .await?;
+    Ok(())
 }

@@ -25,7 +25,7 @@ impl App {
         loop {
             if self.editor {
                 sender.send(Signal::Pause).await?;
-                shell::nvim(&self.files[self.cursor]).await;
+                shell::nvim(&self.files[self.cursor]).await?;
                 sender.send(Signal::Pause).await?;
                 execute!(io::stdout(), EnterAlternateScreen, Hide)?;
                 self.editor = false;

@@ -135,7 +135,7 @@ impl App {
                         .for_each(|i| self.register.push(self.files[*i].clone()));
                     self.selected.clear();
                 }
-                shell::clip(&self.register);
+                shell::clip(&self.register)?;
                 Action::None
             }
             Action::Paste => {
