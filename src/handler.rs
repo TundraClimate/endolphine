@@ -76,7 +76,7 @@ impl App {
                 Action::None
             }
             Action::Open => {
-                let cur_position = &self.files[self.cursor];
+                let cur_position = self.cur_file();
                 if cur_position.exists() {
                     if cur_position.is_dir() {
                         self.path = cur_position.clone();
@@ -109,7 +109,7 @@ impl App {
                 if self.selected.is_empty() {
                     dialog.write_backend(format!(
                         "Delete \"{}\" ? (y/N)",
-                        crate::filename(&self.files[self.cursor])
+                        crate::filename(self.cur_file())
                     ))?;
                 } else {
                     let len = self.selected.len();
@@ -125,7 +125,7 @@ impl App {
             Action::Copy => {
                 self.register.clear();
                 if self.selected.is_empty() {
-                    let file = self.files[self.cursor].clone();
+                    let file = self.cur_file().clone();
                     ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
                     self.register.push(file);
                 } else {
@@ -163,7 +163,7 @@ impl App {
                 Action::None
             }
             Action::Rename => {
-                let name = crate::filename(&self.files[self.cursor]);
+                let name = crate::filename(self.cur_file());
                 let dialog = Dialog {
                     action: Action::Rename,
                     input: name.into(),
@@ -205,7 +205,7 @@ impl App {
                         Action::Delete => {
                             if value == "y" || value == "Y" {
                                 if self.selected.is_empty() {
-                                    let file = &self.files[self.cursor];
+                                    let file = self.cur_file();
                                     ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
                                     shell::trash_file(&file);
                                 } else {
@@ -218,7 +218,7 @@ impl App {
                             }
                         }
                         Action::Rename => {
-                            let file = &self.files[self.cursor];
+                            let file = self.cur_file();
                             if crate::filename(&file) != value {
                                 ui::log(format!(
                                     "{} renamed \"{}\"",

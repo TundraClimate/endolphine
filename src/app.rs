@@ -65,4 +65,8 @@ impl App {
         })?;
         Ok(())
     }
+
+    pub fn cur_file(&self) -> &PathBuf {
+        &self.files[self.cursor]
+    }
 }
