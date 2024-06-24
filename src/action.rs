@@ -8,6 +8,7 @@ use crossterm::{
     execute,
     terminal::{self, Clear, ClearType},
 };
+use image::io::Reader as ImageReader;
 use std::{
     fs::File,
     io::{self, Read},
@@ -71,6 +72,12 @@ pub fn open(app: &mut App) -> io::Result<Action> {
             let read = file.read(&mut buffer)?;
             if std::str::from_utf8(&buffer[..read]).is_ok() {
                 app.editor = true;
+            } else if ImageReader::open(cur_position)?
+                .with_guessed_format()?
+                .format()
+                .is_some()
+            {
+                shell::eog(cur_position)?;
             }
         }
     } else {

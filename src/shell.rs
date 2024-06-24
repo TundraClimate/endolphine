@@ -96,3 +96,10 @@ pub async fn nvim(path: &PathBuf) -> io::Result<()> {
         .await?;
     Ok(())
 }
+
+pub fn eog(path: &PathBuf) -> io::Result<()> {
+    if let Some(path) = path.to_str() {
+        Command::new("eog").args([path]).spawn()?;
+    }
+    Ok(())
+}
