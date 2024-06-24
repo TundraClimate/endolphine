@@ -12,6 +12,7 @@ use crossterm::{
 use std::{error::Error, io};
 use tokio::sync::mpsc::Sender;
 use tui_input::{backend::crossterm as backend, Input};
+use unicode_segmentation::UnicodeSegmentation;
 
 impl App {
     pub async fn render_mode<F: FnMut(&mut App) -> Result<(), Box<dyn Error>>>(
@@ -81,6 +82,8 @@ impl App {
             if self.files.len() >= buf && self.files.len() - buf > i {
                 let file = &self.files[i + buf];
                 let file_names = crate::filename(&file).chars().take(65).collect::<String>();
+                let file_len = file_names.graphemes(true).count();
+                let pad = (file_names.len() - file_len) / 2;
                 let select = if self.selected.contains(&i) {
                     Color::Rgb {
                         r: 100,
@@ -113,7 +116,7 @@ impl App {
                     Print(&file_names),
                     ResetColor,
                     SetBackgroundColor(select),
-                    Print(" ".repeat(cols as usize - file_names.len() - mod_time.len() - 9)),
+                    Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 9)),
                     Print("| "),
                     Print(mod_time),
                     Print(" |"),
