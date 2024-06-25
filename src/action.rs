@@ -78,6 +78,8 @@ pub fn open(app: &mut App) -> io::Result<Action> {
                 .is_some()
             {
                 shell::eog(cur_position)?;
+            } else if shell::ffprobe_is_video(cur_position) {
+                shell::vlc(cur_position)?;
             }
         }
     } else {

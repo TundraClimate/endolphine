@@ -103,3 +103,27 @@ pub fn eog(path: &PathBuf) -> io::Result<()> {
     }
     Ok(())
 }
+
+pub fn ffprobe_is_video(path: &PathBuf) -> bool {
+    let output = Command::new("ffprobe")
+        .args([
+            "-v",
+            "error",
+            "-select_streams",
+            "v:0",
+            "-show_entries",
+            "stream=codec_type",
+            "-of",
+            "default=noprint_wrappers=1:nokey=1",
+            path.to_str().unwrap(),
+        ])
+        .output()
+        .expect("Failed to execute ffprobe");
+    let stdout = String::from_utf8_lossy(&output.stdout);
+    stdout.trim() == "video"
+}
+
+pub fn vlc(path: &PathBuf) -> io::Result<()> {
+    Command::new("vlc").args([path]).spawn()?;
+    Ok(())
+}
