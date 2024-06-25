@@ -124,6 +124,6 @@ pub fn ffprobe_is_video(path: &PathBuf) -> bool {
 }
 
 pub fn vlc(path: &PathBuf) -> io::Result<()> {
-    Command::new("vlc").args([path]).spawn()?;
+    let _ = Command::new("vlc").args([path]).output()?;
     Ok(())
 }
