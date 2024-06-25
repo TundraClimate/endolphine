@@ -60,35 +60,46 @@ pub fn back(app: &mut App) -> Action {
 }
 
 pub fn open(app: &mut App) -> io::Result<Action> {
-    let cur_position = app.cur_file();
-    if cur_position.exists() {
-        if cur_position.is_dir() {
-            app.path = cur_position.clone();
-            app.cursor = 0;
-            app.selected.clear();
-        } else {
-            let mut file = File::open(cur_position)?;
-            let mut buffer = [0; 1024];
-            let read = file.read(&mut buffer)?;
-            if std::str::from_utf8(&buffer[..read]).is_ok() {
-                app.editor = true;
-            } else if ImageReader::open(cur_position)?
-                .with_guessed_format()?
-                .format()
-                .is_some()
-            {
-                shell::eog(cur_position)?;
-            } else if shell::ffprobe_is_video(cur_position) {
-                shell::vlc(cur_position)?;
-            }
-        }
-    } else {
+    let cur_position = app.cur_file().clone();
+    if !cur_position.exists() {
         ui::log(format!(
             "\"{}\" is not exists",
             crate::filename(&cur_position),
         ))?;
+        return Ok(Action::None);
+    }
+    if cur_position.is_dir() {
+        open_dir(app, &cur_position);
+    } else {
+        open_file(app, &cur_position)?;
     }
     Ok(Action::None)
+}
+
+fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
+    let mut file = File::open(cur_file)?;
+    let mut buffer = [0; 1024];
+    let read = file.read(&mut buffer)?;
+
+    let is_image = ImageReader::open(cur_file)?
+        .with_guessed_format()?
+        .format()
+        .is_some();
+
+    if std::str::from_utf8(&buffer[..read]).is_ok() {
+        app.editor = true;
+    } else if is_image {
+        shell::eog(cur_file)?;
+    } else if shell::ffprobe_is_video(cur_file) {
+        shell::vlc(cur_file)?;
+    }
+    Ok(())
+}
+
+fn open_dir(app: &mut App, cur_file: &PathBuf) {
+    app.path = cur_file.clone();
+    app.cursor = 0;
+    app.selected.clear();
 }
 
 pub fn create(app: &mut App) -> io::Result<Action> {
