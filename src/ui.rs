@@ -61,7 +61,7 @@ impl App {
             Print(path),
             Print(" ".repeat(cols as usize - path.len())),
             MoveTo(cols - 16, 0),
-            Print(format!("page {} / {}", page, page_size))
+            Print(format!("page {} / {}  ", page, page_size))
         )?;
 
         let color = if !self.selected.is_empty() {
