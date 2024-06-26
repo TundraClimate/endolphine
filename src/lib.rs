@@ -16,14 +16,17 @@ pub struct Args {
 }
 
 pub fn dir_pathes(dir: &PathBuf) -> Vec<PathBuf> {
-    let mut vec = vec![];
-    for entry in dir.read_dir().unwrap() {
-        if let Ok(entry) = entry {
-            vec.push(entry.path());
-        }
-    }
-    vec.sort();
-    vec
+    let mut files: Vec<_> = dir
+        .read_dir()
+        .into_iter()
+        .flat_map(|d| {
+            d.filter_map(|p| if let Ok(p) = p { Some(p.path()) } else { None })
+                .collect::<Vec<_>>()
+        })
+        .collect();
+    files.sort();
+    files.sort_by_key(|p| crate::filename(&p).starts_with("."));
+    files
 }
 
 pub fn filename(path: &PathBuf) -> &str {
