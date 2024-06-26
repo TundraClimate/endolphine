@@ -52,8 +52,14 @@ pub fn next(app: &mut App, i: usize) -> Action {
 
 pub fn back(app: &mut App) -> Action {
     if let Some(parent) = app.path.parent() {
+        let before = &app.path.clone();
         app.path = parent.to_path_buf();
-        app.cursor = 0;
+        let pathes = crate::dir_pathes(&app.path);
+        let cursor = pathes
+            .iter()
+            .enumerate()
+            .find_map(|(i, p)| if p == before { Some(i) } else { None });
+        app.cursor = if let Some(cursor) = cursor { cursor } else { 0 };
         app.selected.clear();
     }
     Action::None
