@@ -1,6 +1,5 @@
 use crate::{
     action::Action,
-    file_manager::FileManager,
     shell,
     ui::{self, Dialog},
     App,
@@ -33,7 +32,7 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
         match action {
             Action::Create => confirm_create(value, &app.path.join(value))?,
             Action::Delete => {
-                confirm_delete(value, app.cursor, &app.files, &app.selected)?;
+                confirm_delete(app, value)?;
                 app.selected.clear();
             }
             Action::Rename => {
@@ -67,22 +66,17 @@ fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-fn confirm_delete(
-    value: &str,
-    cursor: usize,
-    files: &FileManager,
-    selected: &Vec<usize>,
-) -> io::Result<()> {
+fn confirm_delete(app: &App, value: &str) -> io::Result<()> {
     if value == "y" || value == "Y" {
-        if selected.is_empty() {
-            if let Some(file) = files.cur_file(cursor) {
+        if app.selected.is_empty() {
+            if let Some(file) = app.files.cur_file(app.cursor) {
                 ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
                 shell::trash_file(&file);
             }
         } else {
-            ui::log(format!("{} items deleted", selected.len()))?;
-            selected.iter().for_each(|i| {
-                if let Some(file) = files.cur_file(*i) {
+            ui::log(format!("{} items deleted", app.selected.len()))?;
+            app.selected.iter().for_each(|i| {
+                if let Some(file) = app.files.cur_file(*i) {
                     shell::trash_file(file);
                 }
             });
