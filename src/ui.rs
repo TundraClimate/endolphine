@@ -120,10 +120,11 @@ impl App {
                         Print(&file_names),
                         ResetColor,
                         SetBackgroundColor(select),
-                        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 9)),
+                        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 11)),
                         Print("▎ "),
                         Print(mod_time),
                         Print(" ▎"),
+                        Print(if self.cursor == i + buf { " <" } else { "  " }),
                     )?;
                 } else {
                     execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
