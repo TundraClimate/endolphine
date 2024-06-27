@@ -5,7 +5,9 @@ pub mod handler;
 pub mod shell;
 pub mod ui;
 
+use crate::app::App;
 use clap::Parser;
+use regex::Regex;
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Parser)]
@@ -15,12 +17,32 @@ pub struct Args {
     pub path: PathBuf,
 }
 
-pub fn dir_pathes(dir: &PathBuf) -> Vec<PathBuf> {
+pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
     let mut files: Vec<_> = dir
         .read_dir()
         .into_iter()
         .flat_map(|d| {
             d.filter_map(|p| if let Ok(p) = p { Some(p.path()) } else { None })
+                .filter_map(|p| {
+                    if let Some(app) = app {
+                        if app.is_search {
+                            if let Some(dialog) = &app.dialog {
+                                let regex = Regex::new(dialog.input.value()).ok()?;
+                                if regex.is_match(filename(&p)) {
+                                    Some(p)
+                                } else {
+                                    None
+                                }
+                            } else {
+                                Some(p)
+                            }
+                        } else {
+                            Some(p)
+                        }
+                    } else {
+                        Some(p)
+                    }
+                })
                 .collect::<Vec<_>>()
         })
         .collect();

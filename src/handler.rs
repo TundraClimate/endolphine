@@ -32,6 +32,7 @@ impl App {
             KeyCode::Char('r') if !is_pending(&self) => self.action = Action::Rename,
             KeyCode::Char('h') if !is_pending(&self) => self.action = Action::Back,
             KeyCode::Char('l') if !is_pending(&self) => self.action = Action::Open,
+            KeyCode::Char('/') if !is_pending(&self) => self.action = Action::Search,
             KeyCode::Enter if is_pending(&self) => self.action = Action::PreConfirm,
 
             _ => {}
@@ -45,6 +46,7 @@ impl App {
             Action::Next(i) => action::next(self, *i),
             Action::Back => action::back(self),
             Action::Open => action::open(self)?,
+            Action::Search => action::search(self)?,
             Action::Create => action::create(self)?,
             Action::Delete => action::delete(self)?,
             Action::Cut => action::cut(self),
@@ -75,6 +77,7 @@ impl App {
                     Action::Rename => {
                         format!("Rename \"{}\" :", filename)
                     }
+                    Action::Search => String::from("/"),
                     _ => String::new(),
                 };
                 if dialog.input.handle_event(&event).is_some() {

@@ -17,6 +17,7 @@ pub struct App {
     pub register: Vec<PathBuf>,
     pub selected: Vec<usize>,
     pub is_cut: bool,
+    pub is_search: bool,
     pub editor: bool,
     pub quit: bool,
 }
@@ -25,13 +26,14 @@ impl App {
     pub fn new(args: Args) -> App {
         App {
             path: args.path.canonicalize().unwrap().clone(),
-            files: crate::dir_pathes(&args.path),
+            files: crate::dir_pathes(None, &args.path),
             cursor: 0,
             action: Action::None,
             dialog: None,
             register: vec![],
             selected: vec![],
             is_cut: false,
+            is_search: false,
             editor: false,
             quit: false,
         }
@@ -56,7 +58,7 @@ impl App {
                 }
                 app.handle_action()?;
                 app.auto_selector();
-                app.files = crate::dir_pathes(&app.path);
+                app.files = crate::dir_pathes(Some(app), &app.path);
                 Ok(())
             };
             app.render_mode(looper, &sender).await?;

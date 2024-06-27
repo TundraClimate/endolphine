@@ -20,6 +20,7 @@ pub enum Action {
     Next(usize),
     Back,
     Open,
+    Search,
     Create,
     Delete,
     Cut,
@@ -54,15 +55,14 @@ pub fn back(app: &mut App) -> Action {
     if let Some(parent) = app.path.parent() {
         let before = &app.path.clone();
         app.path = parent.to_path_buf();
-        let pathes = crate::dir_pathes(&app.path);
+        let pathes = crate::dir_pathes(None, &app.path);
         let cursor = pathes
             .iter()
             .enumerate()
             .find_map(|(i, p)| if p == before { Some(i) } else { None });
         app.cursor = if let Some(cursor) = cursor { cursor } else { 0 };
-        app.selected.clear();
     }
-    Action::None
+    Action::Clean
 }
 
 pub fn open(app: &mut App) -> io::Result<Action> {
@@ -106,6 +106,7 @@ fn open_dir(app: &mut App, cur_file: &PathBuf) {
     app.path = cur_file.clone();
     app.cursor = 0;
     app.selected.clear();
+    app.is_search = false;
 }
 
 pub fn create(app: &mut App) -> io::Result<Action> {
@@ -214,10 +215,13 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
                 app.selected.clear();
             }
             Action::Rename => confirm_rename(value, file, &app.path.join(value))?,
+            Action::Search => confirm_search(app.files.len())?,
             _ => {}
         }
     }
-    app.dialog = None;
+    if !app.is_search {
+        app.dialog = None;
+    }
     Ok(Action::None)
 }
 
@@ -226,6 +230,7 @@ pub fn clean(app: &mut App) -> io::Result<Action> {
     execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
     app.dialog = None;
     app.selected.clear();
+    app.is_search = false;
     Ok(Action::None)
 }
 
@@ -272,4 +277,17 @@ fn confirm_rename(value: &str, cur_file: &PathBuf, renamed: &PathBuf) -> io::Res
         shell::mv(&cur_file, renamed);
     }
     Ok(())
+}
+
+fn confirm_search(files_len: usize) -> io::Result<()> {
+    ui::log(format!("{} results found", files_len))?;
+    Ok(())
+}
+
+pub fn search(app: &mut App) -> io::Result<Action> {
+    let dialog = Dialog::from(Action::Search);
+    dialog.write_backend("/")?;
+    app.dialog = Some(dialog);
+    app.is_search = true;
+    Ok(Action::Pending)
 }
