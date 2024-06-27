@@ -1,0 +1,107 @@
+use crate::{
+    action::Action,
+    file_manager::FileManager,
+    shell,
+    ui::{self, Dialog},
+    App,
+};
+use crossterm::{
+    cursor::MoveTo,
+    execute,
+    terminal::{self, Clear, ClearType},
+};
+use std::{io, path::PathBuf};
+
+pub fn pre_confirm(app: &mut App) -> io::Result<Action> {
+    if let Some(dialog) = &app.dialog {
+        let (_, rows) = terminal::size()?;
+        execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
+        if dialog.input.value().is_empty() {
+            app.dialog = None;
+            Ok(Action::None)
+        } else {
+            Ok(Action::Confirm)
+        }
+    } else {
+        Ok(Action::PreConfirm)
+    }
+}
+
+pub fn confirm(app: &mut App) -> io::Result<Action> {
+    if let Some(Dialog { action, input }) = &app.dialog {
+        let value = input.value();
+        match action {
+            Action::Create => confirm_create(value, &app.path.join(value))?,
+            Action::Delete => {
+                confirm_delete(value, app.cursor, &app.files, &app.selected)?;
+                app.selected.clear();
+            }
+            Action::Rename => {
+                if let Some(file) = app.cur_file() {
+                    confirm_rename(value, file, &app.path.join(value))?
+                }
+            }
+            Action::Search => confirm_search(app.files.len())?,
+            _ => {}
+        }
+    }
+    if !app.is_search {
+        app.dialog = None;
+    }
+    Ok(Action::None)
+}
+
+fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
+    if let Some(suff) = value.chars().last() {
+        let operate = if suff == '/' {
+            shell::mkdir
+        } else {
+            shell::create
+        };
+        operate(path);
+        ui::log(format!("\"{}\" created", value))?;
+    }
+    Ok(())
+}
+
+fn confirm_delete(
+    value: &str,
+    cursor: usize,
+    files: &FileManager,
+    selected: &Vec<usize>,
+) -> io::Result<()> {
+    if value == "y" || value == "Y" {
+        if selected.is_empty() {
+            if let Some(file) = files.cur_file(cursor) {
+                ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
+                shell::trash_file(&file);
+            }
+        } else {
+            ui::log(format!("{} items deleted", selected.len()))?;
+            selected.iter().for_each(|i| {
+                if let Some(file) = files.cur_file(*i) {
+                    shell::trash_file(file);
+                }
+            });
+        }
+    }
+
+    Ok(())
+}
+
+fn confirm_rename(value: &str, cur_file: &PathBuf, renamed: &PathBuf) -> io::Result<()> {
+    if crate::filename(&cur_file) != value {
+        ui::log(format!(
+            "{} renamed \"{}\"",
+            crate::filename(&cur_file),
+            value
+        ))?;
+        shell::mv(&cur_file, renamed);
+    }
+    Ok(())
+}
+
+fn confirm_search(files_len: usize) -> io::Result<()> {
+    ui::log(format!("{} results found", files_len))?;
+    Ok(())
+}

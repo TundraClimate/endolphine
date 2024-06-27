@@ -1,5 +1,5 @@
 use crate::{
-    action::{self, Action},
+    action::{self, clip, confirm, manage, move_h, move_v, Action},
     app::App,
 };
 use crossterm::event::{Event, KeyCode, KeyEvent};
@@ -42,20 +42,20 @@ impl App {
     pub fn handle_action(&mut self) -> Result<(), Box<dyn Error>> {
         let action = &self.action;
         self.action = match action {
-            Action::Previous(i) => action::previous(self, *i),
-            Action::Next(i) => action::next(self, *i),
-            Action::Back => action::back(self),
-            Action::Open => action::open(self)?,
+            Action::Previous(i) => move_v::previous(self, *i),
+            Action::Next(i) => move_v::next(self, *i),
+            Action::Back => move_h::back(self),
+            Action::Open => move_h::open(self)?,
             Action::Search => action::search(self)?,
-            Action::Create => action::create(self)?,
-            Action::Delete => action::delete(self)?,
-            Action::Cut => action::cut(self),
-            Action::Copy => action::copy(self)?,
-            Action::Paste => action::paste(self)?,
-            Action::Rename => action::rename(self)?,
+            Action::Create => manage::create(self)?,
+            Action::Delete => manage::delete(self)?,
+            Action::Cut => clip::cut(self),
+            Action::Copy => clip::copy(self)?,
+            Action::Paste => clip::paste(self)?,
+            Action::Rename => manage::rename(self)?,
             Action::Pending => Action::Pending,
-            Action::PreConfirm => action::pre_confirm(self)?,
-            Action::Confirm => action::confirm(self)?,
+            Action::PreConfirm => confirm::pre_confirm(self)?,
+            Action::Confirm => confirm::confirm(self)?,
             Action::Clean => action::clean(self)?,
             Action::None => Action::None,
         };
