@@ -92,7 +92,7 @@ impl App {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2))?;
             if self.files.len() >= buf && self.files.len() - buf > i {
-                if let Some(file) = self.files.cur_file(i + buf) {
+                if let Some(file) = self.files.require(i + buf) {
                     let file_names = crate::filename(&file).chars().take(65).collect::<String>();
                     let file_len = file_names.graphemes(true).count();
                     let pad = (file_names.len() - file_len) / 2;

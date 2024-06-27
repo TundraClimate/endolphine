@@ -68,7 +68,7 @@ impl App {
                 let text = match dialog.action {
                     Action::Create => "New file/directory:".to_string(),
                     Action::Delete if self.selected.is_empty() => {
-                        if let Some(file) = self.files.cur_file(self.cursor) {
+                        if let Some(file) = self.files.require(self.cursor) {
                             let filename = crate::filename(file);
                             format!("Delete \"{}\" ? (y/N)", filename)
                         } else {
@@ -79,7 +79,7 @@ impl App {
                         format!("Delete {} items? (y/N)", self.selected.len())
                     }
                     Action::Rename => {
-                        if let Some(file) = self.files.cur_file(self.cursor) {
+                        if let Some(file) = self.files.require(self.cursor) {
                             let filename = crate::filename(file);
                             format!("Rename \"{}\" :", filename)
                         } else {

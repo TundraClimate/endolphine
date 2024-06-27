@@ -12,11 +12,11 @@ impl FileManager {
         }
     }
 
-    pub fn cur_file(&self, cursor: usize) -> Option<&PathBuf> {
+    pub fn require(&self, i: usize) -> Option<&PathBuf> {
         if self.files.is_empty() {
             None
         } else {
-            Some(&self.files[cursor])
+            Some(&self.files[i])
         }
     }
 

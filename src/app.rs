@@ -70,6 +70,6 @@ impl App {
     }
 
     pub fn cur_file(&self) -> Option<&PathBuf> {
-        self.files.cur_file(self.cursor)
+        self.files.require(self.cursor)
     }
 }

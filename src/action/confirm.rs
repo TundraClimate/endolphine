@@ -69,14 +69,14 @@ fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
 fn confirm_delete(app: &App, value: &str) -> io::Result<()> {
     if value == "y" || value == "Y" {
         if app.selected.is_empty() {
-            if let Some(file) = app.files.cur_file(app.cursor) {
+            if let Some(file) = app.files.require(app.cursor) {
                 ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
                 shell::trash_file(&file);
             }
         } else {
             ui::log(format!("{} items deleted", app.selected.len()))?;
             app.selected.iter().for_each(|i| {
-                if let Some(file) = app.files.cur_file(*i) {
+                if let Some(file) = app.files.require(*i) {
                     shell::trash_file(file);
                 }
             });

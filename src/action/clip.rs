@@ -16,7 +16,7 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
     } else {
         ui::log(format!("{} items copied", app.selected.len()))?;
         app.selected.iter().for_each(|i| {
-            if let Some(file) = app.files.cur_file(*i) {
+            if let Some(file) = app.files.require(*i) {
                 app.register.push(file.clone());
             }
         });
