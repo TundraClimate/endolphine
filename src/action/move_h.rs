@@ -21,23 +21,21 @@ pub fn back(app: &mut App) -> Action {
 }
 
 pub fn open(app: &mut App) -> io::Result<Action> {
-    let cur_position = if let Some(p) = app.cur_file() {
-        p.clone()
-    } else {
-        return Ok(Action::None);
-    };
-    if !cur_position.exists() {
-        ui::log(format!(
-            "\"{}\" is not exists",
-            crate::filename(&cur_position),
-        ))?;
-        return Ok(Action::None);
-    }
-    if cur_position.is_dir() {
-        open_dir(app, &cur_position);
-        return Ok(Action::Clean);
-    } else {
-        open_file(app, &cur_position)?;
+    if let Some(cur_position) = app.cur_file() {
+        let cur_position = cur_position.clone();
+        if !cur_position.exists() {
+            ui::log(format!(
+                "\"{}\" is not exists",
+                crate::filename(&cur_position),
+            ))?;
+            return Ok(Action::None);
+        }
+        if cur_position.is_dir() {
+            open_dir(app, &cur_position);
+            return Ok(Action::Clean);
+        } else {
+            open_file(app, &cur_position)?;
+        }
     }
     Ok(Action::None)
 }
