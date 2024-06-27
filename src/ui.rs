@@ -10,7 +10,10 @@ use crossterm::{
     },
 };
 use std::{error::Error, io};
-use tokio::sync::mpsc::Sender;
+use tokio::{
+    sync::mpsc::Sender,
+    time::{self, Duration, Instant},
+};
 use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;
 
@@ -24,6 +27,7 @@ impl App {
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
 
         loop {
+            let start = Instant::now();
             if self.editor {
                 sender.send(Signal::Pause).await?;
                 if let Some(file) = self.cur_file() {
@@ -38,6 +42,10 @@ impl App {
                 if self.quit {
                     break;
                 }
+            }
+            let elapsed = start.elapsed();
+            if elapsed < Duration::from_millis(10) {
+                time::sleep(Duration::from_millis(10) - elapsed).await;
             }
         }
 
