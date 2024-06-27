@@ -35,6 +35,7 @@ pub fn open(app: &mut App) -> io::Result<Action> {
     }
     if cur_position.is_dir() {
         open_dir(app, &cur_position);
+        return Ok(Action::Clean);
     } else {
         open_file(app, &cur_position)?;
     }

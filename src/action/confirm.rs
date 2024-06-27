@@ -41,7 +41,10 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
                     confirm_rename(value, file, &app.path.join(value))?
                 }
             }
-            Action::Search => confirm_search(app.files.len())?,
+            Action::Search => {
+                confirm_search(app.files.len())?;
+                app.cursor = 0;
+            }
             _ => {}
         }
     }
