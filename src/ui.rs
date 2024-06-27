@@ -26,7 +26,9 @@ impl App {
         loop {
             if self.editor {
                 sender.send(Signal::Pause).await?;
-                shell::nvim(&self.files[self.cursor]).await?;
+                if let Some(file) = self.cur_file() {
+                    shell::nvim(file).await?;
+                }
                 sender.send(Signal::Pause).await?;
                 execute!(io::stdout(), EnterAlternateScreen, Hide)?;
                 self.editor = false;
@@ -82,47 +84,50 @@ impl App {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2))?;
             if self.files.len() >= buf && self.files.len() - buf > i {
-                let file = &self.files[i + buf];
-                let file_names = crate::filename(&file).chars().take(65).collect::<String>();
-                let file_len = file_names.graphemes(true).count();
-                let pad = (file_names.len() - file_len) / 2;
-                let select = if self.selected.contains(&i) {
-                    Color::Rgb {
-                        r: 100,
-                        g: 100,
-                        b: 100,
-                    }
-                } else {
-                    Color::Reset
-                };
-                let mod_time = if let Ok(meta) = file.metadata() {
-                    let datetime = DateTime::<Local>::from(meta.modified()?);
-                    datetime.format("%Y/%m/%d %H:%M").to_string()
-                } else {
-                    String::from("       N/A      ")
-                };
-                execute!(
-                    io::stdout(),
-                    SetBackgroundColor(select),
-                    Print(if self.cursor == i + buf { "> " } else { "  " }),
-                    Print(" ▎ "),
-                    SetForegroundColor(if file.is_symlink() {
-                        Color::Magenta
-                    } else if file.is_dir() {
-                        Color::Green
-                    } else if file.is_file() {
-                        Color::Yellow
+                if let Some(file) = self.files.cur_file(i + buf) {
+                    let file_names = crate::filename(&file).chars().take(65).collect::<String>();
+                    let file_len = file_names.graphemes(true).count();
+                    let pad = (file_names.len() - file_len) / 2;
+                    let select = if self.selected.contains(&i) {
+                        Color::Rgb {
+                            r: 100,
+                            g: 100,
+                            b: 100,
+                        }
                     } else {
-                        Color::Red
-                    }),
-                    Print(&file_names),
-                    ResetColor,
-                    SetBackgroundColor(select),
-                    Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 9)),
-                    Print("▎ "),
-                    Print(mod_time),
-                    Print(" ▎"),
-                )?;
+                        Color::Reset
+                    };
+                    let mod_time = if let Ok(meta) = file.metadata() {
+                        let datetime = DateTime::<Local>::from(meta.modified()?);
+                        datetime.format("%Y/%m/%d %H:%M").to_string()
+                    } else {
+                        String::from("       N/A      ")
+                    };
+                    execute!(
+                        io::stdout(),
+                        SetBackgroundColor(select),
+                        Print(if self.cursor == i + buf { "> " } else { "  " }),
+                        Print(" ▎ "),
+                        SetForegroundColor(if file.is_symlink() {
+                            Color::Magenta
+                        } else if file.is_dir() {
+                            Color::Green
+                        } else if file.is_file() {
+                            Color::Yellow
+                        } else {
+                            Color::Red
+                        }),
+                        Print(&file_names),
+                        ResetColor,
+                        SetBackgroundColor(select),
+                        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 9)),
+                        Print("▎ "),
+                        Print(mod_time),
+                        Print(" ▎"),
+                    )?;
+                } else {
+                    execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
+                }
             } else {
                 execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
             }

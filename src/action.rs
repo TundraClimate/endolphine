@@ -1,5 +1,6 @@
 use crate::{
     app::App,
+    file_manager::FileManager,
     shell,
     ui::{self, Dialog},
 };
@@ -43,11 +44,13 @@ pub fn previous(app: &mut App, i: usize) -> Action {
 pub fn next(app: &mut App, i: usize) -> Action {
     let cursor = app.cursor;
     let len = app.files.len();
-    app.cursor = if cursor + i < len {
-        cursor + i
-    } else {
-        len - 1
-    };
+    if len != 0 {
+        app.cursor = if cursor + i < len {
+            cursor + i
+        } else {
+            len - 1
+        };
+    }
     Action::None
 }
 
@@ -66,7 +69,11 @@ pub fn back(app: &mut App) -> Action {
 }
 
 pub fn open(app: &mut App) -> io::Result<Action> {
-    let cur_position = app.cur_file().clone();
+    let cur_position = if let Some(p) = app.cur_file() {
+        p.clone()
+    } else {
+        return Ok(Action::None);
+    };
     if !cur_position.exists() {
         ui::log(format!(
             "\"{}\" is not exists",
@@ -118,17 +125,18 @@ pub fn create(app: &mut App) -> io::Result<Action> {
 
 pub fn delete(app: &mut App) -> io::Result<Action> {
     let dialog = Dialog::from(Action::Delete);
-    if app.selected.is_empty() {
-        dialog.write_backend(format!(
-            "Delete \"{}\" ? (y/N)",
-            crate::filename(app.cur_file())
-        ))?;
+    if let Some(file) = app.cur_file() {
+        if app.selected.is_empty() {
+            dialog.write_backend(format!("Delete \"{}\" ? (y/N)", crate::filename(file)))?;
+        } else {
+            let len = app.selected.len();
+            dialog.write_backend(format!("Delete {} items? (y/N)", len))?;
+        }
+        app.dialog = Some(dialog);
+        Ok(Action::Pending)
     } else {
-        let len = app.selected.len();
-        dialog.write_backend(format!("Delete {} items? (y/N)", len))?;
+        Ok(Action::None)
     }
-    app.dialog = Some(dialog);
-    Ok(Action::Pending)
 }
 
 pub fn cut(app: &mut App) -> Action {
@@ -139,14 +147,17 @@ pub fn cut(app: &mut App) -> Action {
 pub fn copy(app: &mut App) -> io::Result<Action> {
     app.register.clear();
     if app.selected.is_empty() {
-        let file = app.cur_file().clone();
-        ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
-        app.register.push(file);
+        if let Some(file) = app.cur_file() {
+            ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
+            app.register.push(file.clone());
+        }
     } else {
         ui::log(format!("{} items copied", app.selected.len()))?;
-        app.selected
-            .iter()
-            .for_each(|i| app.register.push(app.files[*i].clone()));
+        app.selected.iter().for_each(|i| {
+            if let Some(file) = app.files.cur_file(*i) {
+                app.register.push(file.clone());
+            }
+        });
         app.selected.clear();
     }
     shell::clip(&app.register)?;
@@ -179,14 +190,18 @@ pub fn paste(app: &mut App) -> io::Result<Action> {
 }
 
 pub fn rename(app: &mut App) -> io::Result<Action> {
-    let name = crate::filename(app.cur_file());
-    let dialog = Dialog {
-        action: Action::Rename,
-        input: name.into(),
-    };
-    dialog.write_backend(format!("Rename \"{}\" :", name))?;
-    app.dialog = Some(dialog);
-    Ok(Action::Pending)
+    if let Some(file) = app.cur_file() {
+        let name = crate::filename(file);
+        let dialog = Dialog {
+            action: Action::Rename,
+            input: name.into(),
+        };
+        dialog.write_backend(format!("Rename \"{}\" :", name))?;
+        app.dialog = Some(dialog);
+        Ok(Action::Pending)
+    } else {
+        Ok(Action::None)
+    }
 }
 
 pub fn pre_confirm(app: &mut App) -> io::Result<Action> {
@@ -207,14 +222,17 @@ pub fn pre_confirm(app: &mut App) -> io::Result<Action> {
 pub fn confirm(app: &mut App) -> io::Result<Action> {
     if let Some(Dialog { action, input }) = &app.dialog {
         let value = input.value();
-        let file = app.cur_file();
         match action {
             Action::Create => confirm_create(value, &app.path.join(value))?,
             Action::Delete => {
-                confirm_delete(value, file, &app.files, &app.selected)?;
+                confirm_delete(value, app.cursor, &app.files, &app.selected)?;
                 app.selected.clear();
             }
-            Action::Rename => confirm_rename(value, file, &app.path.join(value))?,
+            Action::Rename => {
+                if let Some(file) = app.cur_file() {
+                    confirm_rename(value, file, &app.path.join(value))?
+                }
+            }
             Action::Search => confirm_search(app.files.len())?,
             _ => {}
         }
@@ -249,18 +267,23 @@ fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
 
 fn confirm_delete(
     value: &str,
-    cur_file: &PathBuf,
-    files: &Vec<PathBuf>,
+    cursor: usize,
+    files: &FileManager,
     selected: &Vec<usize>,
 ) -> io::Result<()> {
     if value == "y" || value == "Y" {
         if selected.is_empty() {
-            let file = cur_file;
-            ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
-            shell::trash_file(&file);
+            if let Some(file) = files.cur_file(cursor) {
+                ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
+                shell::trash_file(&file);
+            }
         } else {
             ui::log(format!("{} items deleted", selected.len()))?;
-            selected.iter().for_each(|i| shell::trash_file(&files[*i]));
+            selected.iter().for_each(|i| {
+                if let Some(file) = files.cur_file(*i) {
+                    shell::trash_file(file);
+                }
+            });
         }
     }
 

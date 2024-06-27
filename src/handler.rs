@@ -65,17 +65,26 @@ impl App {
     pub fn handle_dialog(&mut self, event: &Event) -> Result<(), Box<dyn Error>> {
         if is_pending(&self) {
             if let Some(ref mut dialog) = self.dialog {
-                let filename = crate::filename(&self.files[self.cursor]);
                 let text = match dialog.action {
                     Action::Create => "New file/directory:".to_string(),
                     Action::Delete if self.selected.is_empty() => {
-                        format!("Delete \"{}\" ? (y/N)", filename)
+                        if let Some(file) = self.files.cur_file(self.cursor) {
+                            let filename = crate::filename(file);
+                            format!("Delete \"{}\" ? (y/N)", filename)
+                        } else {
+                            return Ok(());
+                        }
                     }
                     Action::Delete => {
                         format!("Delete {} items? (y/N)", self.selected.len())
                     }
                     Action::Rename => {
-                        format!("Rename \"{}\" :", filename)
+                        if let Some(file) = self.files.cur_file(self.cursor) {
+                            let filename = crate::filename(file);
+                            format!("Rename \"{}\" :", filename)
+                        } else {
+                            return Ok(());
+                        }
                     }
                     Action::Search => String::from("/"),
                     _ => String::new(),

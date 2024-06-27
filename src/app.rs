@@ -1,6 +1,7 @@
 use crate::{
     action::Action,
     event::{self, Signal},
+    file_manager::FileManager,
     ui::Dialog,
     Args,
 };
@@ -10,7 +11,7 @@ use tokio::runtime::Runtime;
 
 pub struct App {
     pub path: PathBuf,
-    pub files: Vec<PathBuf>,
+    pub files: FileManager,
     pub cursor: usize,
     pub action: Action,
     pub dialog: Option<Dialog>,
@@ -26,7 +27,7 @@ impl App {
     pub fn new(args: Args) -> App {
         App {
             path: args.path.canonicalize().unwrap().clone(),
-            files: crate::dir_pathes(None, &args.path),
+            files: FileManager::from(&args.path),
             cursor: 0,
             action: Action::None,
             dialog: None,
@@ -58,7 +59,7 @@ impl App {
                 }
                 app.handle_action()?;
                 app.auto_selector();
-                app.files = crate::dir_pathes(Some(app), &app.path);
+                app.files = FileManager::new(app);
                 Ok(())
             };
             app.render_mode(looper, &sender).await?;
@@ -68,7 +69,7 @@ impl App {
         Ok(())
     }
 
-    pub fn cur_file(&self) -> &PathBuf {
-        &self.files[self.cursor]
+    pub fn cur_file(&self) -> Option<&PathBuf> {
+        self.files.cur_file(self.cursor)
     }
 }
