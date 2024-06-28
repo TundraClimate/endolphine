@@ -13,7 +13,7 @@ impl FileManager {
     }
 
     pub fn require(&self, i: usize) -> Option<&PathBuf> {
-        if self.files.is_empty() {
+        if self.files.is_empty() || self.files.len() <= i {
             None
         } else {
             Some(&self.files[i])

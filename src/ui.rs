@@ -9,7 +9,7 @@ use crossterm::{
         LeaveAlternateScreen,
     },
 };
-use std::{error::Error, io};
+use std::{error::Error, io, path::PathBuf};
 use tokio::{
     sync::mpsc::Sender,
     time::{self, Duration, Instant},
@@ -60,11 +60,7 @@ impl App {
         let len = self.files.len();
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
-        let page_size = if len % max == 0 {
-            len / max
-        } else {
-            (len / max) + 1
-        };
+        let page_size = (len + max - 1) / max;
         execute!(
             io::stdout(),
             MoveTo(2, 0),
@@ -73,76 +69,84 @@ impl App {
             MoveTo(cols - 16, 0),
             Print(format!("page {} / {}  ", page, page_size))
         )?;
-
-        let color = if !self.selected.is_empty() {
-            Color::DarkBlue
-        } else if self.is_search {
-            Color::Magenta
-        } else if self.dialog.is_some() {
-            Color::Green
-        } else {
-            Color::Grey
+        let color = match (
+            self.selected.is_empty(),
+            self.is_search,
+            self.dialog.is_some(),
+        ) {
+            (false, _, _) => Color::DarkBlue,
+            (true, true, _) => Color::Magenta,
+            (true, false, true) => Color::Green,
+            _ => Color::Grey,
         };
         render_line((cols, 1), color)?;
         render_line((cols, rows - 2), color)?;
 
-        let buf = page - 1;
-        let buf = buf * max;
+        let buf = (page - 1) * max;
         for p in 0..rows - 4 {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2))?;
-            if self.files.len() >= buf && self.files.len() - buf > i {
-                if let Some(file) = self.files.require(i + buf) {
-                    let file_names = crate::filename(&file).chars().take(65).collect::<String>();
-                    let file_len = file_names.graphemes(true).count();
-                    let pad = (file_names.len() - file_len) / 2;
-                    let select = if self.selected.contains(&i) {
-                        Color::Rgb {
-                            r: 100,
-                            g: 100,
-                            b: 100,
-                        }
-                    } else {
-                        Color::Reset
-                    };
-                    let mod_time = if let Ok(meta) = file.metadata() {
-                        let datetime = DateTime::<Local>::from(meta.modified()?);
-                        datetime.format("%Y/%m/%d %H:%M").to_string()
-                    } else {
-                        String::from("       N/A      ")
-                    };
-                    execute!(
-                        io::stdout(),
-                        SetBackgroundColor(select),
-                        Print(if self.cursor == i + buf { "> " } else { "  " }),
-                        Print(" | "),
-                        SetForegroundColor(if file.is_symlink() {
-                            Color::Magenta
-                        } else if file.is_dir() {
-                            Color::Green
-                        } else if file.is_file() {
-                            Color::Yellow
-                        } else {
-                            Color::Red
-                        }),
-                        Print(&file_names),
-                        ResetColor,
-                        SetBackgroundColor(select),
-                        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 11)),
-                        Print("| "),
-                        Print(mod_time),
-                        Print(" |"),
-                        Print(if self.cursor == i + buf { " <" } else { "  " }),
-                    )?;
-                } else {
-                    execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
-                }
+            if let Some(file) = self.files.require(i + buf) {
+                render_row(
+                    file,
+                    self.cursor == i + buf,
+                    self.selected.contains(&i),
+                    cols,
+                )?;
             } else {
                 execute!(io::stdout(), ResetColor, Print(" ".repeat(cols as usize)))?;
             }
         }
-
         Ok(())
+    }
+}
+
+fn render_row(file: &PathBuf, is_cursor: bool, is_selected: bool, cols: u16) -> io::Result<()> {
+    let file_names = crate::filename(&file).chars().take(65).collect::<String>();
+    let file_len = file_names.graphemes(true).count();
+    let pad = (file_names.len() - file_len) / 2;
+    let select = if is_selected {
+        Color::Rgb {
+            r: 100,
+            g: 100,
+            b: 100,
+        }
+    } else {
+        Color::Reset
+    };
+    let mod_time = if let Ok(meta) = file.metadata() {
+        let datetime = DateTime::<Local>::from(meta.modified()?);
+        datetime.format("%Y/%m/%d %H:%M").to_string()
+    } else {
+        String::from("       N/A      ")
+    };
+    execute!(
+        io::stdout(),
+        SetBackgroundColor(select),
+        Print(if is_cursor { "> " } else { "  " }),
+        Print(" | "),
+        SetForegroundColor(colored_path(file)),
+        Print(&file_names),
+        ResetColor,
+        SetBackgroundColor(select),
+        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 11)),
+        Print("| "),
+        Print(mod_time),
+        Print(" |"),
+        Print(if is_cursor { " <" } else { "  " }),
+    )?;
+    Ok(())
+}
+
+fn colored_path(file: &PathBuf) -> Color {
+    if file.is_symlink() {
+        Color::Magenta
+    } else if file.is_dir() {
+        Color::Green
+    } else if file.is_file() {
+        Color::Yellow
+    } else {
+        Color::Red
     }
 }
 
