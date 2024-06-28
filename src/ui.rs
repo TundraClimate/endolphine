@@ -27,7 +27,6 @@ impl App {
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
 
         loop {
-            let start = Instant::now();
             if self.editor {
                 sender.send(Signal::Pause).await?;
                 if let Some(file) = self.cur_file() {
@@ -37,15 +36,16 @@ impl App {
                 execute!(io::stdout(), EnterAlternateScreen, Hide)?;
                 self.editor = false;
             } else {
+                let start = Instant::now();
                 self.ui()?;
                 looper(self)?;
                 if self.quit {
                     break;
                 }
-            }
-            let elapsed = start.elapsed();
-            if elapsed < Duration::from_millis(10) {
-                time::sleep(Duration::from_millis(10) - elapsed).await;
+                let elapsed = start.elapsed();
+                if elapsed < Duration::from_millis(10) {
+                    time::sleep(Duration::from_millis(10) - elapsed).await;
+                }
             }
         }
 
