@@ -150,7 +150,7 @@ fn colored_path(file: &PathBuf) -> Color {
     }
 }
 
-fn render_line((cols, rows): (u16, u16), color: Color) -> Result<(), Box<dyn Error>> {
+fn render_line((cols, rows): (u16, u16), color: Color) -> io::Result<()> {
     execute!(
         io::stdout(),
         MoveTo(0, rows),
