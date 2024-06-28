@@ -35,6 +35,13 @@ pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
         })
         .collect();
     files.sort();
+    files.sort_by_key(|p| {
+        crate::filename(&p)
+            .chars()
+            .next()
+            .unwrap_or(' ')
+            .is_uppercase()
+    });
     files.sort_by_key(|p| crate::filename(&p).starts_with("."));
     files
 }
