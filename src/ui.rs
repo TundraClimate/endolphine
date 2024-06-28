@@ -175,12 +175,7 @@ impl From<Action> for Dialog {
 impl Dialog {
     pub fn write_backend<S: AsRef<str>>(&self, text: S) -> io::Result<()> {
         let text = text.as_ref();
-        execute!(
-            io::stdout(),
-            MoveTo(1, 40),
-            Clear(ClearType::CurrentLine),
-            Print(text)
-        )?;
+        execute!(io::stdout(), MoveTo(1, 40), Print(text))?;
         backend::write(
             &mut io::stdout(),
             self.input.value(),

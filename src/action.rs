@@ -1,4 +1,7 @@
-use crate::{app::App, ui::Dialog};
+use crate::{
+    app::App,
+    ui::{self, Dialog},
+};
 use crossterm::{
     cursor::MoveTo,
     execute,
@@ -41,6 +44,7 @@ pub fn clean(app: &mut App) -> io::Result<Action> {
 }
 
 pub fn search(app: &mut App) -> io::Result<Action> {
+    ui::log("".into())?;
     let dialog = Dialog::from(Action::Search);
     dialog.write_backend("/")?;
     app.dialog = Some(dialog);
