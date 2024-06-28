@@ -115,7 +115,7 @@ impl App {
                         io::stdout(),
                         SetBackgroundColor(select),
                         Print(if self.cursor == i + buf { "> " } else { "  " }),
-                        Print(" ▎ "),
+                        Print(" | "),
                         SetForegroundColor(if file.is_symlink() {
                             Color::Magenta
                         } else if file.is_dir() {
@@ -129,9 +129,9 @@ impl App {
                         ResetColor,
                         SetBackgroundColor(select),
                         Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 11)),
-                        Print("▎ "),
+                        Print("| "),
                         Print(mod_time),
-                        Print(" ▎"),
+                        Print(" |"),
                         Print(if self.cursor == i + buf { " <" } else { "  " }),
                     )?;
                 } else {
