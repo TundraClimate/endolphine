@@ -1,5 +1,4 @@
-use crate::{action::Action, shell, ui, App};
-use image::io::Reader as ImageReader;
+use crate::{action::Action, file_manager, shell, ui, App};
 use std::{
     fs::File,
     io::{self, Read},
@@ -45,17 +44,14 @@ fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
     let mut buffer = [0; 1024];
     let read = file.read(&mut buffer)?;
 
-    let is_image = ImageReader::open(cur_file)?
-        .with_guessed_format()?
-        .format()
-        .is_some();
-
     if std::str::from_utf8(&buffer[..read]).is_ok() {
         app.editor = true;
-    } else if is_image {
+    } else if file_manager::is_image(cur_file)? {
         shell::eog(cur_file)?;
     } else if shell::ffprobe_is_video(cur_file) {
         shell::vlc(cur_file)?;
+    } else if file_manager::is_compressed(cur_file)? {
+        shell::file_roller_open(cur_file)?;
     }
     Ok(())
 }

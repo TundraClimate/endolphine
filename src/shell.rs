@@ -127,3 +127,8 @@ pub fn vlc(path: &PathBuf) -> io::Result<()> {
     let _ = Command::new("vlc").args([path]).output()?;
     Ok(())
 }
+
+pub fn file_roller_open(path: &PathBuf) -> io::Result<()> {
+    Command::new("file-roller").args([path]).spawn()?;
+    Ok(())
+}
