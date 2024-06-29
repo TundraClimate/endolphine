@@ -1,4 +1,4 @@
-use crate::{action::Action, app::App, event::Signal, shell};
+use crate::{action::Action, app::App, event};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
@@ -10,42 +10,26 @@ use crossterm::{
     },
 };
 use std::{error::Error, io, path::PathBuf};
-use tokio::{
-    sync::mpsc::Sender,
-    time::{self, Duration, Instant},
-};
+use tokio::time::{self, Duration, Instant};
 use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;
 
 impl App {
-    pub async fn render_mode<F: FnMut(&mut App) -> Result<(), Box<dyn Error>>>(
-        &mut self,
-        mut looper: F,
-        sender: &Sender<Signal>,
-    ) -> Result<(), Box<dyn Error>> {
+    pub async fn render_mode(&mut self) -> Result<(), Box<dyn Error>> {
         enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
+        let (mut rc, sender) = event::spawn();
 
         loop {
-            if self.editor {
-                sender.send(Signal::Pause).await?;
-                if let Some(file) = self.cur_file() {
-                    shell::nvim(file).await?;
-                }
-                sender.send(Signal::Pause).await?;
-                execute!(io::stdout(), EnterAlternateScreen, Hide)?;
-                self.editor = false;
-            } else {
-                let start = Instant::now();
-                self.ui()?;
-                looper(self)?;
-                if self.quit {
-                    break;
-                }
-                let elapsed = start.elapsed();
-                if elapsed < Duration::from_millis(10) {
-                    time::sleep(Duration::from_millis(10) - elapsed).await;
-                }
+            let start = Instant::now();
+            self.ui()?;
+            self.looper(&mut rc, &sender).await?;
+            if self.quit {
+                break;
+            }
+            let elapsed = start.elapsed();
+            if elapsed < Duration::from_millis(10) {
+                time::sleep(Duration::from_millis(10) - elapsed).await;
             }
         }
 
