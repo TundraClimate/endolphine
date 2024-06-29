@@ -1,4 +1,4 @@
-use crate::{action::Action, app::App, event};
+use crate::{action::Action, app::App, event::EventThread};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
@@ -15,15 +15,14 @@ use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;
 
 impl App {
-    pub async fn render_mode(&mut self) -> Result<(), Box<dyn Error>> {
+    pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
         enable_raw_mode()?;
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
-        let (mut rc, sender) = event::spawn();
 
         loop {
             let start = Instant::now();
             self.ui()?;
-            self.looper(&mut rc, &sender).await?;
+            self.looper(ev).await?;
             if self.quit {
                 break;
             }

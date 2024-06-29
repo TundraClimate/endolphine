@@ -1,10 +1,32 @@
 use crossterm::event;
 use crossterm::event::Event;
+use std::error::Error;
 use tokio::sync::mpsc;
 use tokio::sync::mpsc::Receiver;
 use tokio::sync::mpsc::Sender;
 
-pub fn spawn() -> (Receiver<Event>, Sender<Option<()>>) {
+pub struct EventThread {
+    rc: Receiver<Event>,
+    sd: Sender<Option<()>>,
+}
+
+impl EventThread {
+    pub async fn shatdown(&mut self) -> Result<(), Box<dyn Error>> {
+        self.sd.send(Some(())).await?;
+        Ok(())
+    }
+
+    pub async fn respond(&mut self) -> Result<(), Box<dyn Error>> {
+        self.sd.send(None).await?;
+        Ok(())
+    }
+
+    pub fn read(&mut self) -> Result<Event, mpsc::error::TryRecvError> {
+        self.rc.try_recv()
+    }
+}
+
+pub fn spawn() -> EventThread {
     let (tx, rx) = mpsc::channel::<Event>(100);
     let (sender, mut receiver) = mpsc::channel::<Option<()>>(100);
 
@@ -21,6 +43,5 @@ pub fn spawn() -> (Receiver<Event>, Sender<Option<()>>) {
             }
         }
     });
-
-    (rx, sender)
+    EventThread { rc: rx, sd: sender }
 }
