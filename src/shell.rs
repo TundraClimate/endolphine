@@ -1,5 +1,6 @@
 use std::{
-    io::{self, Write},
+    fs::File,
+    io::{self, Read, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -130,5 +131,28 @@ pub fn vlc(path: &PathBuf) -> io::Result<()> {
 
 pub fn file_roller_open(path: &PathBuf) -> io::Result<()> {
     Command::new("file-roller").args([path]).spawn()?;
+    Ok(())
+}
+
+pub fn extract_from_archive(path: &PathBuf) -> io::Result<()> {
+    let mut file = File::open(path)?;
+    let mut buffer = [0; 4];
+    file.read_exact(&mut buffer)?;
+
+    match &buffer {
+        [0x50, 0x4B, 0x03, 0x04] => extract_zip(path)?,
+        [0x1F, 0x8B, ..] => extract_tgz(path)?,
+        _ => {}
+    }
+    Ok(())
+}
+
+fn extract_zip(path: &PathBuf) -> io::Result<()> {
+    Command::new("unzip").args([path]).spawn()?;
+    Ok(())
+}
+
+fn extract_tgz(path: &PathBuf) -> io::Result<()> {
+    Command::new("tar").arg("xzf").arg(path).spawn()?;
     Ok(())
 }
