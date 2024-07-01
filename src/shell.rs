@@ -156,3 +156,8 @@ fn extract_tgz(path: &PathBuf) -> io::Result<()> {
     Command::new("tar").arg("xzf").arg(path).spawn()?;
     Ok(())
 }
+
+pub fn evince(path: &PathBuf) -> io::Result<()> {
+    Command::new("evince").args([path]).spawn()?;
+    Ok(())
+}

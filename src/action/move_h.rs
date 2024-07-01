@@ -52,6 +52,8 @@ fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
         shell::vlc(cur_file)?;
     } else if file_manager::is_compressed(cur_file)? {
         shell::file_roller_open(cur_file)?;
+    } else if &buffer[..4] == b"%PDF" {
+        shell::evince(cur_file)?;
     }
     Ok(())
 }
