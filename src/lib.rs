@@ -6,7 +6,7 @@ pub mod handler;
 pub mod shell;
 pub mod ui;
 
-use crate::app::App;
+use crate::{action::menu, app::App};
 use clap::Parser;
 use regex::Regex;
 use std::{ffi::OsStr, path::PathBuf};
@@ -19,6 +19,11 @@ pub struct Args {
 }
 
 pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
+    if app.is_some() && app.unwrap().menu_opened() {
+        if let Some(ref path) = app.unwrap().menu {
+            return menu::choices(path).unwrap_or(vec![]);
+        }
+    }
     let mut files: Vec<_> = dir
         .read_dir()
         .into_iter()

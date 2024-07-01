@@ -12,6 +12,7 @@ use std::io;
 pub mod clip;
 pub mod confirm;
 pub mod manage;
+pub mod menu;
 pub mod move_h;
 pub mod move_v;
 
@@ -27,6 +28,8 @@ pub enum Action {
     Copy,
     Paste,
     Rename,
+    Menu,
+    Select,
     Pending,
     PreConfirm,
     Confirm,
@@ -40,6 +43,7 @@ pub fn clean(app: &mut App) -> io::Result<Action> {
     app.dialog = None;
     app.selected.clear();
     app.is_search = false;
+    app.menu = None;
     Ok(Action::None)
 }
 

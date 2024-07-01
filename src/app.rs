@@ -22,6 +22,7 @@ pub struct App {
     pub dialog: Option<Dialog>,
     pub register: Vec<PathBuf>,
     pub selected: Vec<usize>,
+    pub menu: Option<PathBuf>,
     pub is_cut: bool,
     pub is_search: bool,
     pub editor: bool,
@@ -38,6 +39,7 @@ impl App {
             dialog: None,
             register: vec![],
             selected: vec![],
+            menu: None,
             is_cut: false,
             is_search: false,
             editor: false,
@@ -95,5 +97,9 @@ impl App {
 
     pub fn cur_file(&self) -> Option<&PathBuf> {
         self.files.require(self.cursor)
+    }
+
+    pub fn menu_opened(&self) -> bool {
+        self.menu.is_some()
     }
 }

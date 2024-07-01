@@ -161,3 +161,30 @@ pub fn evince(path: &PathBuf) -> io::Result<()> {
     Command::new("evince").args([path]).spawn()?;
     Ok(())
 }
+
+pub fn zip(path: &PathBuf) -> io::Result<()> {
+    if let Some(archive) = path.parent() {
+        let _ = Command::new("zip")
+            .arg("-r")
+            .arg(archive.join(format!("{}.zip", crate::filename(path))))
+            .arg(path)
+            .output()?;
+    }
+    Ok(())
+}
+
+pub fn gz(path: &PathBuf) -> io::Result<()> {
+    Command::new("gzip").args([path]).spawn()?;
+    Ok(())
+}
+
+pub fn tgz(path: &PathBuf) -> io::Result<()> {
+    if let Some(archive) = path.parent() {
+        let _ = Command::new("tar")
+            .arg("czf")
+            .arg(archive.join(format!("{}.tar.gz", crate::filename(path))))
+            .arg(path)
+            .output()?;
+    }
+    Ok(())
+}

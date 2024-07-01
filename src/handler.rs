@@ -1,5 +1,5 @@
 use crate::{
-    action::{self, clip, confirm, manage, move_h, move_v, Action},
+    action::{self, clip, confirm, manage, menu, move_h, move_v, Action},
     app::App,
 };
 use crossterm::event::{Event, KeyCode, KeyEvent};
@@ -23,6 +23,10 @@ impl App {
             KeyCode::Char('J') if !is_pending(&self) => self.action = Action::Next(10),
             KeyCode::Char('k') if !is_pending(&self) => self.action = Action::Previous(1),
             KeyCode::Char('K') if !is_pending(&self) => self.action = Action::Previous(10),
+            KeyCode::Char('j') if self.menu_opened() => self.action = Action::Next(1),
+            KeyCode::Char('J') if self.menu_opened() => self.action = Action::Next(10),
+            KeyCode::Char('k') if self.menu_opened() => self.action = Action::Previous(1),
+            KeyCode::Char('K') if self.menu_opened() => self.action = Action::Previous(10),
             KeyCode::Char('V') if !is_pending(&self) => self.selected.push(self.cursor),
             KeyCode::Char('c') if !is_pending(&self) => self.action = Action::Cut,
             KeyCode::Char('y') if !is_pending(&self) => self.action = Action::Copy,
@@ -31,9 +35,11 @@ impl App {
             KeyCode::Char('d') if !is_pending(&self) => self.action = Action::Delete,
             KeyCode::Char('r') if !is_pending(&self) => self.action = Action::Rename,
             KeyCode::Char('h') if !is_pending(&self) => self.action = Action::Back,
+            KeyCode::Char('l') if self.menu_opened() => self.action = Action::Select,
             KeyCode::Char('l') if !is_pending(&self) => self.action = Action::Open,
             KeyCode::Char('/') if !is_pending(&self) => self.action = Action::Search,
             KeyCode::Enter if is_pending(&self) => self.action = Action::PreConfirm,
+            KeyCode::Enter if !is_pending(&self) => self.action = Action::Menu,
 
             _ => {}
         }
@@ -53,6 +59,8 @@ impl App {
             Action::Copy => clip::copy(self)?,
             Action::Paste => clip::paste(self)?,
             Action::Rename => manage::rename(self)?,
+            Action::Menu => menu::open(self),
+            Action::Select => menu::select(self)?,
             Action::Pending => Action::Pending,
             Action::PreConfirm => confirm::pre_confirm(self)?,
             Action::Confirm => confirm::confirm(self)?,
@@ -89,7 +97,7 @@ impl App {
                     Action::Search => String::from("/"),
                     _ => String::new(),
                 };
-                if dialog.input.handle_event(&event).is_some() {
+                if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
                     dialog.write_backend(text)?;
                 }
             }

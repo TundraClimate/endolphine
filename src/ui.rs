@@ -51,10 +51,12 @@ impl App {
             self.selected.is_empty(),
             self.is_search,
             self.dialog.is_some(),
+            self.menu.is_some(),
         ) {
-            (false, _, _) => Color::DarkBlue,
-            (true, true, _) => Color::Magenta,
-            (true, false, true) => Color::Green,
+            (false, ..) => Color::DarkBlue,
+            (true, _, _, true) => Color::Yellow,
+            (true, true, ..) => Color::Magenta,
+            (true, false, true, ..) => Color::Green,
             _ => Color::Grey,
         };
         render_line((cols, 1), color)?;
@@ -67,6 +69,7 @@ impl App {
             if let Some(file) = self.files.require(i + buf) {
                 render_row(
                     file,
+                    self.menu_opened(),
                     self.cursor == i + buf,
                     self.selected.contains(&i),
                     cols,
@@ -91,7 +94,13 @@ fn render_header(path: &str, cols: u16, (page, page_size): (usize, usize)) -> io
     Ok(())
 }
 
-fn render_row(file: &PathBuf, is_cursor: bool, is_selected: bool, cols: u16) -> io::Result<()> {
+fn render_row(
+    file: &PathBuf,
+    is_menu: bool,
+    is_cursor: bool,
+    is_selected: bool,
+    cols: u16,
+) -> io::Result<()> {
     let file_names = crate::filename(&file).chars().take(65).collect::<String>();
     let file_len = file_names.graphemes(true).count();
     let pad = (file_names.len() - file_len) / 2;
@@ -107,6 +116,8 @@ fn render_row(file: &PathBuf, is_cursor: bool, is_selected: bool, cols: u16) -> 
     let mod_time = if let Ok(meta) = file.metadata() {
         let datetime = DateTime::<Local>::from(meta.modified()?);
         datetime.format("%Y/%m/%d %H:%M").to_string()
+    } else if is_menu {
+        String::from(" Open to Select ")
     } else {
         String::from("       N/A      ")
     };
