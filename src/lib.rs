@@ -35,6 +35,12 @@ pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
         })
         .collect();
     files.sort();
+    sort_by_case(&mut files);
+    files.sort_by_key(|p| crate::filename(&p).starts_with("."));
+    files
+}
+
+fn sort_by_case(files: &mut Vec<PathBuf>) {
     files.sort_by_key(|p| {
         crate::filename(&p)
             .chars()
@@ -42,8 +48,6 @@ pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
             .unwrap_or(' ')
             .is_uppercase()
     });
-    files.sort_by_key(|p| crate::filename(&p).starts_with("."));
-    files
 }
 
 pub fn filename(path: &PathBuf) -> &str {
