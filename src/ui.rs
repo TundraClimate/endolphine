@@ -44,21 +44,10 @@ impl App {
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
         let page_size = (len + max - 1) / max;
+        let color = self.bar_color();
 
         render_header(path, cols, (page, page_size))?;
 
-        let color = match (
-            self.selected.is_empty(),
-            self.is_search,
-            self.dialog.is_some(),
-            self.menu.is_some(),
-        ) {
-            (false, ..) => Color::DarkBlue,
-            (true, _, _, true) => Color::Yellow,
-            (true, true, ..) => Color::Magenta,
-            (true, false, true, ..) => Color::Green,
-            _ => Color::Grey,
-        };
         render_line((cols, 1), color)?;
         render_line((cols, rows - 2), color)?;
 
@@ -79,6 +68,21 @@ impl App {
             }
         }
         Ok(())
+    }
+
+    fn bar_color(&self) -> Color {
+        match (
+            self.selected.is_empty(),
+            self.is_search,
+            self.dialog.is_some(),
+            self.menu.is_some(),
+        ) {
+            (false, ..) => Color::DarkBlue,
+            (true, _, _, true) => Color::Yellow,
+            (true, true, ..) => Color::Magenta,
+            (true, false, true, ..) => Color::Green,
+            _ => Color::Grey,
+        }
     }
 }
 
