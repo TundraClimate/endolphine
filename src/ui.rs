@@ -44,14 +44,9 @@ impl App {
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
         let page_size = (len + max - 1) / max;
-        execute!(
-            io::stdout(),
-            MoveTo(2, 0),
-            Print(path),
-            Print(" ".repeat(cols as usize - path.len() - 16)),
-            MoveTo(cols - 16, 0),
-            Print(format!("page {} / {}  ", page, page_size))
-        )?;
+
+        render_header(path, cols, (page, page_size))?;
+
         let color = match (
             self.selected.is_empty(),
             self.is_search,
@@ -82,6 +77,18 @@ impl App {
         }
         Ok(())
     }
+}
+
+fn render_header(path: &str, cols: u16, (page, page_size): (usize, usize)) -> io::Result<()> {
+    execute!(
+        io::stdout(),
+        MoveTo(2, 0),
+        Print(path),
+        Print(" ".repeat(cols as usize - path.len() - 16)),
+        MoveTo(cols - 16, 0),
+        Print(format!("page {} / {}  ", page, page_size))
+    )?;
+    Ok(())
 }
 
 fn render_row(file: &PathBuf, is_cursor: bool, is_selected: bool, cols: u16) -> io::Result<()> {
