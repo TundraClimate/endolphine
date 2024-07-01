@@ -72,37 +72,46 @@ impl App {
 
     pub fn handle_dialog(&mut self, event: &Event) -> Result<(), Box<dyn Error>> {
         if is_pending(&self) {
-            if let Some(ref mut dialog) = self.dialog {
-                let text = match dialog.action {
-                    Action::Create => "New file/directory:".to_string(),
-                    Action::Delete if self.selected.is_empty() => {
-                        if let Some(file) = self.files.require(self.cursor) {
-                            let filename = crate::filename(file);
-                            format!("Delete \"{}\" ? (y/N)", filename)
-                        } else {
-                            return Ok(());
-                        }
-                    }
-                    Action::Delete => {
-                        format!("Delete {} items? (y/N)", self.selected.len())
-                    }
-                    Action::Rename => {
-                        if let Some(file) = self.files.require(self.cursor) {
-                            let filename = crate::filename(file);
-                            format!("Rename \"{}\" :", filename)
-                        } else {
-                            return Ok(());
-                        }
-                    }
-                    Action::Search => String::from("/"),
-                    _ => String::new(),
-                };
-                if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
-                    dialog.write_backend(text)?;
-                }
+            return Ok(());
+        }
+        let text = if let Some(dialog) = &self.dialog {
+            self.dialog_prefix(&dialog.action)?
+        } else {
+            String::new()
+        };
+        if let Some(ref mut dialog) = self.dialog {
+            if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
+                dialog.write_backend(text)?;
             }
         }
         Ok(())
+    }
+
+    fn dialog_prefix(&self, action: &Action) -> Result<String, Box<dyn Error>> {
+        Ok(match action {
+            Action::Create => "New file/directory:".to_string(),
+            Action::Delete if self.selected.is_empty() => {
+                if let Some(file) = self.files.require(self.cursor) {
+                    let filename = crate::filename(file);
+                    format!("Delete \"{}\" ? (y/N)", filename)
+                } else {
+                    return Ok("".into());
+                }
+            }
+            Action::Delete => {
+                format!("Delete {} items? (y/N)", self.selected.len())
+            }
+            Action::Rename => {
+                if let Some(file) = self.files.require(self.cursor) {
+                    let filename = crate::filename(file);
+                    format!("Rename \"{}\" :", filename)
+                } else {
+                    return Ok("".into());
+                }
+            }
+            Action::Search => String::from("/"),
+            _ => String::new(),
+        })
     }
 
     pub fn auto_selector(&mut self) {
