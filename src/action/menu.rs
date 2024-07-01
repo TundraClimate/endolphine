@@ -30,30 +30,35 @@ pub fn select(app: &mut App) -> io::Result<Action> {
 fn handle_menu(selected: &PathBuf, menu: &Option<PathBuf>) -> io::Result<()> {
     let name = crate::filename(selected);
     if let Some(ref path) = menu {
-        match name {
-            "Create archive(.zip)" => {
-                shell::zip(path)?;
-                ui::log(format!(
-                    "Created an archive for \"{}\"",
-                    crate::filename(path)
-                ))?;
-            }
-            "Create archive(.tar.gz)" => {
-                shell::tgz(path)?;
-                ui::log(format!(
-                    "Created an archive for \"{}\"",
-                    crate::filename(path)
-                ))?;
-            }
-            "Extract from archive(Only .zip, .tar.gz)" => {
-                shell::extract_from_archive(path)?;
-                ui::log(format!(
-                    "Archive \"{}\" has been extracted",
-                    crate::filename(path)
-                ))?;
-            }
-            _ => {}
+        handle_choice(name, path)?;
+    }
+    Ok(())
+}
+
+fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
+    match name {
+        "Create archive(.zip)" => {
+            shell::zip(path)?;
+            ui::log(format!(
+                "Created an archive for \"{}\"",
+                crate::filename(path)
+            ))?;
         }
+        "Create archive(.tar.gz)" => {
+            shell::tgz(path)?;
+            ui::log(format!(
+                "Created an archive for \"{}\"",
+                crate::filename(path)
+            ))?;
+        }
+        "Extract from archive(Only .zip, .tar.gz)" => {
+            shell::extract_from_archive(path)?;
+            ui::log(format!(
+                "Archive \"{}\" has been extracted",
+                crate::filename(path)
+            ))?;
+        }
+        _ => {}
     }
     Ok(())
 }
