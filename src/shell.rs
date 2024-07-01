@@ -148,7 +148,7 @@ pub fn extract_from_archive(path: &PathBuf) -> io::Result<()> {
 }
 
 fn extract_zip(path: &PathBuf) -> io::Result<()> {
-    let _ = Command::new("unzip").args([path]).output()?;
+    let _ = Command::new("unzip").arg("-o").arg(path).output()?;
     Ok(())
 }
 
@@ -167,7 +167,7 @@ pub fn zip(path: &PathBuf) -> io::Result<()> {
         let _ = Command::new("zip")
             .arg("-r")
             .arg(archive.join(format!("{}.zip", crate::filename(path))))
-            .arg(path)
+            .arg(crate::filename(path))
             .output()?;
     }
     Ok(())
@@ -178,7 +178,7 @@ pub fn tgz(path: &PathBuf) -> io::Result<()> {
         let _ = Command::new("tar")
             .arg("czf")
             .arg(archive.join(format!("{}.tar.gz", crate::filename(path))))
-            .arg(path)
+            .arg(crate::filename(path))
             .output()?;
     }
     Ok(())

@@ -34,7 +34,7 @@ pub fn select(app: &mut App) -> io::Result<Action> {
                         crate::filename(path)
                     ))?;
                 }
-                "Extract from archive(Only .zip, .gz, .tar.gz)" => {
+                "Extract from archive(Only .zip, .tar.gz)" => {
                     shell::extract_from_archive(path)?;
                     ui::log(format!(
                         "Archive \"{}\" has been extracted",
