@@ -34,6 +34,7 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
             Action::Delete => {
                 confirm_delete(app, value)?;
                 app.selected.clear();
+                app.cursor = 0;
             }
             Action::Rename => {
                 if let Some(file) = app.cur_file() {
