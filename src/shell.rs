@@ -148,12 +148,12 @@ pub fn extract_from_archive(path: &PathBuf) -> io::Result<()> {
 }
 
 fn extract_zip(path: &PathBuf) -> io::Result<()> {
-    Command::new("unzip").args([path]).spawn()?;
+    let _ = Command::new("unzip").args([path]).output()?;
     Ok(())
 }
 
 fn extract_tgz(path: &PathBuf) -> io::Result<()> {
-    Command::new("tar").arg("xzf").arg(path).spawn()?;
+    let _ = Command::new("tar").arg("xzf").arg(path).output()?;
     Ok(())
 }
 
@@ -170,11 +170,6 @@ pub fn zip(path: &PathBuf) -> io::Result<()> {
             .arg(path)
             .output()?;
     }
-    Ok(())
-}
-
-pub fn gz(path: &PathBuf) -> io::Result<()> {
-    Command::new("gzip").args([path]).spawn()?;
     Ok(())
 }
 

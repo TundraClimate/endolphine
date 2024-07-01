@@ -34,13 +34,6 @@ pub fn select(app: &mut App) -> io::Result<Action> {
                         crate::filename(path)
                     ))?;
                 }
-                "Create archive(.gz)" => {
-                    shell::gz(path)?;
-                    ui::log(format!(
-                        "Created an archive for \"{}\"",
-                        crate::filename(path)
-                    ))?;
-                }
                 "Extract from archive(Only .zip, .gz, .tar.gz)" => {
                     shell::extract_from_archive(path)?;
                     ui::log(format!(
@@ -61,32 +54,20 @@ pub fn select(app: &mut App) -> io::Result<Action> {
 }
 
 pub fn choices(path: &PathBuf) -> io::Result<Vec<PathBuf>> {
-    if path.is_dir() {
-        let res = vec!["Create archive(.zip)", "Create archive(.tar.gz)"]
-            .into_iter()
-            .map(|s| PathBuf::from(s))
-            .collect();
-        return Ok(res);
-    }
-    let mut files: Vec<PathBuf> = if path.is_file() {
-        vec![
-            "Create archive(.gz)",
-            "Create archive(.zip)",
-            "Create archive(.tar.gz)",
-        ]
+    let mut files: Vec<PathBuf> = vec!["Create archive(.zip)", "Create archive(.tar.gz)"]
         .into_iter()
         .map(|s| PathBuf::from(s))
-        .collect()
-    } else {
-        vec![]
-    };
+        .collect();
+    if path.is_dir() {
+        return Ok(files);
+    }
 
     let mut file = File::open(path)?;
     let mut buffer = [0; 1024];
     let _ = file.read(&mut buffer)?;
 
     if file_manager::is_compressed(path)? {
-        vec!["Extract from archive(Only .zip, .gz, .tar.gz)"]
+        vec!["Extract from archive(Only .zip, .tar.gz)"]
             .into_iter()
             .map(|s| PathBuf::from(s))
             .for_each(|p| files.push(p));
