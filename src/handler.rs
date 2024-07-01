@@ -75,9 +75,9 @@ impl App {
             return Ok(());
         }
         let text = if let Some(dialog) = &self.dialog {
-            self.dialog_prefix(&dialog.action)?
+            self.dialog_prefix(&dialog.action).unwrap_or("".into())
         } else {
-            String::new()
+            "".into()
         };
         if let Some(ref mut dialog) = self.dialog {
             if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
@@ -87,31 +87,23 @@ impl App {
         Ok(())
     }
 
-    fn dialog_prefix(&self, action: &Action) -> Result<String, Box<dyn Error>> {
-        Ok(match action {
-            Action::Create => "New file/directory:".to_string(),
+    fn dialog_prefix(&self, action: &Action) -> Option<String> {
+        match action {
+            Action::Create => Some("New file/directory:".to_string()),
             Action::Delete if self.selected.is_empty() => {
-                if let Some(file) = self.files.require(self.cursor) {
-                    let filename = crate::filename(file);
-                    format!("Delete \"{}\" ? (y/N)", filename)
-                } else {
-                    return Ok("".into());
-                }
+                let file = self.files.require(self.cursor)?;
+                let filename = crate::filename(file);
+                Some(format!("Delete \"{}\" ? (y/N)", filename))
             }
-            Action::Delete => {
-                format!("Delete {} items? (y/N)", self.selected.len())
-            }
+            Action::Delete => Some(format!("Delete {} items? (y/N)", self.selected.len())),
             Action::Rename => {
-                if let Some(file) = self.files.require(self.cursor) {
-                    let filename = crate::filename(file);
-                    format!("Rename \"{}\" :", filename)
-                } else {
-                    return Ok("".into());
-                }
+                let file = self.files.require(self.cursor)?;
+                let filename = crate::filename(file);
+                Some(format!("Rename \"{}\" :", filename))
             }
-            Action::Search => String::from("/"),
-            _ => String::new(),
-        })
+            Action::Search => Some("/".into()),
+            _ => None,
+        }
     }
 
     pub fn auto_selector(&mut self) {
