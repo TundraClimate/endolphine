@@ -74,11 +74,11 @@ impl App {
         if !is_pending(&self) {
             return Ok(());
         }
-        let text = if let Some(dialog) = &self.dialog {
-            self.dialog_prefix(&dialog.action).unwrap_or("".into())
-        } else {
-            "".into()
-        };
+        let text = self
+            .dialog
+            .as_ref()
+            .and_then(|dialog| self.dialog_prefix(&dialog.action))
+            .unwrap_or_else(String::new);
         if let Some(ref mut dialog) = self.dialog {
             if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
                 dialog.write_backend(text)?;
