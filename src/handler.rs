@@ -71,7 +71,7 @@ impl App {
     }
 
     pub fn handle_dialog(&mut self, event: &Event) -> Result<(), Box<dyn Error>> {
-        if is_pending(&self) {
+        if !is_pending(&self) {
             return Ok(());
         }
         let text = if let Some(dialog) = &self.dialog {
