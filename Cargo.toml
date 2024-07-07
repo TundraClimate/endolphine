@@ -15,3 +15,4 @@ regex = "1.10.5"
 tokio = { version = "1.38.0", features = ["full"] }
 tui-input = "*"
 unicode-segmentation = "1.11.0"
+termkit = { git = "https://github.com/TundraClimate/termkit" }

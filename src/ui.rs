@@ -1,4 +1,4 @@
-use crate::{action::Action, app::App, event::EventThread};
+use crate::{action::Action, app::App};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::{Hide, MoveTo, Show},
@@ -10,6 +10,7 @@ use crossterm::{
     },
 };
 use std::{error::Error, io, path::PathBuf};
+use termkit::EventThread;
 use tokio::time::{self, Duration, Instant};
 use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;

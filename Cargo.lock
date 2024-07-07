@@ -430,6 +430,7 @@ dependencies = [
  "dirs",
  "image",
  "regex",
+ "termkit",
  "tokio",
  "tui-input",
  "unicode-segmentation",
@@ -1283,6 +1284,15 @@ name = "target-lexicon"
 version = "0.12.14"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e1fc403891a21bcfb7c37834ba66a547a8f402146eba7265b5a6d88059c9ff2f"
+
+[[package]]
+name = "termkit"
+version = "0.1.0"
+source = "git+https://github.com/TundraClimate/termkit#19b174eb61974fd41573833f51761fecae398c88"
+dependencies = [
+ "crossterm",
+ "tokio",
+]
 
 [[package]]
 name = "thiserror"

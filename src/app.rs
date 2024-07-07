@@ -1,11 +1,4 @@
-use crate::{
-    action::Action,
-    event::{self, EventThread},
-    file_manager::FileManager,
-    shell,
-    ui::Dialog,
-    Args,
-};
+use crate::{action::Action, file_manager::FileManager, shell, ui::Dialog, Args};
 use crossterm::{
     cursor::Hide,
     event::{Event, KeyEventKind},
@@ -13,6 +6,7 @@ use crossterm::{
     terminal::EnterAlternateScreen,
 };
 use std::{error::Error, io, path::PathBuf};
+use termkit::EventThread;
 
 pub struct App {
     pub path: PathBuf,
@@ -53,7 +47,7 @@ impl App {
 
     pub async fn run_app(self) -> Result<(), Box<dyn Error>> {
         let mut app = self;
-        let mut ev = event::spawn();
+        let mut ev = EventThread::spawn();
         app.render_mode(&mut ev).await?;
         Ok(())
     }
