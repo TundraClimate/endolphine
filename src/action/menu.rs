@@ -60,6 +60,10 @@ fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
                 crate::filename(path)
             ))?;
         }
+        "Open gimp" => {
+            shell::gimp(path)?;
+            ui::log(format!("\"{}\" opened gimp", crate::filename(path)))?;
+        }
         _ => {}
     }
     Ok(())
@@ -84,5 +88,11 @@ pub fn choices(path: &PathBuf) -> io::Result<Vec<PathBuf>> {
             .map(|s| PathBuf::from(s))
             .for_each(|p| files.push(p));
     };
+    if file_manager::is_image(path)? {
+        vec!["Open gimp"]
+            .into_iter()
+            .map(|s| PathBuf::from(s))
+            .for_each(|p| files.push(p));
+    }
     Ok(files)
 }

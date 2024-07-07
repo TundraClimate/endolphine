@@ -183,3 +183,8 @@ pub fn tgz(path: &PathBuf) -> io::Result<()> {
     }
     Ok(())
 }
+
+pub fn gimp(path: &PathBuf) -> io::Result<()> {
+    Command::new("gimp").args([path]).spawn()?;
+    Ok(())
+}
