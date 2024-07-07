@@ -1,6 +1,5 @@
 pub mod action;
 pub mod app;
-pub mod event;
 pub mod file_manager;
 pub mod handler;
 pub mod shell;
