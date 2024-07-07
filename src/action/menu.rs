@@ -11,8 +11,10 @@ pub fn open(app: &mut App) -> Action {
             app.menu = Some(cur_file.clone());
             app.cursor = 0;
         }
+        Action::Pending
+    } else {
+        Action::None
     }
-    Action::Pending
 }
 
 pub fn select(app: &mut App) -> io::Result<Action> {
