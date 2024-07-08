@@ -1,24 +1,20 @@
 use crate::{action::Action, app::App};
 use chrono::{DateTime, Local};
 use crossterm::{
-    cursor::{Hide, MoveTo, Show},
+    cursor::MoveTo,
     execute,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal::{
-        self, disable_raw_mode, enable_raw_mode, Clear, ClearType, EnterAlternateScreen,
-        LeaveAlternateScreen,
-    },
+    terminal::{self, Clear, ClearType},
 };
 use std::{error::Error, io, path::PathBuf};
-use termkit::EventThread;
+use termkit::{render, EventThread};
 use tokio::time::{self, Duration, Instant};
 use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;
 
 impl App {
     pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
-        enable_raw_mode()?;
-        execute!(io::stdout(), EnterAlternateScreen, Hide)?;
+        termkit::enable_tui()?;
 
         loop {
             let start = Instant::now();
@@ -33,8 +29,7 @@ impl App {
             }
         }
 
-        disable_raw_mode()?;
-        execute!(io::stdout(), LeaveAlternateScreen, Show)?;
+        termkit::disable_tui()?;
         Ok(())
     }
 
@@ -49,8 +44,8 @@ impl App {
 
         render_header(path, cols, (page, page_size))?;
 
-        render_line((cols, 1), color)?;
-        render_line((cols, rows - 2), color)?;
+        render::horizontal_bar(1, color)?;
+        render::horizontal_bar(rows - 2, color)?;
 
         let buf = (page - 1) * max;
         for p in 0..rows - 4 {
@@ -154,18 +149,6 @@ fn colored_path(file: &PathBuf) -> Color {
     } else {
         Color::Red
     }
-}
-
-fn render_line((cols, rows): (u16, u16), color: Color) -> io::Result<()> {
-    execute!(
-        io::stdout(),
-        MoveTo(0, rows),
-        SetBackgroundColor(color),
-        Clear(ClearType::CurrentLine),
-        Print(" ".repeat(cols as usize)),
-        ResetColor
-    )?;
-    Ok(())
 }
 
 pub struct Dialog {
