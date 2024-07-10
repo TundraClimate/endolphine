@@ -148,7 +148,16 @@ pub fn extract_from_archive(path: &PathBuf) -> io::Result<()> {
 }
 
 fn extract_zip(path: &PathBuf) -> io::Result<()> {
-    let _ = Command::new("unzip").arg("-o").arg(path).output()?;
+    let outpath = path
+        .file_stem()
+        .map(|s| s.to_os_string())
+        .unwrap_or("out".into());
+    let _ = Command::new("unzip")
+        .arg("-o")
+        .arg(path)
+        .arg("-d")
+        .arg(outpath)
+        .output()?;
     Ok(())
 }
 
