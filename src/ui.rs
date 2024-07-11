@@ -16,13 +16,10 @@ impl App {
     pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
         termkit::enable_tui()?;
 
-        loop {
+        while !self.quit {
             let start = Instant::now();
             self.ui()?;
             self.looper(ev).await?;
-            if self.quit {
-                break;
-            }
             let elapsed = start.elapsed();
             if elapsed < Duration::from_millis(10) {
                 time::sleep(Duration::from_millis(10) - elapsed).await;
