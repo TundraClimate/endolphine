@@ -92,14 +92,6 @@ fn render_row(
     } else {
         Color::Reset
     };
-    let mod_time = if let Ok(meta) = file.metadata() {
-        let datetime = DateTime::<Local>::from(meta.modified()?);
-        datetime.format("%Y/%m/%d %H:%M").to_string()
-    } else if is_menu {
-        String::from(" Open to Select ")
-    } else {
-        String::from("       N/A      ")
-    };
     execute!(
         io::stdout(),
         SetBackgroundColor(select),
@@ -109,9 +101,9 @@ fn render_row(
         Print(&file_names),
         ResetColor,
         SetBackgroundColor(select),
-        Print(" ".repeat(cols as usize - file_len - pad - mod_time.len() - 11)),
+        Print(" ".repeat(cols as usize - file_len - pad - 27)),
         Print("| "),
-        Print(mod_time),
+        Print(info_block(file, is_menu)?),
         Print(" |"),
         Print(if is_cursor { " <" } else { "  " }),
     )?;
@@ -128,6 +120,17 @@ fn colored_path(file: &PathBuf) -> Color {
     } else {
         Color::Red
     }
+}
+
+fn info_block(file: &PathBuf, is_menu: bool) -> io::Result<String> {
+    Ok(if let Ok(meta) = file.metadata() {
+        let datetime = DateTime::<Local>::from(meta.modified()?);
+        datetime.format("%Y/%m/%d %H:%M").to_string()
+    } else if is_menu {
+        String::from(" Open to Select ")
+    } else {
+        String::from("       N/A      ")
+    })
 }
 
 pub struct Dialog {
