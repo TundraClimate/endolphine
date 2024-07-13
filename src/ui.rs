@@ -103,7 +103,7 @@ fn render_row(
     execute!(
         io::stdout(),
         SetBackgroundColor(select),
-        Print(if is_cursor { "> " } else { "  " }),
+        Print(if is_cursor { "~>" } else { "  " }),
         Print(" | "),
         SetForegroundColor(colored_path(file)),
         Print(&file_names),
