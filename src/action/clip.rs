@@ -29,7 +29,11 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
 pub fn paste(app: &mut App) -> io::Result<Action> {
     let register = &mut app.register;
     let current_dir = &app.path;
-    let operate = if app.is_cut { shell::mv } else { shell::cp };
+    let operate = if app.is_cut {
+        shell::move_file
+    } else {
+        shell::copy_file
+    };
     register.iter().for_each(|p| {
         if let Some(parent) = p.parent() {
             if parent != current_dir {

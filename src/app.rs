@@ -100,7 +100,7 @@ impl App {
 
     async fn open_editor(&mut self) -> io::Result<()> {
         if let Some(file) = self.cur_file() {
-            shell::nvim(file).await?;
+            shell::editor(file).await?;
         }
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
         self.editor = false;

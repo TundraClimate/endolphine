@@ -47,13 +47,13 @@ fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
     if std::str::from_utf8(&buffer[..read]).is_ok() {
         app.editor = true;
     } else if file_manager::is_image(cur_file)? {
-        shell::eog(cur_file)?;
-    } else if shell::ffprobe_is_video(cur_file) {
-        shell::vlc(cur_file)?;
+        shell::open_picture_viewer(cur_file)?;
+    } else if shell::is_video(cur_file) {
+        shell::open_video_viewer(cur_file)?;
     } else if file_manager::is_compressed(cur_file)? {
-        shell::file_roller_open(cur_file)?;
+        shell::open_archiver(cur_file)?;
     } else if &buffer[..4] == b"%PDF" {
-        shell::evince(cur_file)?;
+        shell::open_pdf_viewer(cur_file)?;
     }
     Ok(())
 }

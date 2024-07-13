@@ -29,7 +29,7 @@ pub fn trash_file(path: &PathBuf) {
     }
 }
 
-pub fn mv(from: &PathBuf, to: &PathBuf) {
+pub fn move_file(from: &PathBuf, to: &PathBuf) {
     if let (Some(from), Some(to)) = (from.to_str(), to.to_str()) {
         Command::new("mv")
             .args(["-f", from, to])
@@ -38,7 +38,7 @@ pub fn mv(from: &PathBuf, to: &PathBuf) {
     }
 }
 
-pub fn cp(from: &PathBuf, to: &PathBuf) {
+pub fn copy_file(from: &PathBuf, to: &PathBuf) {
     if let (Some(from), Some(to)) = (from.to_str(), to.to_str()) {
         Command::new("cp")
             .args(["-f", "-r", from, to])
@@ -47,7 +47,7 @@ pub fn cp(from: &PathBuf, to: &PathBuf) {
     }
 }
 
-pub fn create(path: &PathBuf) {
+pub fn create_file(path: &PathBuf) {
     if let Some(path) = path.to_str() {
         Command::new("touch")
             .args([path])
@@ -87,7 +87,7 @@ pub fn clip(pathes: &Vec<PathBuf>) -> io::Result<()> {
     Ok(())
 }
 
-pub async fn nvim(path: &PathBuf) -> io::Result<()> {
+pub async fn editor(path: &PathBuf) -> io::Result<()> {
     TokioCommand::new("nvim")
         .args([path])
         .stdin(Stdio::inherit())
@@ -98,14 +98,14 @@ pub async fn nvim(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn eog(path: &PathBuf) -> io::Result<()> {
+pub fn open_picture_viewer(path: &PathBuf) -> io::Result<()> {
     if let Some(path) = path.to_str() {
         Command::new("eog").args([path]).spawn()?;
     }
     Ok(())
 }
 
-pub fn ffprobe_is_video(path: &PathBuf) -> bool {
+pub fn is_video(path: &PathBuf) -> bool {
     let output = Command::new("ffprobe")
         .args([
             "-v",
@@ -124,12 +124,12 @@ pub fn ffprobe_is_video(path: &PathBuf) -> bool {
     stdout.trim() == "video"
 }
 
-pub fn vlc(path: &PathBuf) -> io::Result<()> {
+pub fn open_video_viewer(path: &PathBuf) -> io::Result<()> {
     let _ = Command::new("vlc").args([path]).output()?;
     Ok(())
 }
 
-pub fn file_roller_open(path: &PathBuf) -> io::Result<()> {
+pub fn open_archiver(path: &PathBuf) -> io::Result<()> {
     Command::new("file-roller").args([path]).spawn()?;
     Ok(())
 }
@@ -166,7 +166,7 @@ fn extract_tgz(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn evince(path: &PathBuf) -> io::Result<()> {
+pub fn open_pdf_viewer(path: &PathBuf) -> io::Result<()> {
     Command::new("evince").args([path]).spawn()?;
     Ok(())
 }

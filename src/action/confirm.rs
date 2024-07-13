@@ -59,7 +59,7 @@ fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
         let operate = if suff == '/' {
             shell::mkdir
         } else {
-            shell::create
+            shell::create_file
         };
         operate(path);
         ui::log(format!("\"{}\" created", value))?;
@@ -94,7 +94,7 @@ fn confirm_rename(value: &str, cur_file: &PathBuf, renamed: &PathBuf) -> io::Res
             crate::filename(&cur_file),
             value
         ))?;
-        shell::mv(&cur_file, renamed);
+        shell::move_file(&cur_file, renamed);
     }
     Ok(())
 }
