@@ -7,6 +7,7 @@ use crossterm::{
 };
 use std::{error::Error, io, path::PathBuf};
 use termkit::EventThread;
+use tokio::time::{self, Duration, Instant};
 
 pub struct App {
     pub path: PathBuf,
@@ -49,6 +50,23 @@ impl App {
         let mut app = self;
         let mut ev = EventThread::spawn();
         app.render_mode(&mut ev).await?;
+        Ok(())
+    }
+
+    pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
+        termkit::enable_tui()?;
+
+        while !self.quit {
+            let start = Instant::now();
+            self.ui()?;
+            self.looper(ev).await?;
+            let elapsed = start.elapsed();
+            if elapsed < Duration::from_millis(10) {
+                time::sleep(Duration::from_millis(10) - elapsed).await;
+            }
+        }
+
+        termkit::disable_tui()?;
         Ok(())
     }
 

@@ -7,30 +7,12 @@ use crossterm::{
     terminal::{self, Clear, ClearType},
 };
 use std::{error::Error, io, path::PathBuf};
-use termkit::{render, EventThread};
-use tokio::time::{self, Duration, Instant};
+use termkit::render;
 use tui_input::{backend::crossterm as backend, Input};
 use unicode_segmentation::UnicodeSegmentation;
 
 impl App {
-    pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
-        termkit::enable_tui()?;
-
-        while !self.quit {
-            let start = Instant::now();
-            self.ui()?;
-            self.looper(ev).await?;
-            let elapsed = start.elapsed();
-            if elapsed < Duration::from_millis(10) {
-                time::sleep(Duration::from_millis(10) - elapsed).await;
-            }
-        }
-
-        termkit::disable_tui()?;
-        Ok(())
-    }
-
-    fn ui(&self) -> Result<(), Box<dyn Error>> {
+    pub fn ui(&self) -> Result<(), Box<dyn Error>> {
         let (cols, rows) = terminal::size()?;
         let path = self.path.to_str().unwrap_or("/");
         let len = self.files.len();
