@@ -27,40 +27,39 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
 
 pub fn paste(app: &mut App) -> io::Result<Action> {
     let clipboard = shell::clipboard()?;
-    if clipboard.starts_with("file://") {
-        let clipboard: Vec<_> = clipboard.split("\n").collect();
-        let pathes: Vec<_> = clipboard
-            .iter()
-            .filter_map(|s| s.strip_prefix("file://"))
-            .map(|s| PathBuf::from(s))
-            .filter(|p| p.exists())
-            .collect();
-        if pathes.len() != clipboard.len() {
-            return Ok(Action::None);
-        }
-        let operate = if app.is_cut {
-            shell::move_file
-        } else {
-            shell::copy_file
-        };
-        pathes.iter().for_each(|p| {
-            if let Some(parent) = p.parent() {
-                if parent != app.path {
-                    operate(p, &app.path);
-                } else {
-                    if !app.is_cut {
-                        let mut modif = app.path.clone();
-                        modif.push(format!("{}(Copy)", crate::filename(&p)));
-                        operate(p, &modif);
-                    }
+    if !clipboard.starts_with("file://") {
+        return Ok(Action::None);
+    }
+    let pathes: Vec<_> = clipboard
+        .lines()
+        .filter_map(|s| s.strip_prefix("file://"))
+        .map(PathBuf::from)
+        .filter(|p| p.exists())
+        .collect();
+    if pathes.len() != clipboard.lines().count() {
+        return Ok(Action::None);
+    }
+    let operate = if app.is_cut {
+        shell::move_file
+    } else {
+        shell::copy_file
+    };
+    pathes.iter().for_each(|p| {
+        if let Some(parent) = p.parent() {
+            if parent == app.path {
+                if !app.is_cut {
+                    let new_path = app.path.join(format!("{}(Copy)", crate::filename(&p)));
+                    operate(p, &new_path);
                 }
+            } else {
+                operate(p, &app.path);
             }
-        });
-        ui::log(format!("pasted {} items", clipboard.len()))?;
-        if app.is_cut {
-            app.is_cut = false;
-            shell::clean_clipboard()?;
         }
+    });
+    ui::log(format!("pasted {} items", pathes.len()))?;
+    if app.is_cut {
+        app.is_cut = false;
+        shell::clean_clipboard()?;
     }
     Ok(Action::None)
 }
