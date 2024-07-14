@@ -65,26 +65,45 @@ pub fn mkdir(path: &PathBuf) {
     }
 }
 
-pub fn clip(pathes: &Vec<PathBuf>) -> io::Result<()> {
+pub fn clip(pathes: Vec<&PathBuf>) -> io::Result<()> {
     let pathes = pathes
         .iter()
         .map(|p| format!("file://{}", p.to_str().unwrap()))
         .collect::<Vec<String>>()
         .join("\n");
-    let echo = Command::new("echo")
-        .args(["-e", pathes.as_str()])
-        .stdout(Stdio::piped())
-        .spawn()?
-        .wait_with_output()?;
     let xclip = Command::new("xclip")
         .args(["-selection", "clipboard", "-t", "text/uri-list"])
         .stdin(Stdio::piped())
         .spawn()
         .expect("Failed file copy to clipboard");
     if let Some(mut stdin) = xclip.stdin {
-        stdin.write_all(&echo.stdout)?;
+        stdin.write_all(&pathes.as_bytes())?;
     }
     Ok(())
+}
+
+pub fn clean_clipboard() -> io::Result<()> {
+    let xclip = Command::new("xclip")
+        .args(["-selection", "clipboard", "-t", "text/uri-list"])
+        .stdin(Stdio::piped())
+        .spawn()
+        .expect("Failed cleaning clipboard");
+    if let Some(mut stdin) = xclip.stdin {
+        stdin.write_all(b"")?;
+    }
+    Ok(())
+}
+
+pub fn clipboard() -> io::Result<String> {
+    let output = Command::new("xclip")
+        .arg("-selection")
+        .arg("clipboard")
+        .arg("-o")
+        .output()?;
+
+    let clipboard = String::from_utf8(output.stdout).expect("unparsed output");
+
+    Ok(clipboard)
 }
 
 pub async fn editor(path: &PathBuf) -> io::Result<()> {
