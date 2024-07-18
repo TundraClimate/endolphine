@@ -103,7 +103,9 @@ fn render_row(
         SetBackgroundColor(select),
         Print(" ".repeat(cols as usize - file_len - pad - 27)),
         Print("| "),
+        SetForegroundColor(Color::DarkBlue),
         Print(info_block(file, is_menu)?),
+        ResetColor,
         Print(" |"),
         Print(if is_cursor { " <" } else { "  " }),
     )?;
