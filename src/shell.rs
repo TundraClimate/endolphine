@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
     process::{Command, Stdio},
 };
-use tokio::process::Command as TokioCommand;
+use tokio::{process::Command as TokioCommand, task};
 
 pub fn trash_file(path: &PathBuf) {
     let name = crate::filename(&path);
@@ -153,17 +153,19 @@ pub fn open_archiver(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn extract_from_archive(path: &PathBuf) -> io::Result<()> {
-    let mut file = File::open(path)?;
-    let mut buffer = [0; 4];
-    file.read_exact(&mut buffer)?;
+pub fn extract_from_archive(path: PathBuf) {
+    task::spawn_blocking(move || {
+        let mut file = File::open(&path)?;
+        let mut buffer = [0; 4];
+        file.read_exact(&mut buffer)?;
 
-    match &buffer {
-        [0x50, 0x4B, 0x03, 0x04] => extract_zip(path)?,
-        [0x1F, 0x8B, ..] => extract_tgz(path)?,
-        _ => {}
-    }
-    Ok(())
+        match &buffer {
+            [0x50, 0x4B, 0x03, 0x04] => extract_zip(&path)?,
+            [0x1F, 0x8B, ..] => extract_tgz(&path)?,
+            _ => {}
+        }
+        Ok::<(), io::Error>(())
+    });
 }
 
 fn extract_zip(path: &PathBuf) -> io::Result<()> {
@@ -190,26 +192,30 @@ pub fn open_pdf_viewer(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn zip(path: &PathBuf) -> io::Result<()> {
-    if let Some(archive) = path.parent() {
-        let _ = Command::new("zip")
-            .arg("-r")
-            .arg(archive.join(format!("{}.zip", crate::filename(path))))
-            .arg(crate::filename(path))
-            .output()?;
-    }
-    Ok(())
+pub fn zip(path: PathBuf) {
+    task::spawn_blocking(move || {
+        if let Some(archive) = path.parent() {
+            let _ = Command::new("zip")
+                .arg("-r")
+                .arg(archive.join(format!("{}.zip", crate::filename(&path))))
+                .arg(crate::filename(&path))
+                .output()?;
+        }
+        Ok::<(), io::Error>(())
+    });
 }
 
-pub fn tgz(path: &PathBuf) -> io::Result<()> {
-    if let Some(archive) = path.parent() {
-        let _ = Command::new("tar")
-            .arg("czf")
-            .arg(archive.join(format!("{}.tar.gz", crate::filename(path))))
-            .arg(crate::filename(path))
-            .output()?;
-    }
-    Ok(())
+pub fn tgz(path: PathBuf) {
+    task::spawn_blocking(move || {
+        if let Some(archive) = path.parent() {
+            let _ = Command::new("tar")
+                .arg("czf")
+                .arg(archive.join(format!("{}.tar.gz", crate::filename(&path))))
+                .arg(crate::filename(&path))
+                .output()?;
+        }
+        Ok::<(), io::Error>(())
+    });
 }
 
 pub fn gimp(path: &PathBuf) -> io::Result<()> {
