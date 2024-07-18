@@ -173,17 +173,29 @@ fn extract_zip(path: &PathBuf) -> io::Result<()> {
         .file_stem()
         .map(|s| s.to_os_string())
         .unwrap_or("out".into());
-    let _ = Command::new("unzip")
-        .arg("-o")
-        .arg(path)
-        .arg("-d")
-        .arg(outpath)
-        .output()?;
+    if let Some(parent) = path.parent() {
+        if !parent.join(&outpath).exists() {
+            let _ = Command::new("unzip")
+                .arg("-o")
+                .arg(path)
+                .arg("-d")
+                .arg(outpath)
+                .output()?;
+        }
+    }
     Ok(())
 }
 
 fn extract_tgz(path: &PathBuf) -> io::Result<()> {
-    let _ = Command::new("tar").arg("xzf").arg(path).output()?;
+    let outpath = path
+        .file_stem()
+        .map(|s| PathBuf::from(s).file_stem().unwrap().to_os_string())
+        .unwrap_or("out".into());
+    if let Some(parent) = path.parent() {
+        if !parent.join(&outpath).exists() {
+            let _ = Command::new("tar").arg("xzf").arg(path).output()?;
+        }
+    }
     Ok(())
 }
 
