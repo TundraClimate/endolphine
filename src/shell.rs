@@ -1,6 +1,6 @@
 use std::{
-    fs::File,
-    io::{self, Read, Write},
+    ffi::OsString,
+    io::{self, Write},
     path::PathBuf,
     process::{Command, Stdio},
 };
@@ -153,49 +153,18 @@ pub fn open_archiver(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn extract_from_archive(path: PathBuf) {
-    task::spawn_blocking(move || {
-        let mut file = File::open(&path)?;
-        let mut buffer = [0; 4];
-        file.read_exact(&mut buffer)?;
-
-        match &buffer {
-            [0x50, 0x4B, 0x03, 0x04] => extract_zip(&path)?,
-            [0x1F, 0x8B, ..] => extract_tgz(&path)?,
-            _ => {}
-        }
-        Ok::<(), io::Error>(())
-    });
-}
-
-fn extract_zip(path: &PathBuf) -> io::Result<()> {
-    let outpath = path
-        .file_stem()
-        .map(|s| s.to_os_string())
-        .unwrap_or("out".into());
-    if let Some(parent) = path.parent() {
-        if !parent.join(&outpath).exists() {
-            let _ = Command::new("unzip")
-                .arg("-o")
-                .arg(path)
-                .arg("-d")
-                .arg(outpath)
-                .output()?;
-        }
-    }
+pub fn extract_zip(path: &PathBuf, outpath: OsString) -> io::Result<()> {
+    let _ = Command::new("unzip")
+        .arg("-o")
+        .arg(path)
+        .arg("-d")
+        .arg(outpath)
+        .output()?;
     Ok(())
 }
 
-fn extract_tgz(path: &PathBuf) -> io::Result<()> {
-    let outpath = path
-        .file_stem()
-        .map(|s| PathBuf::from(s).file_stem().unwrap().to_os_string())
-        .unwrap_or("out".into());
-    if let Some(parent) = path.parent() {
-        if !parent.join(&outpath).exists() {
-            let _ = Command::new("tar").arg("xzf").arg(path).output()?;
-        }
-    }
+pub fn extract_tgz(path: &PathBuf) -> io::Result<()> {
+    let _ = Command::new("tar").arg("xzf").arg(path).output()?;
     Ok(())
 }
 

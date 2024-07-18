@@ -54,7 +54,7 @@ fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
             ))?;
         }
         "Extract from archive(Only .zip, .tar.gz)" => {
-            shell::extract_from_archive(path.clone());
+            file_manager::extract_from_archive(path.clone());
             ui::log(format!(
                 "Archive \"{}\" has been extracted",
                 crate::filename(path)

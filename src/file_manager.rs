@@ -1,10 +1,11 @@
-use crate::app::App;
+use crate::{app::App, shell, ui};
 use image::io::Reader as ImageReader;
 use std::{
     fs::File,
     io::{self, Read},
     path::PathBuf,
 };
+use tokio::task;
 
 pub struct FileManager {
     files: Vec<PathBuf>,
@@ -71,4 +72,49 @@ pub fn is_compressed(path: &PathBuf) -> io::Result<bool> {
     };
 
     Ok(is_compressed)
+}
+
+pub fn extract_from_archive(path: PathBuf) {
+    task::spawn_blocking(move || {
+        let mut file = File::open(&path)?;
+        let mut buffer = [0; 4];
+        file.read_exact(&mut buffer)?;
+
+        match &buffer {
+            [0x50, 0x4B, 0x03, 0x04] => extract_zip(&path)?,
+            [0x1F, 0x8B, ..] => extract_tgz(&path)?,
+            _ => {}
+        }
+        Ok::<(), io::Error>(())
+    });
+}
+
+fn extract_zip(path: &PathBuf) -> io::Result<()> {
+    let outpath = path
+        .file_stem()
+        .map(|s| s.to_os_string())
+        .unwrap_or("out".into());
+    if let Some(parent) = path.parent() {
+        if !parent.join(&outpath).exists() {
+            shell::extract_zip(&path, outpath)?;
+        } else {
+            ui::log(format!("Could not extract {}", crate::filename(&path)))?;
+        }
+    }
+    Ok(())
+}
+
+fn extract_tgz(path: &PathBuf) -> io::Result<()> {
+    if let Some(parent) = path.parent() {
+        let outpath = path
+            .file_stem()
+            .map(|s| PathBuf::from(s).file_stem().unwrap().to_os_string())
+            .unwrap_or("out".into());
+        if !parent.join(&outpath).exists() {
+            shell::extract_tgz(&path)?;
+        } else {
+            ui::log(format!("Could not extract {}", crate::filename(&path)))?;
+        }
+    }
+    Ok(())
 }
