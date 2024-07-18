@@ -40,23 +40,17 @@ fn handle_menu(selected: &PathBuf, menu: &Option<PathBuf>) -> io::Result<()> {
 fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
     match name {
         "Create archive(.zip)" => {
-            shell::zip(path.clone());
-            ui::log(format!(
-                "Created an archive for \"{}\"",
-                crate::filename(path)
-            ))?;
+            ui::log(format!("Archive \"{}\"...", crate::filename(path)))?;
+            file_manager::zip(path.clone());
         }
         "Create archive(.tar.gz)" => {
-            shell::tgz(path.clone());
-            ui::log(format!(
-                "Created an archive for \"{}\"",
-                crate::filename(path)
-            ))?;
+            ui::log(format!("Archive \"{}\"...", crate::filename(path)))?;
+            file_manager::tgz(path.clone());
         }
         "Extract from archive(Only .zip, .tar.gz)" => {
             file_manager::extract_from_archive(path.clone());
             ui::log(format!(
-                "Archive \"{}\" has been extracted",
+                "Extracting archive \"{}\"...",
                 crate::filename(path)
             ))?;
         }

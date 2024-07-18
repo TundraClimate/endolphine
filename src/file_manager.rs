@@ -97,6 +97,10 @@ fn extract_zip(path: &PathBuf) -> io::Result<()> {
     if let Some(parent) = path.parent() {
         if !parent.join(&outpath).exists() {
             shell::extract_zip(&path, outpath)?;
+            ui::log(format!(
+                "Archive \"{}\" has been extracted",
+                crate::filename(path)
+            ))?;
         } else {
             ui::log(format!("Could not extract {}", crate::filename(&path)))?;
         }
@@ -112,9 +116,35 @@ fn extract_tgz(path: &PathBuf) -> io::Result<()> {
             .unwrap_or("out".into());
         if !parent.join(&outpath).exists() {
             shell::extract_tgz(&path)?;
+            ui::log(format!(
+                "Archive \"{}\" has been extracted",
+                crate::filename(path)
+            ))?;
         } else {
             ui::log(format!("Could not extract {}", crate::filename(&path)))?;
         }
     }
     Ok(())
+}
+
+pub fn zip(path: PathBuf) {
+    tokio::spawn(async move {
+        shell::zip(&path).await?;
+        ui::log(format!(
+            "Created an archive for \"{}\"",
+            crate::filename(&path)
+        ))?;
+        Ok::<(), io::Error>(())
+    });
+}
+
+pub fn tgz(path: PathBuf) {
+    tokio::spawn(async move {
+        shell::tgz(&path).await?;
+        ui::log(format!(
+            "Created an archive for \"{}\"",
+            crate::filename(&path)
+        ))?;
+        Ok::<(), io::Error>(())
+    });
 }
