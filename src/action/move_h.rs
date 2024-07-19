@@ -62,5 +62,5 @@ fn open_dir(app: &mut App, cur_file: &PathBuf) {
     app.path = cur_file.clone();
     app.cursor = 0;
     app.selected.clear();
-    app.is_search = false;
+    app.finder = None;
 }

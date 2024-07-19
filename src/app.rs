@@ -1,4 +1,4 @@
-use crate::{action::Action, file_manager::FileManager, shell, ui::Dialog, Args};
+use crate::{action::Action, file_manager::FileManager, finder::Finder, shell, ui::Dialog, Args};
 use crossterm::{
     cursor::Hide,
     event::{Event, KeyEventKind},
@@ -17,8 +17,8 @@ pub struct App {
     pub dialog: Option<Dialog>,
     pub selected: Vec<usize>,
     pub menu: Option<PathBuf>,
+    pub finder: Option<Finder>,
     pub is_cut: bool,
-    pub is_search: bool,
     pub editor: bool,
     pub quit: bool,
 }
@@ -33,8 +33,8 @@ impl App {
             dialog: None,
             selected: vec![],
             menu: None,
+            finder: None,
             is_cut: false,
-            is_search: false,
             editor: false,
             quit: false,
         }
@@ -111,5 +111,9 @@ impl App {
 
     pub fn menu_opened(&self) -> bool {
         self.menu.is_some()
+    }
+
+    pub fn is_search(&self) -> bool {
+        self.finder.is_some()
     }
 }

@@ -48,7 +48,7 @@ impl App {
     fn bar_color(&self) -> Color {
         match (
             self.selected.is_empty(),
-            self.is_search,
+            self.is_search(),
             self.dialog.is_some(),
             self.menu.is_some(),
         ) {

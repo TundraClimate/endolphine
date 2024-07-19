@@ -48,9 +48,7 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
             _ => {}
         }
     }
-    if !app.is_search {
-        app.dialog = None;
-    }
+    app.dialog = None;
     Ok(Action::None)
 }
 

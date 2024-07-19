@@ -1,13 +1,13 @@
 pub mod action;
 pub mod app;
 pub mod file_manager;
+pub mod finder;
 pub mod handler;
 pub mod shell;
 pub mod ui;
 
 use crate::{action::menu, app::App};
 use clap::Parser;
-use regex::Regex;
 use std::{ffi::OsStr, path::PathBuf};
 
 #[derive(Parser)]
@@ -28,9 +28,9 @@ pub fn dir_pathes(app: Option<&App>, dir: &PathBuf) -> Vec<PathBuf> {
         .into_iter()
         .flat_map(|d| d.filter_map(Result::ok).map(|e| e.path()))
         .filter(|p| match app {
-            Some(app) if app.is_search => match &app.dialog {
-                Some(dialog) => {
-                    let regex = Regex::new(dialog.input.value()).ok();
+            Some(app) if app.is_search() => match &app.finder {
+                Some(finder) => {
+                    let regex = finder.regex();
                     regex.map_or(true, |r| r.is_match(filename(p)))
                 }
                 None => true,

@@ -24,7 +24,7 @@ pub fn select(app: &mut App) -> io::Result<Action> {
     app.cursor = 0;
     app.dialog = None;
     app.selected.clear();
-    app.is_search = false;
+    app.finder = None;
     app.menu = None;
     Ok(Action::None)
 }

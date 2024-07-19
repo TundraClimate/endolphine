@@ -82,6 +82,9 @@ impl App {
         if let Some(ref mut dialog) = self.dialog {
             if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
                 dialog.write_backend(text)?;
+                if let Some(ref mut finder) = self.finder {
+                    finder.search(dialog.input.value());
+                }
             }
         }
         Ok(())
