@@ -1,4 +1,4 @@
-use crate::{action::Action, file_manager::FileManager, finder::Finder, shell, ui::Dialog, Args};
+use crate::{action::Action, command, file_manager::FileManager, finder::Finder, ui::Dialog, Args};
 use crossterm::{
     cursor::Hide,
     event::{Event, KeyEventKind},
@@ -98,7 +98,7 @@ impl App {
 
     async fn open_editor(&mut self) -> io::Result<()> {
         if let Some(file) = self.cur_file() {
-            shell::editor(file).await?;
+            command::editor(file).await?;
         }
         execute!(io::stdout(), EnterAlternateScreen, Hide)?;
         self.editor = false;

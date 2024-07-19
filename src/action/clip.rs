@@ -1,4 +1,4 @@
-use crate::{action::Action, shell, ui, App};
+use crate::{action::Action, command, ui, App};
 use std::{io, path::PathBuf};
 
 pub fn cut(app: &mut App) -> Action {
@@ -10,7 +10,7 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
     if app.selected.is_empty() {
         if let Some(file) = app.cur_file() {
             ui::log(format!("\"{}\" copied", crate::filename(&file)))?;
-            shell::clip(vec![file])?;
+            command::clip(vec![file])?;
         }
     } else {
         ui::log(format!("{} items copied", app.selected.len()))?;
@@ -19,14 +19,14 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
             .iter()
             .filter_map(|i| app.files.require(*i))
             .collect();
-        shell::clip(files)?;
+        command::clip(files)?;
         app.selected.clear();
     }
     Ok(Action::None)
 }
 
 pub fn paste(app: &mut App) -> io::Result<Action> {
-    let clipboard = shell::clipboard()?;
+    let clipboard = command::clipboard()?;
     if !clipboard.starts_with("file://") {
         return Ok(Action::None);
     }
@@ -40,9 +40,9 @@ pub fn paste(app: &mut App) -> io::Result<Action> {
         return Ok(Action::None);
     }
     let operate = if app.is_cut {
-        shell::move_file
+        command::move_file
     } else {
-        shell::copy_file
+        command::copy_file
     };
     pathes.iter().for_each(|p| {
         if let Some(parent) = p.parent() {
@@ -59,7 +59,7 @@ pub fn paste(app: &mut App) -> io::Result<Action> {
     ui::log(format!("pasted {} items", pathes.len()))?;
     if app.is_cut {
         app.is_cut = false;
-        shell::clean_clipboard()?;
+        command::clean_clipboard()?;
     }
     Ok(Action::None)
 }

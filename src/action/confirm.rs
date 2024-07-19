@@ -1,6 +1,6 @@
 use crate::{
     action::Action,
-    shell,
+    command,
     ui::{self, Dialog},
     App,
 };
@@ -55,9 +55,9 @@ pub fn confirm(app: &mut App) -> io::Result<Action> {
 fn confirm_create(value: &str, path: &PathBuf) -> io::Result<()> {
     if let Some(suff) = value.chars().last() {
         let operate = if suff == '/' {
-            shell::mkdir
+            command::mkdir
         } else {
-            shell::create_file
+            command::create_file
         };
         operate(path);
         ui::log(format!("\"{}\" created", value))?;
@@ -70,13 +70,13 @@ fn confirm_delete(app: &App, value: &str) -> io::Result<()> {
         if app.selected.is_empty() {
             if let Some(file) = app.files.require(app.cursor) {
                 ui::log(format!("\"{}\" deleted", crate::filename(&file)))?;
-                shell::trash_file(&file);
+                command::trash_file(&file);
             }
         } else {
             ui::log(format!("{} items deleted", app.selected.len()))?;
             app.selected.iter().for_each(|i| {
                 if let Some(file) = app.files.require(*i) {
-                    shell::trash_file(file);
+                    command::trash_file(file);
                 }
             });
         }
@@ -92,7 +92,7 @@ fn confirm_rename(value: &str, cur_file: &PathBuf, renamed: &PathBuf) -> io::Res
             crate::filename(&cur_file),
             value
         ))?;
-        shell::move_file(&cur_file, renamed);
+        command::move_file(&cur_file, renamed);
     }
     Ok(())
 }

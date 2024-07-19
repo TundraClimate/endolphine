@@ -1,4 +1,4 @@
-use crate::{app::App, shell, ui};
+use crate::{app::App, command, ui};
 use image::io::Reader as ImageReader;
 use std::{
     fs::File,
@@ -96,7 +96,7 @@ fn extract_zip(path: &PathBuf) -> io::Result<()> {
         .unwrap_or("out".into());
     if let Some(parent) = path.parent() {
         if !parent.join(&outpath).exists() {
-            shell::extract_zip(&path, outpath)?;
+            command::extract_zip(&path, outpath)?;
             ui::log(format!(
                 "Archive \"{}\" has been extracted",
                 crate::filename(path)
@@ -115,7 +115,7 @@ fn extract_tgz(path: &PathBuf) -> io::Result<()> {
             .map(|s| PathBuf::from(s).file_stem().unwrap().to_os_string())
             .unwrap_or("out".into());
         if !parent.join(&outpath).exists() {
-            shell::extract_tgz(&path)?;
+            command::extract_tgz(&path)?;
             ui::log(format!(
                 "Archive \"{}\" has been extracted",
                 crate::filename(path)
@@ -129,7 +129,7 @@ fn extract_tgz(path: &PathBuf) -> io::Result<()> {
 
 pub fn zip(path: PathBuf) {
     tokio::spawn(async move {
-        shell::zip(&path).await?;
+        command::zip(&path).await?;
         ui::log(format!(
             "Created an archive for \"{}\"",
             crate::filename(&path)
@@ -140,7 +140,7 @@ pub fn zip(path: PathBuf) {
 
 pub fn tgz(path: PathBuf) {
     tokio::spawn(async move {
-        shell::tgz(&path).await?;
+        command::tgz(&path).await?;
         ui::log(format!(
             "Created an archive for \"{}\"",
             crate::filename(&path)

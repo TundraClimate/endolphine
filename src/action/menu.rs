@@ -1,4 +1,4 @@
-use crate::{action::Action, file_manager, shell, ui, App};
+use crate::{action::Action, command, file_manager, ui, App};
 use std::{
     fs::File,
     io::{self, Read},
@@ -51,7 +51,7 @@ fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
             ))?;
         }
         "Open gimp" => {
-            shell::gimp(path)?;
+            command::gimp(path)?;
             ui::log(format!("\"{}\" opened gimp", crate::filename(path)))?;
         }
         _ => {}

@@ -1,9 +1,9 @@
 pub mod action;
 pub mod app;
+pub mod command;
 pub mod file_manager;
 pub mod finder;
 pub mod handler;
-pub mod shell;
 pub mod ui;
 
 use crate::{action::menu, app::App};
