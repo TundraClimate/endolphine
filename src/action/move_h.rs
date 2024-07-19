@@ -61,6 +61,4 @@ fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
 fn open_dir(app: &mut App, cur_file: &PathBuf) {
     app.path = cur_file.clone();
     app.cursor = 0;
-    app.selected.clear();
-    app.finder = None;
 }

@@ -22,11 +22,7 @@ pub fn select(app: &mut App) -> io::Result<Action> {
         handle_menu(selected, &app.menu)?;
     }
     app.cursor = 0;
-    app.dialog = None;
-    app.selected.clear();
-    app.finder = None;
-    app.menu = None;
-    Ok(Action::None)
+    Ok(Action::Clean)
 }
 
 fn handle_menu(selected: &PathBuf, menu: &Option<PathBuf>) -> io::Result<()> {
