@@ -1,15 +1,18 @@
-use crate::{action::Action, app::App};
-use chrono::{DateTime, Local};
+use crate::App;
 use crossterm::{
     cursor::MoveTo,
     execute,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal::{self, Clear, ClearType},
+    style::{Color, Print, ResetColor},
+    terminal,
 };
-use std::{error::Error, io, path::PathBuf};
+use std::{error::Error, io};
 use termkit::render;
-use tui_input::{backend::crossterm as backend, Input};
-use unicode_segmentation::UnicodeSegmentation;
+
+pub mod dialog;
+mod file_rows;
+mod header;
+
+pub use dialog::*;
 
 impl App {
     pub fn ui(&self) -> Result<(), Box<dyn Error>> {
@@ -19,10 +22,10 @@ impl App {
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
         let page_size = (len + max - 1) / max;
+
+        header::render(path, cols, (page, page_size))?;
+
         let color = self.bar_color();
-
-        render_header(path, cols, (page, page_size))?;
-
         render::horizontal_bar(1, color)?;
         render::horizontal_bar(rows - 2, color)?;
 
@@ -31,7 +34,7 @@ impl App {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2))?;
             if let Some(file) = self.files.require(i + buf) {
-                render_row(
+                file_rows::render(
                     file,
                     self.menu_opened(),
                     self.cursor == i + buf,
@@ -59,116 +62,4 @@ impl App {
             _ => Color::Grey,
         }
     }
-}
-
-fn render_header(path: &str, cols: u16, (page, page_size): (usize, usize)) -> io::Result<()> {
-    execute!(
-        io::stdout(),
-        MoveTo(2, 0),
-        Print(path),
-        Print(" ".repeat(cols as usize - path.len() - 16)),
-        MoveTo(cols - 16, 0),
-        Print(format!("page {} / {}  ", page, page_size))
-    )?;
-    Ok(())
-}
-
-fn render_row(
-    file: &PathBuf,
-    is_menu: bool,
-    is_cursor: bool,
-    is_selected: bool,
-    cols: u16,
-) -> io::Result<()> {
-    let file_names = crate::filename(&file).chars().take(65).collect::<String>();
-    let file_len = file_names.graphemes(true).count();
-    let pad = (file_names.len() - file_len) / 2;
-    let select = if is_selected {
-        Color::Rgb {
-            r: 100,
-            g: 100,
-            b: 100,
-        }
-    } else {
-        Color::Reset
-    };
-    execute!(
-        io::stdout(),
-        SetBackgroundColor(select),
-        Print(if is_cursor { "~>" } else { "  " }),
-        Print(" | "),
-        SetForegroundColor(colored_path(file)),
-        Print(&file_names),
-        ResetColor,
-        SetBackgroundColor(select),
-        Print(" ".repeat(cols as usize - file_len - pad - 27)),
-        Print("| "),
-        SetForegroundColor(Color::DarkBlue),
-        Print(info_block(file, is_menu)?),
-        ResetColor,
-        Print(" |"),
-        Print(if is_cursor { " <" } else { "  " }),
-    )?;
-    Ok(())
-}
-
-fn colored_path(file: &PathBuf) -> Color {
-    if file.is_symlink() {
-        Color::Magenta
-    } else if file.is_dir() {
-        Color::Green
-    } else if file.is_file() {
-        Color::Yellow
-    } else {
-        Color::Red
-    }
-}
-
-fn info_block(file: &PathBuf, is_menu: bool) -> io::Result<String> {
-    Ok(if let Ok(meta) = file.metadata() {
-        let datetime = DateTime::<Local>::from(meta.modified()?);
-        datetime.format("%Y/%m/%d %H:%M").to_string()
-    } else if is_menu {
-        String::from(" Open to Select ")
-    } else {
-        String::from("       N/A      ")
-    })
-}
-
-pub struct Dialog {
-    pub input: Input,
-    pub action: Action,
-}
-
-impl From<Action> for Dialog {
-    fn from(value: Action) -> Self {
-        Dialog {
-            action: value,
-            input: "".into(),
-        }
-    }
-}
-
-impl Dialog {
-    pub fn write_backend<S: AsRef<str>>(&self, text: S) -> io::Result<()> {
-        let text = text.as_ref();
-        execute!(io::stdout(), MoveTo(1, 40), Print(text))?;
-        backend::write(
-            &mut io::stdout(),
-            self.input.value(),
-            self.input.cursor(),
-            ((text.len() + 2) as u16, 40),
-            30,
-        )
-    }
-}
-
-pub fn log(text: String) -> io::Result<()> {
-    execute!(
-        io::stdout(),
-        MoveTo(1, 40),
-        Clear(ClearType::CurrentLine),
-        Print(text)
-    )?;
-    Ok(())
 }
