@@ -82,8 +82,8 @@ impl App {
         if let Some(ref mut dialog) = self.dialog {
             if self.menu.is_none() && dialog.input.handle_event(&event).is_some() {
                 dialog.write_backend(text)?;
-                if let Some(ref mut finder) = self.finder {
-                    finder.search(dialog.input.value());
+                if self.finder.is_search() {
+                    self.finder.search(dialog.input.value());
                 }
             }
         }
@@ -94,13 +94,13 @@ impl App {
         match action {
             Action::Create => Some("New file/directory:".to_string()),
             Action::Delete if self.selected.is_empty() => {
-                let file = self.files.require(self.cursor)?;
+                let file = self.finder.require(self.cursor)?;
                 let filename = crate::filename(file);
                 Some(format!("Delete \"{}\" ? (y/N)", filename))
             }
             Action::Delete => Some(format!("Delete {} items? (y/N)", self.selected.len())),
             Action::Rename => {
-                let file = self.files.require(self.cursor)?;
+                let file = self.finder.require(self.cursor)?;
                 let filename = crate::filename(file);
                 Some(format!("Rename \"{}\" :", filename))
             }

@@ -18,7 +18,7 @@ impl App {
     pub fn ui(&self) -> Result<(), Box<dyn Error>> {
         let (cols, rows) = terminal::size()?;
         let path = self.path.to_str().unwrap_or("/");
-        let len = self.files.len();
+        let len = self.finder.len();
         let max = (rows - 4) as usize;
         let page = (self.cursor / max) + 1;
         let page_size = (len + max - 1) / max;
@@ -33,7 +33,7 @@ impl App {
         for p in 0..rows - 4 {
             let i = p as usize;
             execute!(io::stdout(), MoveTo(0, p + 2))?;
-            if let Some(file) = self.files.require(i + buf) {
+            if let Some(file) = self.finder.require(i + buf) {
                 file_rows::render(
                     file,
                     self.menu_opened(),
@@ -51,7 +51,7 @@ impl App {
     fn bar_color(&self) -> Color {
         match (
             self.selected.is_empty(),
-            self.is_search(),
+            self.finder.is_search(),
             self.dialog.is_some(),
             self.menu.is_some(),
         ) {

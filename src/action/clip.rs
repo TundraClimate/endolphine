@@ -17,7 +17,7 @@ pub fn copy(app: &mut App) -> io::Result<Action> {
         let files: Vec<_> = app
             .selected
             .iter()
-            .filter_map(|i| app.files.require(*i))
+            .filter_map(|i| app.finder.require(*i))
             .collect();
         command::clip(files)?;
         app.selected.clear();

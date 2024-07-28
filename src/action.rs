@@ -1,6 +1,5 @@
 use crate::{
     app::App,
-    finder::Finder,
     ui::{self, Dialog},
 };
 use crossterm::{
@@ -41,8 +40,8 @@ pub enum Action {
 pub fn clean(app: &mut App) -> io::Result<Action> {
     let (_, rows) = terminal::size()?;
     execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
-    if !app.dialog.is_some() {
-        app.finder = None;
+    if app.finder.is_search() || !app.dialog.is_some() {
+        app.finder.cancel_search();
     }
     app.dialog = None;
     app.selected.clear();
@@ -55,6 +54,6 @@ pub fn search(app: &mut App) -> io::Result<Action> {
     let dialog = Dialog::from(Action::Search);
     dialog.write_backend("/")?;
     app.dialog = Some(dialog);
-    app.finder = Some(Finder::new());
+    app.finder.search("");
     Ok(Action::Pending)
 }

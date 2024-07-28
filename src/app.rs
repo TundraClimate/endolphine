@@ -1,6 +1,4 @@
-use crate::{
-    action::Action, command, file_manager::FileManager, finder::Finder, menu, ui::Dialog, Args,
-};
+use crate::{action::Action, command, finder::Finder, menu, ui::Dialog, Args};
 use crossterm::{
     cursor::Hide,
     event::{Event, KeyEventKind},
@@ -13,13 +11,12 @@ use tokio::time::{self, Duration, Instant};
 
 pub struct App {
     pub path: PathBuf,
-    pub files: FileManager,
     pub cursor: usize,
     pub action: Action,
     pub dialog: Option<Dialog>,
     pub selected: Vec<usize>,
     pub menu: Option<PathBuf>,
-    pub finder: Option<Finder>,
+    pub finder: Finder,
     pub is_cut: bool,
     pub editor: bool,
     pub quit: bool,
@@ -29,13 +26,12 @@ impl App {
     pub fn new(args: Args) -> App {
         App {
             path: args.path.canonicalize().unwrap().clone(),
-            files: FileManager::from(&args.path),
             cursor: 0,
             action: Action::None,
             dialog: None,
             selected: vec![],
             menu: None,
-            finder: None,
+            finder: Finder::new(&args.path),
             is_cut: false,
             editor: false,
             quit: false,
@@ -78,7 +74,7 @@ impl App {
         self.handle_action()?;
         self.auto_selector();
         let rows = self.rows(&self.path);
-        self.files.update(rows);
+        self.finder.update(rows);
         Ok(())
     }
 
@@ -86,16 +82,16 @@ impl App {
         if let Some(ref path) = self.menu {
             return menu::choices(&path).unwrap_or(vec![]);
         }
-        match self.finder {
-            Some(ref finder) => crate::dir_pathes(path)
-                .into_iter()
-                .filter(|p| {
-                    let regex = finder.regex();
-                    regex.map_or(true, |r| r.is_match(crate::filename(p)))
-                })
-                .collect(),
-            None => crate::dir_pathes(path),
-        }
+        crate::dir_pathes(path)
+            .into_iter()
+            .filter(|p| {
+                let regex = self.finder.regex();
+                match regex {
+                    Some(regex) => regex.map_or(true, |r| r.is_match(crate::filename(p))),
+                    None => true,
+                }
+            })
+            .collect()
     }
 
     async fn receive_event(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
@@ -125,14 +121,10 @@ impl App {
     }
 
     pub fn cur_file(&self) -> Option<&PathBuf> {
-        self.files.require(self.cursor)
+        self.finder.require(self.cursor)
     }
 
     pub fn menu_opened(&self) -> bool {
         self.menu.is_some()
-    }
-
-    pub fn is_search(&self) -> bool {
-        self.finder.is_some()
     }
 }

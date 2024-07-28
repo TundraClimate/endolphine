@@ -1,7 +1,6 @@
 pub mod action;
 pub mod app;
 pub mod command;
-pub mod file_manager;
 pub mod finder;
 pub mod handler;
 pub mod misc;

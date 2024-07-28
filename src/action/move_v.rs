@@ -2,7 +2,7 @@ use crate::{action::Action, App};
 
 pub fn move_cursor(app: &mut App, offset: isize) -> Action {
     let cursor = app.cursor as isize;
-    let len = app.files.len() as isize;
+    let len = app.finder.len() as isize;
 
     if len != 0 {
         app.cursor = if offset < 0 {
