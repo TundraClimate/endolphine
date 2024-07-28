@@ -14,7 +14,7 @@ pub struct FileManager {
 impl FileManager {
     pub fn new(app: &App) -> FileManager {
         FileManager {
-            files: crate::dir_pathes(Some(app), &app.path),
+            files: crate::rows(app, &app.path),
         }
     }
 
@@ -34,7 +34,7 @@ impl FileManager {
 impl From<&PathBuf> for FileManager {
     fn from(value: &PathBuf) -> Self {
         FileManager {
-            files: crate::dir_pathes(None, value),
+            files: crate::dir_pathes(value),
         }
     }
 }

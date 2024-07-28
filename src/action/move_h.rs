@@ -9,7 +9,7 @@ pub fn back(app: &mut App) -> Action {
     if let Some(parent) = app.path.parent() {
         let before = &app.path.clone();
         app.path = parent.to_path_buf();
-        let pathes = crate::dir_pathes(None, &app.path);
+        let pathes = crate::dir_pathes(&app.path);
         let cursor = pathes
             .iter()
             .enumerate()
