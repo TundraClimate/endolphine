@@ -1,4 +1,3 @@
-use crate::App;
 use std::path::PathBuf;
 
 pub struct FileManager {
@@ -6,10 +5,8 @@ pub struct FileManager {
 }
 
 impl FileManager {
-    pub fn new(app: &App) -> FileManager {
-        FileManager {
-            files: crate::rows(app, &app.path),
-        }
+    pub fn update(&mut self, pathes: Vec<PathBuf>) {
+        self.files = pathes;
     }
 
     pub fn require(&self, i: usize) -> Option<&PathBuf> {

@@ -1,4 +1,6 @@
-use crate::{action::Action, command, file_manager::FileManager, finder::Finder, ui::Dialog, Args};
+use crate::{
+    action::Action, command, file_manager::FileManager, finder::Finder, menu, ui::Dialog, Args,
+};
 use crossterm::{
     cursor::Hide,
     event::{Event, KeyEventKind},
@@ -75,8 +77,25 @@ impl App {
         self.receive_event(ev).await?;
         self.handle_action()?;
         self.auto_selector();
-        self.files = FileManager::new(self);
+        let rows = self.rows(&self.path);
+        self.files.update(rows);
         Ok(())
+    }
+
+    fn rows(&self, path: &PathBuf) -> Vec<PathBuf> {
+        if let Some(ref path) = self.menu {
+            return menu::choices(&path).unwrap_or(vec![]);
+        }
+        match self.finder {
+            Some(ref finder) => crate::dir_pathes(path)
+                .into_iter()
+                .filter(|p| {
+                    let regex = finder.regex();
+                    regex.map_or(true, |r| r.is_match(crate::filename(p)))
+                })
+                .collect(),
+            None => crate::dir_pathes(path),
+        }
     }
 
     async fn receive_event(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {

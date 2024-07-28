@@ -30,22 +30,6 @@ pub fn dir_pathes(dir: &PathBuf) -> Vec<PathBuf> {
     files
 }
 
-fn rows(app: &App, path: &PathBuf) -> Vec<PathBuf> {
-    if let Some(ref path) = app.menu {
-        return menu::choices(&path).unwrap_or(vec![]);
-    }
-    match app.finder {
-        Some(ref finder) => crate::dir_pathes(path)
-            .into_iter()
-            .filter(|p| {
-                let regex = finder.regex();
-                regex.map_or(true, |r| r.is_match(crate::filename(p)))
-            })
-            .collect(),
-        None => crate::dir_pathes(path),
-    }
-}
-
 fn sort_by_case(files: &mut Vec<PathBuf>) {
     files.sort_by_key(|p| {
         crate::filename(&p)
