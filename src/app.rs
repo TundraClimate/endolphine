@@ -44,14 +44,14 @@ impl App {
         Ok(self)
     }
 
-    pub async fn run_app(self) -> Result<(), Box<dyn Error>> {
+    pub async fn launch(self) -> Result<(), Box<dyn Error>> {
         let mut app = self;
         let mut ev = EventThread::spawn();
-        app.render_mode(&mut ev).await?;
+        app.run_app(&mut ev).await?;
         Ok(())
     }
 
-    pub async fn render_mode(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
+    pub async fn run_app(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
         termkit::enable_tui()?;
 
         while !self.quit {
