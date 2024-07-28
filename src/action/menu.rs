@@ -1,4 +1,4 @@
-use crate::{action::Action, command, file_manager, ui, App};
+use crate::{action::Action, command, misc, ui, App};
 use std::{
     fs::File,
     io::{self, Read},
@@ -37,14 +37,14 @@ fn handle_choice(name: &str, path: &PathBuf) -> io::Result<()> {
     match name {
         "Create archive(.zip)" => {
             ui::log(format!("Archive \"{}\"...", crate::filename(path)))?;
-            file_manager::zip(path.clone());
+            misc::zip(path.clone());
         }
         "Create archive(.tar.gz)" => {
             ui::log(format!("Archive \"{}\"...", crate::filename(path)))?;
-            file_manager::tgz(path.clone());
+            misc::tgz(path.clone());
         }
         "Extract from archive(Only .zip, .tar.gz)" => {
-            file_manager::extract_from_archive(path.clone());
+            misc::extract_from_archive(path.clone());
             ui::log(format!(
                 "Extracting archive \"{}\"...",
                 crate::filename(path)
@@ -72,13 +72,13 @@ pub fn choices(path: &PathBuf) -> io::Result<Vec<PathBuf>> {
     let mut buffer = [0; 1024];
     let _ = file.read(&mut buffer)?;
 
-    if file_manager::is_compressed(path)? {
+    if misc::is_compressed(path)? {
         vec!["Extract from archive(Only .zip, .tar.gz)"]
             .into_iter()
             .map(|s| PathBuf::from(s))
             .for_each(|p| files.push(p));
     };
-    if file_manager::is_image(path)? {
+    if misc::is_image(path)? {
         vec!["Open gimp"]
             .into_iter()
             .map(|s| PathBuf::from(s))

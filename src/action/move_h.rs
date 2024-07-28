@@ -1,4 +1,4 @@
-use crate::{action::Action, command, file_manager, ui, App};
+use crate::{action::Action, command, misc, ui, App};
 use std::{
     fs::File,
     io::{self, Read},
@@ -46,11 +46,11 @@ fn open_file(app: &mut App, cur_file: &PathBuf) -> io::Result<()> {
 
     if std::str::from_utf8(&buffer[..read]).is_ok() {
         app.editor = true;
-    } else if file_manager::is_image(cur_file)? {
+    } else if misc::is_image(cur_file)? {
         command::open_picture_viewer(cur_file)?;
     } else if command::is_video(cur_file) {
         command::open_video_viewer(cur_file)?;
-    } else if file_manager::is_compressed(cur_file)? {
+    } else if misc::is_compressed(cur_file)? {
         command::open_archiver(cur_file)?;
     } else if &buffer[..4] == b"%PDF" {
         command::open_pdf_viewer(cur_file)?;
