@@ -15,12 +15,16 @@ pub mod manage;
 pub mod menu;
 pub mod move_h;
 pub mod move_v;
+pub mod visual;
+
+use visual::VisualType;
 
 pub enum Action {
     Previous(usize),
     Next(usize),
     Back,
     Open,
+    Visual(VisualType),
     Search,
     Create,
     Delete,

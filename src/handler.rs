@@ -1,8 +1,12 @@
 use crate::{
-    action::{self, clip, confirm, manage, menu, move_h, move_v, Action},
+    action::{
+        self, clip, confirm, manage, menu, move_h, move_v,
+        visual::{self, VisualType},
+        Action,
+    },
     app::App,
 };
-use crossterm::event::{Event, KeyCode, KeyEvent};
+use crossterm::event::{Event, KeyCode, KeyEvent, KeyModifiers};
 use std::error::Error;
 use tui_input::backend::crossterm::EventHandler;
 
@@ -16,16 +20,23 @@ fn is_pending(app: &App) -> bool {
 
 impl App {
     pub fn handle_keys(&mut self, event: KeyEvent) {
+        let is_ctrl = event.modifiers.contains(KeyModifiers::CONTROL);
         match event.code {
             KeyCode::Char('Q') => self.quit = !is_pending(&self),
             KeyCode::Esc => self.action = Action::Clean,
             KeyCode::Enter if is_pending(&self) => self.action = Action::PreConfirm,
 
+            KeyCode::Char('a') if is_ctrl && !is_pending(&self) => {
+                self.action = Action::Visual(VisualType::All)
+            }
+
             KeyCode::Char('j') if !is_pending(&self) => self.action = Action::Next(1),
             KeyCode::Char('J') if !is_pending(&self) => self.action = Action::Next(10),
             KeyCode::Char('k') if !is_pending(&self) => self.action = Action::Previous(1),
             KeyCode::Char('K') if !is_pending(&self) => self.action = Action::Previous(10),
-            KeyCode::Char('V') if !is_pending(&self) => self.selected.push(self.cursor),
+            KeyCode::Char('V') if !is_pending(&self) => {
+                self.action = Action::Visual(VisualType::Cursor)
+            }
             KeyCode::Char('c') if !is_pending(&self) => self.action = Action::Cut,
             KeyCode::Char('y') if !is_pending(&self) => self.action = Action::Copy,
             KeyCode::Char('p') if !is_pending(&self) => self.action = Action::Paste,
@@ -54,6 +65,7 @@ impl App {
             Action::Next(i) => move_v::next(self, *i),
             Action::Back => move_h::back(self),
             Action::Open => move_h::open(self)?,
+            Action::Visual(v) => visual::visual_select(self, *v),
             Action::Search => action::search(self)?,
             Action::Create => manage::create(self)?,
             Action::Delete => manage::delete(self)?,
