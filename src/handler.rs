@@ -30,6 +30,12 @@ impl App {
                 self.action = Action::Visual(VisualType::All)
             }
 
+            KeyCode::Char('j') if self.menu_opened() => self.action = Action::Next(1),
+            KeyCode::Char('J') if self.menu_opened() => self.action = Action::Next(10),
+            KeyCode::Char('k') if self.menu_opened() => self.action = Action::Previous(1),
+            KeyCode::Char('K') if self.menu_opened() => self.action = Action::Previous(10),
+            KeyCode::Char('l') if self.menu_opened() => self.action = Action::Select,
+
             KeyCode::Char('j') if !is_pending(&self) => self.action = Action::Next(1),
             KeyCode::Char('J') if !is_pending(&self) => self.action = Action::Next(10),
             KeyCode::Char('k') if !is_pending(&self) => self.action = Action::Previous(1),
@@ -47,12 +53,6 @@ impl App {
             KeyCode::Char('l') if !is_pending(&self) => self.action = Action::Open,
             KeyCode::Char('/') if !is_pending(&self) => self.action = Action::Search,
             KeyCode::Enter if !is_pending(&self) => self.action = Action::Menu,
-
-            KeyCode::Char('j') if self.menu_opened() => self.action = Action::Next(1),
-            KeyCode::Char('J') if self.menu_opened() => self.action = Action::Next(10),
-            KeyCode::Char('k') if self.menu_opened() => self.action = Action::Previous(1),
-            KeyCode::Char('K') if self.menu_opened() => self.action = Action::Previous(10),
-            KeyCode::Char('l') if self.menu_opened() => self.action = Action::Select,
 
             _ => {}
         }
