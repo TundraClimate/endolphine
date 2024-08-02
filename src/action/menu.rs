@@ -22,7 +22,8 @@ pub fn select(app: &mut App) -> io::Result<Action> {
         handle_menu(selected, &app.menu)?;
     }
     app.cursor = 0;
-    Ok(Action::Clean)
+    app.menu = None;
+    Ok(Action::None)
 }
 
 fn handle_menu(selected: &PathBuf, menu: &Option<PathBuf>) -> io::Result<()> {
