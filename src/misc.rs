@@ -64,7 +64,7 @@ fn extract_zip(path: &PathBuf) -> io::Result<()> {
         .unwrap_or("out".into());
     if let Some(parent) = path.parent() {
         if !parent.join(&outpath).exists() {
-            command::extract_zip(&path, outpath)?;
+            command::extract_zip(&path, parent.join(&outpath))?;
             ui::log(format!(
                 "Archive \"{}\" has been extracted",
                 crate::filename(path)

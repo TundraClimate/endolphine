@@ -1,5 +1,4 @@
 use std::{
-    ffi::OsString,
     io::{self, Write},
     path::PathBuf,
     process::{Command, Stdio},
@@ -153,7 +152,7 @@ pub fn open_archiver(path: &PathBuf) -> io::Result<()> {
     Ok(())
 }
 
-pub fn extract_zip(path: &PathBuf, outpath: OsString) -> io::Result<()> {
+pub fn extract_zip(path: &PathBuf, outpath: PathBuf) -> io::Result<()> {
     let _ = Command::new("unzip")
         .arg("-o")
         .arg(path)
