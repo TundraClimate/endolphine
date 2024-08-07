@@ -2,11 +2,6 @@ use crate::{
     app::App,
     ui::{self, Dialog},
 };
-use crossterm::{
-    cursor::MoveTo,
-    execute,
-    terminal::{self, Clear, ClearType},
-};
 use std::io;
 
 pub mod clip;
@@ -42,8 +37,6 @@ pub enum Action {
 }
 
 pub fn clean(app: &mut App) -> io::Result<Action> {
-    let (_, rows) = terminal::size()?;
-    execute!(io::stdout(), MoveTo(0, rows), Clear(ClearType::CurrentLine))?;
     if app.finder.is_search() || !app.dialog.is_some() {
         app.finder.cancel_search();
     }
