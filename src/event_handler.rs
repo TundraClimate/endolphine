@@ -1,11 +1,13 @@
-use crate::error::*;
+use crate::{app, error::*};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 
 pub async fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
         match event {
             Event::Key(key) => return Ok(handle_key_event(key)? == HandledKeyEventState::Leave),
-            Event::Resize(_, row) => {}
+            Event::Resize(_, row) => {
+                app::set_row(row);
+            }
             _ => {}
         }
     }
