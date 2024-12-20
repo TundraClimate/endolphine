@@ -7,6 +7,7 @@ mod canvas_cache;
 mod color;
 mod error;
 mod event_handler;
+mod misc;
 mod thread;
 
 #[derive(Parser)]

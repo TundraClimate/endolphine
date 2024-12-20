@@ -19,3 +19,5 @@ macro_rules! const_color {
 }
 
 const_color!(APP_BG, 90);
+const_color!(DEFAULT_BAR, 180);
+const_color!(HEADER_CURRENT_PATH_ON_DARK, 150);
