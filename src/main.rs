@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 mod app;
 mod error;
+mod thread;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -11,9 +12,10 @@ struct Args {
     pub path: PathBuf,
 }
 
-fn main() {
+#[tokio::main]
+async fn main() {
     let args = Args::parse();
-    if let Err(e) = app::launch(&args.path) {
+    if let Err(e) = app::launch(&args.path).await {
         e.handle();
     }
 }
