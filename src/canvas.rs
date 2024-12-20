@@ -26,6 +26,8 @@ pub fn render() -> EpResult<()> {
     let (cols, rows) = terminal::size().unwrap_or((100, 100));
     render_header(cols)?;
 
+    render_body()?;
+
     render_footer(rows - 2, cols)?;
     Ok(())
 }
@@ -100,6 +102,19 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         di_view_line!("empty", row + 1, Print(""));
     }
 
+    Ok(())
+}
+
+fn render_body() -> EpResult<()> {
+    let path = app::get_path()?;
+    let child_files = misc::sorted_child_files(&path);
+    for rel_i in 0..(app::get_row()? - 4) {
+        if let Some(f) = child_files.get(rel_i as usize) {
+            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(misc::file_name(f)))
+        } else {
+            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
+        }
+    }
     Ok(())
 }
 
