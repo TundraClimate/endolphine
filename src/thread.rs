@@ -1,4 +1,4 @@
-use crate::error::*;
+use crate::{error::*, event_handler};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -6,7 +6,13 @@ use std::sync::{
 use tokio::time::{self, Duration, Instant};
 
 pub async fn process(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
-    loop {}
+    loop {
+        if event_handler::handle_event().await? {
+            quit_flag.swap(true, Ordering::Relaxed);
+            break;
+        }
+    }
+
     Ok(())
 }
 

@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 mod app;
 mod error;
+mod event_handler;
 mod thread;
 
 #[derive(Parser)]
