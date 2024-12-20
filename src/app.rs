@@ -47,6 +47,10 @@ pub async fn launch(path: &PathBuf) -> EpResult<()> {
 }
 
 fn init(path: &PathBuf) -> EpResult<()> {
+    let Ok(path) = path.canonicalize() else {
+        return Err(EpError::InitFailed);
+    };
+
     if let Err(_) = PATH.get_or_try_init(|| -> Result<PathBuf, ()> { Ok(path.clone()) }) {
         return Err(EpError::InitFailed);
     }
