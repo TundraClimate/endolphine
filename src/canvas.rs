@@ -8,7 +8,7 @@ use std::path::PathBuf;
 #[macro_export]
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get($row) != &$tag && crate::app::get_row()? != 0 {
+        if &crate::canvas_cache::get($row) != &$tag && crate::app::get_row() != 0 {
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
@@ -42,7 +42,7 @@ fn colored_bar(color: Color, len: u16) -> String {
 }
 
 fn render_header(bar_length: u16) -> EpResult<()> {
-    let current_path = app::get_path()?;
+    let current_path = app::get_path();
     {
         let filename = if current_path == PathBuf::from("/") {
             "/"
@@ -106,9 +106,9 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 }
 
 fn render_body() -> EpResult<()> {
-    let path = app::get_path()?;
+    let path = app::get_path();
     let child_files = misc::sorted_child_files(&path);
-    for rel_i in 0..(app::get_row()? - 4) {
+    for rel_i in 0..(app::get_row() - 4) {
         if let Some(f) = child_files.get(rel_i as usize) {
             di_view_line!(format!("{}", rel_i), rel_i + 2, Print(misc::file_name(f)))
         } else {
@@ -121,7 +121,7 @@ fn render_body() -> EpResult<()> {
 #[macro_export]
 macro_rules! log {
     ($text:expr) => {{
-        let row = crate::app::get_row()?;
+        let row = crate::app::get_row();
         crate::di_view_line!(
             format!("{}", chrono::Utc::now().timestamp_micros()),
             row - 1,
