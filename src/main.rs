@@ -1,6 +1,8 @@
 use clap::Parser;
 use std::path::PathBuf;
 
+mod app;
+
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -10,4 +12,5 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
+    args.path
 }
