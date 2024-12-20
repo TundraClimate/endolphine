@@ -2,6 +2,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 mod app;
+mod error;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -12,5 +13,7 @@ struct Args {
 
 fn main() {
     let args = Args::parse();
-    args.path
+    if let Err(e) = app::launch(&args.path) {
+        e.handle();
+    }
 }
