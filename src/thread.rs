@@ -1,4 +1,4 @@
-use crate::{error::*, event_handler};
+use crate::{canvas, error::*, event_handler};
 use std::sync::{
     atomic::{AtomicBool, Ordering},
     Arc,
@@ -19,6 +19,10 @@ pub async fn process(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
 pub async fn ui(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
     while !quit_flag.load(Ordering::Relaxed) {
         let start = Instant::now();
+
+        {
+            canvas::render()?;
+        }
 
         let elapsed = start.elapsed();
         if elapsed < Duration::from_millis(50) {

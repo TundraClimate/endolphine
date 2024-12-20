@@ -9,6 +9,9 @@ pub enum EpError {
 
     #[error("init error")]
     InitFailed,
+
+    #[error("di_view_line error")]
+    DisplayViewLineFailed,
 }
 
 impl EpError {
@@ -16,6 +19,7 @@ impl EpError {
         match self {
             Self::SwitchScreen => panic!("cannot switch Alternate screen"),
             Self::InitFailed => panic!("application init failed"),
+            Self::DisplayViewLineFailed => panic!("cannot display texts"),
         }
     }
 }

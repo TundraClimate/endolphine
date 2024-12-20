@@ -2,6 +2,8 @@ use clap::Parser;
 use std::path::PathBuf;
 
 mod app;
+mod canvas;
+mod canvas_cache;
 mod error;
 mod event_handler;
 mod thread;
