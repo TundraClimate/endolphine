@@ -4,6 +4,7 @@ use std::path::PathBuf;
 mod app;
 mod canvas;
 mod canvas_cache;
+mod color;
 mod error;
 mod event_handler;
 mod thread;

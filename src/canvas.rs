@@ -11,6 +11,8 @@ macro_rules! di_view_line {
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
+                crossterm::style::SetBackgroundColor(crate::color::APP_BG),
+                crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
                 $($cmd),+,
                 crossterm::style::ResetColor
             ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)?;
