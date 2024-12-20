@@ -23,12 +23,15 @@ enum HandledKeyEventState {
 
 fn handle_key_event(key: KeyEvent) -> EpResult<HandledKeyEventState> {
     match key.code {
-        KeyCode::Char(c) => {
-            if c == 'Q' {
-                return Ok(HandledKeyEventState::Leave);
-            }
-        }
+        KeyCode::Char(c) => return handle_char_key(c),
         _ => {}
+    }
+    Ok(HandledKeyEventState::Retake)
+}
+
+fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
+    if key == 'Q' {
+        return Ok(HandledKeyEventState::Leave);
     }
     Ok(HandledKeyEventState::Retake)
 }
