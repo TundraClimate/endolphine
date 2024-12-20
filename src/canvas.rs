@@ -102,3 +102,15 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 
     Ok(())
 }
+
+#[macro_export]
+macro_rules! log {
+    ($text:expr) => {{
+        let row = crate::app::get_row()?;
+        crate::di_view_line!(
+            format!("{}", chrono::Utc::now().timestamp_micros()),
+            row - 1,
+            crossterm::style::Print($text)
+        );
+    }};
+}
