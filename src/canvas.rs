@@ -122,10 +122,12 @@ fn render_body() -> EpResult<()> {
         if let Some(f) = pagenated.get(rel_i as usize) {
             let c = if cursor.current() == abs_i { ">" } else { " " };
             let filename = misc::file_name(f);
+            let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
             di_view_line!(
-                format!("{}{}{}", rel_i, c, filename),
+                format!("{}{}{}{}", rel_i, c, filename, selected),
                 rel_i + 2,
-                Print(format!("{} | {}", c, filename))
+                Print(format!("{} | {} ", c, filename)),
+                Print(selected)
             )?;
         } else {
             di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))?;

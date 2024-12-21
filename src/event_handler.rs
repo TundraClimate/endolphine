@@ -49,6 +49,11 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
     }
 
     if key == 'h' {
+        let cursor = app::cursor();
+        if cursor.is_selection_mode() {
+            cursor.toggle_selection();
+        }
+
         let path = app::get_path();
 
         if path == PathBuf::from("/") {
@@ -59,7 +64,6 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         app::set_path(&parent);
         canvas_cache::clear();
 
-        let cursor = app::cursor();
         let child_files = misc::sorted_child_files(&path);
         {
             if let Some(target_path) = child_files.get(cursor.current()) {
@@ -77,6 +81,11 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
     }
 
     if key == 'l' {
+        let cursor = app::cursor();
+        if cursor.is_selection_mode() {
+            cursor.toggle_selection();
+        }
+
         let path = app::get_path();
         let child_files = misc::sorted_child_files(&path);
 
@@ -84,7 +93,6 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
             return Ok(HandledKeyEventState::Retake);
         }
 
-        let cursor = app::cursor();
         let Some(target_path) = &child_files.get(cursor.current()) else {
             return Ok(HandledKeyEventState::Retake);
         };
@@ -113,6 +121,10 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
             metadata if metadata.is_file() => {}
             _ => {}
         }
+    }
+
+    if key == 'V' {
+        app::cursor().toggle_selection();
     }
 
     Ok(HandledKeyEventState::Retake)

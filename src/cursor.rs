@@ -10,6 +10,7 @@ pub struct Cursor {
     index: AtomicUsize,
     size: AtomicUsize,
     pub cache: RwLock<CursorCache>,
+    selection: RwLock<Option<(usize, usize)>>,
 }
 
 impl Cursor {
@@ -18,6 +19,7 @@ impl Cursor {
             index: AtomicUsize::new(0),
             size: AtomicUsize::new(0),
             cache: RwLock::new(CursorCache::new()),
+            selection: RwLock::new(None),
         }
     }
 
@@ -38,6 +40,13 @@ impl Cursor {
         }
 
         self.index.swap(val, Ordering::Relaxed);
+
+        if self.is_selection_mode() {
+            let mut lock = self.selection.write().unwrap();
+            if let Some((base, _)) = *lock {
+                *lock = Some((base, val));
+            }
+        }
     }
 
     pub fn next(&self) {
@@ -58,6 +67,34 @@ impl Cursor {
 
     pub fn reset(&self) {
         self.swap_id(0);
+    }
+
+    pub fn is_selection_mode(&self) -> bool {
+        self.selection.read().unwrap().is_some()
+    }
+
+    pub fn toggle_selection(&self) {
+        let mut lock = self.selection.write().unwrap();
+        if lock.is_some() {
+            *lock = None;
+        } else {
+            *lock = Some((self.current(), self.current()))
+        }
+    }
+
+    pub fn is_selected(&self, i: usize) -> bool {
+        if !self.is_selection_mode() {
+            return false;
+        }
+
+        let lock = self.selection.read().unwrap();
+        if let Some((base, pin)) = *lock {
+            let min = base.min(pin);
+            let max = base.max(pin);
+            (min..=max).contains(&i)
+        } else {
+            false
+        }
     }
 }
 
