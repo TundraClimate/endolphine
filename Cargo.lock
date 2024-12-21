@@ -431,6 +431,7 @@ dependencies = [
  "image",
  "once_cell",
  "regex",
+ "si-scale",
  "thiserror 2.0.8",
  "tokio",
  "tui-input",
@@ -1179,6 +1180,12 @@ checksum = "79e674e01f999af37c49f70a6ede167a8a60b2503e56c5599532a65baa5969a0"
 dependencies = [
  "serde",
 ]
+
+[[package]]
+name = "si-scale"
+version = "0.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "b72e7cd0744e007e382ba320435f1ed1ecd709409b4ebd5cfbc843d77b25a8aa"
 
 [[package]]
 name = "signal-hook"

@@ -180,7 +180,9 @@ fn colored_file_name(path: &PathBuf) -> String {
 }
 
 fn permission(path: &PathBuf) -> Vec<char> {
-    let metadata = path.symlink_metadata().unwrap();
+    let Ok(metadata) = path.symlink_metadata() else {
+        return "---------".chars().collect();
+    };
     let mode = metadata.permissions().mode();
 
     let permissions = format!(
