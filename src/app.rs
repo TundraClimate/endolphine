@@ -69,9 +69,9 @@ pub fn get_path() -> PathBuf {
     (*PATH.read().unwrap()).clone()
 }
 
-pub fn set_path(new_path: PathBuf) {
+pub fn set_path(new_path: &PathBuf) {
     let mut lock = PATH.write().unwrap();
-    *lock = new_path;
+    *lock = new_path.clone();
 }
 
 pub fn get_row() -> u16 {
