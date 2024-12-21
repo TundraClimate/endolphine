@@ -1,11 +1,13 @@
 use crate::{app, canvas_cache, error::*, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use std::path::PathBuf;
+use std::{path::PathBuf, process::Command};
 
 pub async fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
         match event {
-            Event::Key(key) => return Ok(handle_key_event(key)? == HandledKeyEventState::Leave),
+            Event::Key(key) => {
+                return Ok(handle_key_event(key).await? == HandledKeyEventState::Leave)
+            }
             Event::Resize(_, row) => {
                 app::set_row(row);
                 app::cursor().resize(misc::child_files(&app::get_path()).len());
@@ -24,15 +26,15 @@ enum HandledKeyEventState {
     Retake,
 }
 
-fn handle_key_event(key: KeyEvent) -> EpResult<HandledKeyEventState> {
+async fn handle_key_event(key: KeyEvent) -> EpResult<HandledKeyEventState> {
     match key.code {
-        KeyCode::Char(c) => return handle_char_key(c),
+        KeyCode::Char(c) => return handle_char_key(c).await,
         _ => {}
     }
     Ok(HandledKeyEventState::Retake)
 }
 
-fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
+async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
     if key == 'Q' {
         return Ok(HandledKeyEventState::Leave);
     }
@@ -93,7 +95,7 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
             return Ok(HandledKeyEventState::Retake);
         }
 
-        let Some(target_path) = &child_files.get(cursor.current()) else {
+        let Some(target_path) = child_files.get(cursor.current()) else {
             return Ok(HandledKeyEventState::Retake);
         };
         let Ok(metadata) = target_path.symlink_metadata() else {
@@ -118,7 +120,18 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
                     }
                 }
             }
-            metadata if metadata.is_file() => {}
+            metadata if metadata.is_file() => {
+                let editor = option_env!("EDITOR").unwrap_or("vi");
+                crate::disable_tui!().map_err(|_| EpError::SwitchScreen)?;
+                Command::new(editor)
+                    .arg(&target_path)
+                    .status()
+                    .map_err(|e| {
+                        EpError::CommandExecute(editor.to_string(), e.kind().to_string())
+                    })?;
+                crate::enable_tui!().map_err(|_| EpError::SwitchScreen)?;
+                canvas_cache::clear();
+            }
             _ => {}
         }
     }

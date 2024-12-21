@@ -1,12 +1,4 @@
 use crate::{cursor::Cursor, disable_tui, enable_tui, error::*, misc, thread};
-use crossterm::{
-    cursor::{Hide, Show},
-    execute,
-    terminal::{
-        disable_raw_mode, enable_raw_mode, DisableLineWrap, EnableLineWrap, EnterAlternateScreen,
-        LeaveAlternateScreen,
-    },
-};
 use once_cell::sync::Lazy;
 use std::{
     path::PathBuf,
@@ -98,12 +90,12 @@ pub fn set_view_shift(new_value: u16) {
 macro_rules! enable_tui {
     () => {
         (|| -> std::io::Result<()> {
-            enable_raw_mode()?;
-            execute!(
+            crossterm::terminal::enable_raw_mode()?;
+            crossterm::execute!(
                 std::io::stdout(),
-                EnterAlternateScreen,
-                Hide,
-                DisableLineWrap
+                crossterm::terminal::EnterAlternateScreen,
+                crossterm::cursor::Hide,
+                crossterm::terminal::DisableLineWrap
             )
         })()
     };
@@ -113,12 +105,12 @@ macro_rules! enable_tui {
 macro_rules! disable_tui {
     () => {
         (|| -> std::io::Result<()> {
-            disable_raw_mode()?;
-            execute!(
+            crossterm::terminal::disable_raw_mode()?;
+            crossterm::execute!(
                 std::io::stdout(),
-                LeaveAlternateScreen,
-                Show,
-                EnableLineWrap,
+                crossterm::terminal::LeaveAlternateScreen,
+                crossterm::cursor::Show,
+                crossterm::terminal::EnableLineWrap,
             )
         })()
     };
