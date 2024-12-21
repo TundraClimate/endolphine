@@ -1,5 +1,6 @@
 use crate::{app, canvas_cache, color, error::*, misc};
 use crossterm::{
+    cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal,
 };
@@ -82,10 +83,25 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         )?;
     }
 
+    let cursor = app::cursor();
+
+    let page_size = app::get_row().saturating_sub(4);
+    let page = cursor.current() / page_size as usize + 1;
+    let len = misc::child_files(&app::get_path()).len();
+
     di_view_line!(
-        "header_bar",
+        format!("{}{}", page, len),
         1,
-        Print(colored_bar(color::DEFAULT_BAR, bar_length))
+        Print(colored_bar(color::DEFAULT_BAR, bar_length)),
+        MoveTo(app::get_view_shift(), 1),
+        Print(format!(
+            "{}{} Page {} {}(All {} items)",
+            SetBackgroundColor(color::DEFAULT_BAR),
+            SetForegroundColor(Color::Black),
+            page,
+            SetForegroundColor(Color::Black),
+            len
+        )),
     )?;
 
     Ok(())
