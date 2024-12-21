@@ -1,4 +1,4 @@
-use crate::{app, canvas_cache, error::*};
+use crate::{app, canvas_cache, error::*, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 
 pub async fn handle_event() -> EpResult<bool> {
@@ -7,6 +7,7 @@ pub async fn handle_event() -> EpResult<bool> {
             Event::Key(key) => return Ok(handle_key_event(key)? == HandledKeyEventState::Leave),
             Event::Resize(_, row) => {
                 app::set_row(row);
+                app::cursor().resize(misc::child_files(&app::get_path()).len());
                 canvas_cache::clear();
             }
             _ => {}
@@ -35,8 +36,16 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         return Ok(HandledKeyEventState::Leave);
     }
 
-    if key == 'f' {
-        app::set_path(std::path::PathBuf::from("/home/tundra/MyStorage"));
+    if ['j', 'k', 'J', 'K'].contains(&key) {
+        let cursor = app::cursor();
+        match key {
+            'j' => cursor.next(),
+            'k' => cursor.previous(),
+            'J' => cursor.shift(10),
+            'K' => cursor.shift(-10),
+            _ => {}
+        };
     }
+
     Ok(HandledKeyEventState::Retake)
 }

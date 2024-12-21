@@ -5,6 +5,7 @@ mod app;
 mod canvas;
 mod canvas_cache;
 mod color;
+mod cursor;
 mod error;
 mod event_handler;
 mod misc;

@@ -9,6 +9,7 @@ use std::path::PathBuf;
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
         if &crate::canvas_cache::get($row) != &$tag && crate::app::get_row() != 0 {
+            crate::canvas_cache::insert($row, $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
@@ -16,9 +17,8 @@ macro_rules! di_view_line {
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
                 $($cmd),+,
                 crossterm::style::ResetColor
-            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)?;
-        }
-        crate::canvas_cache::insert($row, $tag.to_string());
+            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
+        } else { Ok(()) }
     }};
 }
 
@@ -79,14 +79,14 @@ fn render_header(bar_length: u16) -> EpResult<()> {
             format!("{}", &filename),
             0,
             Print(format!(" {} in {}", filename, pwd))
-        );
+        )?;
     }
 
     di_view_line!(
         "header_bar",
         1,
         Print(colored_bar(color::DEFAULT_BAR, bar_length))
-    );
+    )?;
 
     Ok(())
 }
@@ -96,24 +96,39 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         "footer_bar",
         row,
         Print(colored_bar(color::DEFAULT_BAR, bar_length))
-    );
+    )?;
 
     if !canvas_cache::contain_key(row + 1) {
-        di_view_line!("empty", row + 1, Print(""));
+        di_view_line!("empty", row + 1, Print(""))?;
     }
 
     Ok(())
 }
 
 fn render_body() -> EpResult<()> {
+    let page_size = app::get_row().saturating_sub(4);
+
+    if page_size == 0 {
+        return Ok(());
+    }
+
     let path = app::get_path();
     let child_files = misc::sorted_child_files(&path);
-    let pagenated = pagenate(&child_files, app::get_row() - 4, app::get_page());
+    let cursor = app::cursor();
+    let page = cursor.current() / page_size as usize + 1;
+    let pagenated = pagenate(&child_files, page_size, page);
     for rel_i in 0..(app::get_row() - 4) {
+        let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
         if let Some(f) = pagenated.get(rel_i as usize) {
-            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(misc::file_name(f)))
+            let c = if cursor.current() == abs_i { ">" } else { " " };
+            let filename = misc::file_name(f);
+            di_view_line!(
+                format!("{}{}{}", rel_i, c, filename),
+                rel_i + 2,
+                Print(format!("{} | {}", c, filename))
+            )?;
         } else {
-            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
+            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))?;
         }
     }
     Ok(())
@@ -139,6 +154,6 @@ macro_rules! log {
             format!("{}", chrono::Utc::now().timestamp_micros()),
             row - 1,
             crossterm::style::Print($text)
-        );
+        )
     }};
 }

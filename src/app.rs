@@ -1,4 +1,4 @@
-use crate::{disable_tui, enable_tui, error::*, thread};
+use crate::{cursor::Cursor, disable_tui, enable_tui, error::*, misc, thread};
 use crossterm::{
     cursor::{Hide, Show},
     execute,
@@ -11,7 +11,7 @@ use once_cell::sync::Lazy;
 use std::{
     path::PathBuf,
     sync::{
-        atomic::{AtomicBool, AtomicU16, AtomicUsize, Ordering},
+        atomic::{AtomicBool, AtomicU16, Ordering},
         Arc, RwLock,
     },
 };
@@ -20,7 +20,7 @@ static PATH: Lazy<RwLock<PathBuf>> = Lazy::new(|| RwLock::new(PathBuf::new()));
 
 static ROW: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(100));
 
-static PAGE: Lazy<AtomicUsize> = Lazy::new(|| AtomicUsize::new(1));
+static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 
@@ -59,6 +59,9 @@ fn init(path: &PathBuf) -> EpResult<()> {
     let (_, row) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
     ROW.swap(row, Ordering::Relaxed);
 
+    let c = misc::child_files(&path).len();
+    CURSOR.resize(c);
+
     Ok(())
 }
 
@@ -79,16 +82,8 @@ pub fn set_row(new_value: u16) {
     ROW.swap(new_value, Ordering::Relaxed);
 }
 
-pub fn get_page() -> usize {
-    PAGE.load(Ordering::Relaxed)
-}
-
-pub fn set_page(new_value: usize) {
-    if new_value == 0 {
-        return;
-    }
-
-    PAGE.swap(new_value, Ordering::Relaxed);
+pub fn cursor() -> &'static Cursor {
+    &*CURSOR
 }
 
 pub fn get_view_shift() -> u16 {
