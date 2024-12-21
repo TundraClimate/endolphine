@@ -108,14 +108,27 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 fn render_body() -> EpResult<()> {
     let path = app::get_path();
     let child_files = misc::sorted_child_files(&path);
+    let pagenated = pagenate(&child_files, app::get_row() - 4, app::get_page());
     for rel_i in 0..(app::get_row() - 4) {
-        if let Some(f) = child_files.get(rel_i as usize) {
+        if let Some(f) = pagenated.get(rel_i as usize) {
             di_view_line!(format!("{}", rel_i), rel_i + 2, Print(misc::file_name(f)))
         } else {
             di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
         }
     }
     Ok(())
+}
+
+fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<PathBuf> {
+    if current_page == 0 {
+        return vec![];
+    }
+
+    let chunks = full.chunks(page_size as usize).collect::<Vec<_>>();
+    chunks
+        .get(current_page - 1)
+        .map(|p| p.to_vec())
+        .unwrap_or(vec![])
 }
 
 #[macro_export]
