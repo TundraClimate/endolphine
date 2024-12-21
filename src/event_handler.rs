@@ -127,5 +127,14 @@ fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         app::cursor().toggle_selection();
     }
 
+    if key == 'M' {
+        if app::get_view_shift() == 0 {
+            app::set_view_shift(20);
+        } else {
+            app::set_view_shift(0);
+        }
+        canvas_cache::clear();
+    }
+
     Ok(HandledKeyEventState::Retake)
 }
