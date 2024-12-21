@@ -137,7 +137,7 @@ fn render_body() -> EpResult<()> {
         let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
         if let Some(f) = pagenated.get(rel_i as usize) {
             let c = if cursor.current() == abs_i { ">" } else { " " };
-            let filename = misc::file_name(f);
+            let filename = colored_file_name(&f);
             let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
             let permission = format_permissions(permission(&f));
             di_view_line!(
@@ -163,6 +163,20 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
         .get(current_page - 1)
         .map(|p| p.to_vec())
         .unwrap_or(vec![])
+}
+
+fn colored_file_name(path: &PathBuf) -> String {
+    format!(
+        "{}{}",
+        SetForegroundColor(match path {
+            path if !path.exists() => color::PATH_NAME_BROKEN,
+            path if path.is_symlink() => color::PATH_NAME_SYMLINK,
+            path if path.is_dir() => color::PATH_NAME_DIRECTORY,
+            path if path.is_file() => color::PATH_NAME_FILE,
+            _ => color::PATH_NAME_BROKEN,
+        }),
+        misc::file_name(path)
+    )
 }
 
 fn permission(path: &PathBuf) -> Vec<char> {
