@@ -97,9 +97,9 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         Print(format!(
             "{}{} Page {} {}(All {} items)",
             SetBackgroundColor(color::DEFAULT_BAR),
-            SetForegroundColor(Color::Black),
+            SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
             page,
-            SetForegroundColor(Color::Black),
+            SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
             len
         )),
     )?;
