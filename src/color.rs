@@ -21,3 +21,6 @@ macro_rules! const_color {
 const_color!(APP_BG, 90);
 const_color!(DEFAULT_BAR, 180);
 const_color!(HEADER_CURRENT_PATH_ON_DARK, 150);
+const_color!(PERMISSION_READ, 100, 220, 150);
+const_color!(PERMISSION_WRITE, 240, 170, 70);
+const_color!(PERMISSION_EXE, 250, 250, 60);

@@ -4,7 +4,7 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal,
 };
-use std::path::PathBuf;
+use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 #[macro_export]
 macro_rules! di_view_line {
@@ -139,10 +139,11 @@ fn render_body() -> EpResult<()> {
             let c = if cursor.current() == abs_i { ">" } else { " " };
             let filename = misc::file_name(f);
             let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
+            let permission = format_permissions(permission(&f));
             di_view_line!(
                 format!("{}{}{}{}", rel_i, c, filename, selected),
                 rel_i + 2,
-                Print(format!("{} | {} ", c, filename)),
+                Print(format!("{} | {} {} ", c, permission, filename)),
                 Print(selected)
             )?;
         } else {
@@ -162,6 +163,52 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
         .get(current_page - 1)
         .map(|p| p.to_vec())
         .unwrap_or(vec![])
+}
+
+fn permission(path: &PathBuf) -> Vec<char> {
+    let metadata = path.symlink_metadata().unwrap();
+    let mode = metadata.permissions().mode();
+
+    let permissions = format!(
+        "{}{}{}{}{}{}{}{}{}",
+        if mode & 0o400 != 0 { "r" } else { "-" },
+        if mode & 0o200 != 0 { "w" } else { "-" },
+        if mode & 0o100 != 0 { "x" } else { "-" },
+        if mode & 0o040 != 0 { "r" } else { "-" },
+        if mode & 0o020 != 0 { "w" } else { "-" },
+        if mode & 0o010 != 0 { "x" } else { "-" },
+        if mode & 0o004 != 0 { "r" } else { "-" },
+        if mode & 0o002 != 0 { "w" } else { "-" },
+        if mode & 0o001 != 0 { "x" } else { "-" },
+    );
+
+    permissions.chars().collect()
+}
+
+fn format_permissions(permission: Vec<char>) -> String {
+    permission
+        .chunks(3)
+        .enumerate()
+        .map(|(i, chunk)| {
+            let (read, write, exe) = (chunk.get(0), chunk.get(1), chunk.get(2));
+            format!(
+                "{}{}{}",
+                fpermission(read, i * 3),
+                fpermission(write, i * 3 + 1),
+                fpermission(exe, i * 3 + 2)
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("")
+}
+
+fn fpermission(permission: Option<&char>, index: usize) -> String {
+    let color = match index % 3 {
+        0 => color::PERMISSION_READ,
+        1 => color::PERMISSION_WRITE,
+        _ => color::PERMISSION_EXE,
+    };
+    SetForegroundColor(color).to_string() + permission.unwrap_or(&'-').to_string().as_str()
 }
 
 #[macro_export]
