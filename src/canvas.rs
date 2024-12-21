@@ -4,6 +4,7 @@ use crossterm::{
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal,
 };
+use si_scale::helpers;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 #[macro_export]
@@ -139,11 +140,15 @@ fn render_body() -> EpResult<()> {
             let c = if cursor.current() == abs_i { ">" } else { " " };
             let filename = colored_file_name(&f);
             let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
+            let bsize = colored_bsize(&f);
             let permission = format_permissions(permission(&f));
             di_view_line!(
-                format!("{}{}{}{}", rel_i, c, filename, selected),
+                format!(
+                    "{}{}{}{}{}{}",
+                    rel_i, c, filename, selected, permission, bsize
+                ),
                 rel_i + 2,
-                Print(format!("{} | {} {} ", c, permission, filename)),
+                Print(format!("{} | {} {} {} ", c, permission, bsize, filename)),
                 Print(selected)
             )?;
         } else {
@@ -177,6 +182,15 @@ fn colored_file_name(path: &PathBuf) -> String {
         }),
         misc::file_name(path)
     )
+}
+
+fn colored_bsize(path: &PathBuf) -> String {
+    let Ok(metadata) = path.symlink_metadata() else {
+        return String::from("       x");
+    };
+    let size = metadata.len();
+
+    format!("{:>8}", helpers::bytes1(size as f64))
 }
 
 fn permission(path: &PathBuf) -> Vec<char> {
