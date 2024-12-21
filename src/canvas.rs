@@ -1,4 +1,5 @@
 use crate::{app, canvas_cache, color, error::*, misc};
+use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
@@ -141,6 +142,7 @@ fn render_body() -> EpResult<()> {
             let filename = colored_file_name(&f);
             let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
             let bsize = colored_bsize(&f);
+            let time = colored_last_modified(&f);
             let permission = format_permissions(permission(&f));
             di_view_line!(
                 format!(
@@ -148,7 +150,10 @@ fn render_body() -> EpResult<()> {
                     rel_i, c, filename, selected, permission, bsize
                 ),
                 rel_i + 2,
-                Print(format!("{} | {} {} {} ", c, permission, bsize, filename)),
+                Print(format!(
+                    "{} | {} {} {} {} ",
+                    c, permission, bsize, time, filename
+                )),
                 Print(selected)
             )?;
         } else {
@@ -191,6 +196,22 @@ fn colored_bsize(path: &PathBuf) -> String {
     let size = metadata.len();
 
     format!("{:>8}", helpers::bytes1(size as f64))
+}
+
+fn colored_last_modified(path: &PathBuf) -> String {
+    let Ok(metadata) = path.symlink_metadata() else {
+        return String::from("       x");
+    };
+    let Ok(modified) = metadata.modified() else {
+        return String::from("       x");
+    };
+    let datetime: DateTime<Local> = DateTime::from(modified);
+
+    format!(
+        "{}{}",
+        SetForegroundColor(color::LAST_MODIFIED_TIME),
+        datetime.format("%y %m/%d %H:%M")
+    )
 }
 
 fn permission(path: &PathBuf) -> Vec<char> {

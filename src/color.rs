@@ -30,3 +30,4 @@ const_color!(PATH_NAME_FILE, 40, 220, 40);
 const_color!(PATH_NAME_DIRECTORY, 40, 200, 200);
 const_color!(PATH_NAME_SYMLINK, 200, 40, 200);
 const_color!(PATH_NAME_BROKEN, 200, 0, 0);
+const_color!(LAST_MODIFIED_TIME, 130, 70, 255);
