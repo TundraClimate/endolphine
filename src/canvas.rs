@@ -117,7 +117,7 @@ fn render_body() -> EpResult<()> {
     let cursor = app::cursor();
     let page = cursor.current() / page_size as usize + 1;
     let pagenated = pagenate(&child_files, page_size, page);
-    for rel_i in 0..(app::get_row() - 4) {
+    for rel_i in 0..(app::get_row().saturating_sub(4)) {
         let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
         if let Some(f) = pagenated.get(rel_i as usize) {
             let c = if cursor.current() == abs_i { ">" } else { " " };
