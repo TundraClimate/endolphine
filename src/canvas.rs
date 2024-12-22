@@ -140,7 +140,11 @@ fn render_body() -> EpResult<()> {
         if let Some(f) = pagenated.get(rel_i as usize) {
             let c = if cursor.current() == abs_i { ">" } else { " " };
             let filename = colored_file_name(&f);
-            let selected = if cursor.is_selected(abs_i) { "]" } else { " " };
+            let selected = SetBackgroundColor(if cursor.is_selected(abs_i) {
+                color::SELECTED
+            } else {
+                color::APP_BG
+            });
             let bsize = colored_bsize(&f);
             let time = colored_last_modified(&f);
             let permission = format_permissions(permission(&f));
@@ -151,10 +155,15 @@ fn render_body() -> EpResult<()> {
                 ),
                 rel_i + 2,
                 Print(format!(
-                    "{} | {} {} {} {} ",
-                    c, permission, bsize, time, filename
+                    "{} | {} {} {} {}{}{} ",
+                    c,
+                    permission,
+                    bsize,
+                    time,
+                    selected,
+                    filename,
+                    SetBackgroundColor(color::APP_BG)
                 )),
-                Print(selected)
             )?;
         } else {
             di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))?;
