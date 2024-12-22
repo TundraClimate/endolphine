@@ -140,8 +140,10 @@ fn render_body() -> EpResult<()> {
         if let Some(f) = pagenated.get(rel_i as usize) {
             let c = if cursor.current() == abs_i { ">" } else { " " };
             let filename = colored_file_name(&f);
-            let selected = SetBackgroundColor(if cursor.is_selected(abs_i) {
+            let under_file_name = SetBackgroundColor(if cursor.is_selected(abs_i) {
                 color::SELECTED
+            } else if cursor.current() == abs_i {
+                color::UNDER_CURSOR
             } else {
                 color::APP_BG
             });
@@ -151,7 +153,7 @@ fn render_body() -> EpResult<()> {
             di_view_line!(
                 format!(
                     "{}{}{}{}{}{}",
-                    rel_i, c, filename, selected, permission, bsize
+                    rel_i, c, filename, under_file_name, permission, bsize
                 ),
                 rel_i + 2,
                 Print(format!(
@@ -160,7 +162,7 @@ fn render_body() -> EpResult<()> {
                     permission,
                     bsize,
                     time,
-                    selected,
+                    under_file_name,
                     filename,
                     SetBackgroundColor(color::APP_BG)
                 )),
