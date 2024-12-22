@@ -204,9 +204,13 @@ fn colored_bsize(path: &PathBuf) -> String {
     let Ok(metadata) = path.symlink_metadata() else {
         return String::from("       x");
     };
-    let size = metadata.len();
+    if metadata.is_dir() {
+        "       -".into()
+    } else {
+        let size = metadata.len();
 
-    format!("{:>8}", helpers::bytes1(size as f64))
+        format!("{:>8}", helpers::bytes1(size as f64))
+    }
 }
 
 fn colored_last_modified(path: &PathBuf) -> String {
