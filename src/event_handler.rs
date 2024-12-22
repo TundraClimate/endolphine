@@ -29,9 +29,19 @@ enum HandledKeyEventState {
 async fn handle_key_event(key: KeyEvent) -> EpResult<HandledKeyEventState> {
     match key.code {
         KeyCode::Char(c) => return handle_char_key(c).await,
+        KeyCode::Esc => handle_esc_key()?,
         _ => {}
     }
     Ok(HandledKeyEventState::Retake)
+}
+
+fn handle_esc_key() -> EpResult<()> {
+    let cursor = app::cursor();
+    if cursor.is_selection_mode() {
+        cursor.toggle_selection();
+    }
+
+    Ok(())
 }
 
 async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
