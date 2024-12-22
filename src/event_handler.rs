@@ -108,7 +108,7 @@ async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         let Some(target_path) = child_files.get(cursor.current()) else {
             return Ok(HandledKeyEventState::Retake);
         };
-        let Ok(metadata) = target_path.symlink_metadata() else {
+        let Ok(metadata) = target_path.metadata() else {
             return Ok(HandledKeyEventState::Retake);
         };
 
