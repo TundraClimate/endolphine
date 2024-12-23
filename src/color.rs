@@ -33,3 +33,4 @@ const_color!(PATH_NAME_BROKEN, 200, 0, 0);
 const_color!(LAST_MODIFIED_TIME, 130, 70, 255);
 const_color!(SELECTED, 235, 140, 0);
 const_color!(UNDER_CURSOR, 125);
+const_color!(MENU_BG, 120);

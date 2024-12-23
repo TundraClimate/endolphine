@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal,
+    terminal, Command,
 };
 use si_scale::helpers;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf};
@@ -27,11 +27,18 @@ macro_rules! di_view_line {
 
 pub fn render() -> EpResult<()> {
     let (cols, rows) = terminal::size().unwrap_or((100, 100));
+
+    if rows <= 4 {
+        return Ok(());
+    }
+
     render_header(cols)?;
 
     render_body()?;
 
     render_footer(rows - 2, cols)?;
+
+    render_menu()?;
     Ok(())
 }
 
@@ -287,4 +294,48 @@ macro_rules! log {
             crossterm::style::Print($text)
         )
     }};
+}
+
+#[macro_export]
+macro_rules! di_menu_line {
+    ($row:expr, $text:expr) => {{
+        let slide = crate::app::get_view_shift();
+        crossterm::execute!(
+            std::io::stdout(),
+            crossterm::style::SetBackgroundColor(crate::color::MENU_BG),
+            crate::canvas::OverWrite(slide, $row),
+            crossterm::cursor::MoveTo(0, $row),
+            crossterm::style::Print($text),
+            crossterm::cursor::MoveTo(slide - 1, $row),
+            crossterm::style::Print(']'),
+        )
+        .map_err(|_| EpError::DisplayMenuLineFailed)
+    }};
+}
+
+struct OverWrite(u16, u16);
+
+impl Command for OverWrite {
+    fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
+        write!(f, "\x1B[{};{}H", self.1 + 1, 0)?;
+        write!(f, "{}", " ".repeat(self.0 as usize))?;
+        Ok(())
+    }
+}
+
+fn render_menu() -> EpResult<()> {
+    let slide_len = app::get_view_shift();
+    if slide_len == 0 {
+        return Ok(());
+    }
+
+    let row = app::get_row();
+
+    di_menu_line!(0, "This is Menu")?;
+
+    for i in 1..row {
+        di_menu_line!(i, "")?;
+    }
+
+    Ok(())
 }
