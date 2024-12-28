@@ -10,7 +10,7 @@ pub async fn handle_event() -> EpResult<bool> {
             }
             Event::Resize(_, row) => {
                 app::set_row(row);
-                app::cursor().resize(misc::child_files(&app::get_path()).len());
+                app::cursor().resize(misc::child_files_len(&app::get_path()));
                 canvas_cache::clear();
             }
             _ => {}

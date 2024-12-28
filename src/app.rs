@@ -51,7 +51,7 @@ fn init(path: &PathBuf) -> EpResult<()> {
     let (_, row) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
     ROW.swap(row, Ordering::Relaxed);
 
-    let c = misc::child_files(&path).len();
+    let c = misc::child_files_len(&path);
     CURSOR.resize(c);
 
     Ok(())

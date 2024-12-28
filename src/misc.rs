@@ -44,3 +44,14 @@ pub fn sorted_child_files(path: &PathBuf) -> Vec<PathBuf> {
     sort_files(&mut c);
     c
 }
+
+pub fn child_files_len(path: &PathBuf) -> usize {
+    if !path.is_dir() || !path.exists() {
+        return 0;
+    }
+
+    match path.read_dir() {
+        Ok(d) => d.count(),
+        Err(_) => 0,
+    }
+}

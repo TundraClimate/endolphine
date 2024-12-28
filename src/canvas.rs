@@ -96,7 +96,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 
     let page_size = app::get_row().saturating_sub(4);
     let page = cursor.current() / page_size as usize + 1;
-    let len = misc::child_files(&app::get_path()).len();
+    let len = misc::child_files_len(&app::get_path());
 
     di_view_line!(
         format!("{}{}", page, len),
