@@ -5,9 +5,7 @@ use std::{path::PathBuf, process::Command};
 pub async fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
         match event {
-            Event::Key(key) => {
-                return Ok(handle_key_event(key).await? == HandledKeyEventState::Leave)
-            }
+            Event::Key(key) => return Ok(handle_key_event(key).await?),
             Event::Resize(_, row) => {
                 app::set_row(row);
                 app::cursor().resize(misc::child_files_len(&app::get_path()));
@@ -20,19 +18,13 @@ pub async fn handle_event() -> EpResult<bool> {
     Ok(false)
 }
 
-#[derive(PartialEq, Eq)]
-enum HandledKeyEventState {
-    Leave,
-    Retake,
-}
-
-async fn handle_key_event(key: KeyEvent) -> EpResult<HandledKeyEventState> {
+async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     match key.code {
         KeyCode::Char(c) => return handle_char_key(c).await,
         KeyCode::Esc => handle_esc_key()?,
         _ => {}
     }
-    Ok(HandledKeyEventState::Retake)
+    Ok(false)
 }
 
 fn handle_esc_key() -> EpResult<()> {
@@ -44,9 +36,9 @@ fn handle_esc_key() -> EpResult<()> {
     Ok(())
 }
 
-async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
+async fn handle_char_key(key: char) -> EpResult<bool> {
     if key == 'Q' {
-        return Ok(HandledKeyEventState::Leave);
+        return Ok(true);
     }
 
     if ['j', 'k', 'J', 'K'].contains(&key) {
@@ -69,7 +61,7 @@ async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         let path = app::get_path();
 
         if path == PathBuf::from("/") {
-            return Ok(HandledKeyEventState::Retake);
+            return Ok(false);
         }
 
         let parent = misc::parent(&path);
@@ -102,14 +94,14 @@ async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         let child_files = misc::sorted_child_files(&path);
 
         if child_files.len() == 0 {
-            return Ok(HandledKeyEventState::Retake);
+            return Ok(false);
         }
 
         let Some(target_path) = child_files.get(cursor.current()) else {
-            return Ok(HandledKeyEventState::Retake);
+            return Ok(false);
         };
         let Ok(metadata) = target_path.metadata() else {
-            return Ok(HandledKeyEventState::Retake);
+            return Ok(false);
         };
 
         if metadata.is_dir() {
@@ -151,5 +143,5 @@ async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
         canvas_cache::clear();
     }
 
-    Ok(HandledKeyEventState::Retake)
+    Ok(false)
 }
