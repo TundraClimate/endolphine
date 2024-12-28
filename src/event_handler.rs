@@ -112,37 +112,29 @@ async fn handle_char_key(key: char) -> EpResult<HandledKeyEventState> {
             return Ok(HandledKeyEventState::Retake);
         };
 
-        match metadata {
-            metadata if metadata.is_dir() => {
-                let child_files = misc::sorted_child_files(target_path);
+        if metadata.is_dir() {
+            let child_files = misc::sorted_child_files(target_path);
 
-                app::set_path(target_path);
-                cursor.reset();
-                cursor.resize(child_files.len());
+            app::set_path(target_path);
+            cursor.reset();
+            cursor.resize(child_files.len());
 
-                {
-                    let mut cur = cursor.cache.write().unwrap();
-                    if let Some(pos) = child_files.iter().position(|e| cur.inner_equal(e)) {
-                        cursor.shift(pos as isize);
-                        cur.unwrap_surface();
-                    } else {
-                        cur.reset();
-                    }
-                }
+            let mut cur = cursor.cache.write().unwrap();
+            if let Some(pos) = child_files.iter().position(|e| cur.inner_equal(e)) {
+                cursor.shift(pos as isize);
+                cur.unwrap_surface();
+            } else {
+                cur.reset();
             }
-            metadata if metadata.is_file() => {
-                let editor = option_env!("EDITOR").unwrap_or("vi");
-                crate::disable_tui!().map_err(|_| EpError::SwitchScreen)?;
-                Command::new(editor)
-                    .arg(&target_path)
-                    .status()
-                    .map_err(|e| {
-                        EpError::CommandExecute(editor.to_string(), e.kind().to_string())
-                    })?;
-                crate::enable_tui!().map_err(|_| EpError::SwitchScreen)?;
-                canvas_cache::clear();
-            }
-            _ => {}
+        } else if metadata.is_file() {
+            let editor = option_env!("EDITOR").unwrap_or("vi");
+            crate::disable_tui!().map_err(|_| EpError::SwitchScreen)?;
+            Command::new(editor)
+                .arg(&target_path)
+                .status()
+                .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
+            crate::enable_tui!().map_err(|_| EpError::SwitchScreen)?;
+            canvas_cache::clear();
         }
     }
 
