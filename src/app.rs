@@ -89,15 +89,17 @@ pub fn set_view_shift(new_value: u16) {
 #[macro_export]
 macro_rules! enable_tui {
     () => {
-        (|| -> std::io::Result<()> {
-            crossterm::terminal::enable_raw_mode()?;
+        'blk: {
+            if let Err(e) = crossterm::terminal::enable_raw_mode() {
+                break 'blk Err(e);
+            }
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::terminal::EnterAlternateScreen,
                 crossterm::cursor::Hide,
                 crossterm::terminal::DisableLineWrap
             )
-        })()
+        }
         .map_err(|_| crate::error::EpError::SwitchScreen)
     };
 }
@@ -105,15 +107,17 @@ macro_rules! enable_tui {
 #[macro_export]
 macro_rules! disable_tui {
     () => {
-        (|| -> std::io::Result<()> {
-            crossterm::terminal::disable_raw_mode()?;
+        'blk: {
+            if let Err(e) = crossterm::terminal::disable_raw_mode() {
+                break 'blk Err(e);
+            }
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::terminal::LeaveAlternateScreen,
                 crossterm::cursor::Show,
                 crossterm::terminal::EnableLineWrap,
             )
-        })()
+        }
         .map_err(|_| crate::error::EpError::SwitchScreen)
     };
 }
