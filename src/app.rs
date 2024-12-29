@@ -18,7 +18,7 @@ static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 
 pub async fn launch(path: &PathBuf) -> EpResult<()> {
     init(path)?;
-    enable_tui!().map_err(|_| EpError::SwitchScreen)?;
+    enable_tui!()?;
 
     let quit_flag = Arc::new(AtomicBool::new(false));
 
@@ -35,7 +35,7 @@ pub async fn launch(path: &PathBuf) -> EpResult<()> {
     process_handle.await.unwrap()?;
     ui_handle.await.unwrap()?;
 
-    disable_tui!().map_err(|_| EpError::SwitchScreen)?;
+    disable_tui!()?;
 
     Ok(())
 }
@@ -98,6 +98,7 @@ macro_rules! enable_tui {
                 crossterm::terminal::DisableLineWrap
             )
         })()
+        .map_err(|_| crate::error::EpError::SwitchScreen)
     };
 }
 
@@ -113,5 +114,6 @@ macro_rules! disable_tui {
                 crossterm::terminal::EnableLineWrap,
             )
         })()
+        .map_err(|_| crate::error::EpError::SwitchScreen)
     };
 }

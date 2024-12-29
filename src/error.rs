@@ -38,7 +38,7 @@ impl EpError {
     }
 
     fn wrapped_panic(text: &str) -> EpResult<()> {
-        crate::disable_tui!().map_err(|_| Self::SwitchScreen)?;
+        crate::disable_tui!()?;
 
         panic!("{text}")
     }

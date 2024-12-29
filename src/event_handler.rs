@@ -120,12 +120,12 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             }
         } else if metadata.is_file() {
             let editor = option_env!("EDITOR").unwrap_or("vi");
-            crate::disable_tui!().map_err(|_| EpError::SwitchScreen)?;
+            crate::disable_tui!()?;
             Command::new(editor)
                 .arg(&target_path)
                 .status()
                 .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
-            crate::enable_tui!().map_err(|_| EpError::SwitchScreen)?;
+            crate::enable_tui!()?;
             canvas_cache::clear();
         }
     }
