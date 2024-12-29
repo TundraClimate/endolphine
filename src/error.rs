@@ -24,9 +24,9 @@ impl EpError {
     pub fn handle(&self) {
         let res = match self {
             Self::SwitchScreen => panic!("cannot switch Alternate screen"),
-            Self::InitFailed => panic!("application init failed"),
-            Self::DisplayViewLineFailed => panic!("cannot display texts"),
-            Self::DisplayMenuLineFailed => panic!("cannot display texts"),
+            Self::InitFailed => EpError::wrapped_panic("application init failed"),
+            Self::DisplayViewLineFailed => EpError::wrapped_panic("cannot display texts"),
+            Self::DisplayMenuLineFailed => EpError::wrapped_panic("cannot display texts"),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("command \"{}\" failed: {}", command, kind))
             }
@@ -35,5 +35,11 @@ impl EpError {
         if let Err(e) = res {
             e.handle();
         }
+    }
+
+    fn wrapped_panic(text: &str) -> EpResult<()> {
+        crate::disable_tui!().map_err(|_| Self::SwitchScreen)?;
+
+        panic!("{text}")
     }
 }
