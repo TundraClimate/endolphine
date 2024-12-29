@@ -53,44 +53,38 @@ fn colored_bar(color: Color, len: u16) -> String {
 
 fn render_header(bar_length: u16) -> EpResult<()> {
     let current_path = app::get_path();
-    {
-        let filename = if current_path == PathBuf::from("/") {
-            "/"
+    let filename = format!("{}/", misc::file_name(&current_path));
+
+    let pwd = {
+        let usr = option_env!("USER").unwrap_or("root");
+        let usr = if usr == "root" {
+            "/root"
         } else {
-            &format!("{}{}", misc::file_name(&current_path), "/")
+            &format!("/home/{}", usr)
         };
+        let parent = misc::parent(&current_path);
+        let mut parent = parent
+            .to_str()
+            .unwrap_or("*Invalid Name*")
+            .replacen(usr, "~", 1);
+        if parent != "/" {
+            parent.push('/')
+        } else {
+            parent.pop();
+        }
+        format!(
+            "{}{}{}",
+            parent,
+            SetForegroundColor(color::HEADER_CURRENT_PATH_ON_DARK),
+            filename
+        )
+    };
 
-        let pwd = {
-            let usr = option_env!("USER").unwrap_or("root");
-            let usr = if usr == "root" {
-                "/root"
-            } else {
-                &format!("/home/{}", usr)
-            };
-            let parent = misc::parent(&current_path);
-            let mut parent = parent
-                .to_str()
-                .unwrap_or("*Invalid Name*")
-                .replacen(usr, "~", 1);
-            if parent != "/" {
-                parent.push('/')
-            } else {
-                parent.pop();
-            }
-            format!(
-                "{}{}{}",
-                parent,
-                SetForegroundColor(color::HEADER_CURRENT_PATH_ON_DARK),
-                filename
-            )
-        };
-
-        di_view_line!(
-            format!("{}", &filename),
-            0,
-            Print(format!(" {} in {}", filename, pwd))
-        )?;
-    }
+    di_view_line!(
+        format!("{}", &filename),
+        0,
+        Print(format!(" {} in {}", filename, pwd))
+    )?;
 
     let cursor = app::cursor();
 
@@ -98,19 +92,21 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let page = cursor.current() / page_size as usize + 1;
     let len = misc::child_files_len(&app::get_path());
 
+    let page_area = format!(
+        "{}{} Page {} {}(All {} items)",
+        SetBackgroundColor(color::DEFAULT_BAR),
+        SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
+        page,
+        SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
+        len
+    );
+
     di_view_line!(
         format!("{}{}", page, len),
         1,
         Print(colored_bar(color::DEFAULT_BAR, bar_length)),
         MoveTo(app::get_view_shift(), 1),
-        Print(format!(
-            "{}{} Page {} {}(All {} items)",
-            SetBackgroundColor(color::DEFAULT_BAR),
-            SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
-            page,
-            SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
-            len
-        )),
+        Print(page_area),
     )?;
 
     Ok(())

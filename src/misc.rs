@@ -1,6 +1,10 @@
 use std::path::PathBuf;
 
 pub fn file_name<'a>(path: &'a PathBuf) -> &'a str {
+    if path == &PathBuf::from("/") {
+        return "";
+    }
+
     path.file_name()
         .map(|o| o.to_str())
         .and_then(|s| s)
