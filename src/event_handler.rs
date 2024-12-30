@@ -92,12 +92,19 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         if menu.is_enabled() {
             let elements = menu.elements();
             if let Some(element) = elements.get(menu.cursor().current()) {
-                app::set_path(&element.path());
+                let path = element.path();
+
+                if !path.is_dir() {
+                    crate::log!(format!("\"{}\" is not Directory", element.tag()))?;
+                    return Ok(false);
+                }
+
+                app::set_path(&path);
                 menu.toggle_enable();
 
                 let cursor = app::cursor();
                 cursor.reset();
-                cursor.resize(misc::child_files_len(&element.path()));
+                cursor.resize(misc::child_files_len(&path));
                 cursor.cache.write().unwrap().reset();
             }
 
