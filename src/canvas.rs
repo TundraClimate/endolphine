@@ -297,10 +297,11 @@ fn fpermission(permission: Option<&char>, index: usize) -> String {
 macro_rules! log {
     ($text:expr) => {{
         let row = crate::app::get_row();
+        let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
         crate::di_view_line!(
-            format!("{}", chrono::Utc::now().timestamp_micros()),
+            format!("{}", ts),
             row - 1,
-            crossterm::style::Print($text)
+            crossterm::style::Print(format!("{} {}", ts, $text))
         )
     }};
 }
