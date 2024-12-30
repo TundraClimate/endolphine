@@ -55,30 +55,27 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let current_path = app::get_path();
     let filename = format!("{}/", misc::file_name(&current_path));
 
-    let pwd = {
-        let usr = option_env!("USER").unwrap_or("root");
-        let usr = if usr == "root" {
-            "/root"
-        } else {
-            &format!("/home/{}", usr)
-        };
-        let parent = misc::parent(&current_path);
-        let mut parent = parent
-            .to_str()
-            .unwrap_or("*Invalid Name*")
-            .replacen(usr, "~", 1);
-        if parent != "/" {
-            parent.push('/')
-        } else {
-            parent.pop();
-        }
-        format!(
-            "{}{}{}",
-            parent,
-            SetForegroundColor(color::HEADER_CURRENT_PATH_ON_DARK),
-            filename
-        )
-    };
+    let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {
+        "root" => "/root".to_string(),
+        user => format!("/home/{}", user),
+    });
+
+    let parent = misc::parent(&current_path)
+        .to_str()
+        .map_or("_OsCompatible_".to_string(), |p| {
+            let rep = p.replacen(&usr, "~", 1);
+            match rep.as_str() {
+                "/" => "".to_string(),
+                replaced => format!("{}/", replaced),
+            }
+        });
+
+    let pwd = format!(
+        "{}{}{}",
+        parent,
+        SetForegroundColor(color::HEADER_CURRENT_PATH_ON_DARK),
+        filename
+    );
 
     di_view_line!(
         format!("{}", &filename),
