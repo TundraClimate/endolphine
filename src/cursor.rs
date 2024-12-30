@@ -33,6 +33,11 @@ impl Cursor {
 
     fn swap_id(&self, val: usize) {
         let size = self.size.load(Ordering::Relaxed);
+
+        if size == 0 {
+            return;
+        }
+
         let val = val.min(size - 1);
 
         self.index.swap(val, Ordering::Relaxed);
