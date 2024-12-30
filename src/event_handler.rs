@@ -1,4 +1,4 @@
-use crate::{app, canvas_cache, error::*, misc};
+use crate::{app, canvas_cache, error::*, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::{path::PathBuf, process::Command};
 
@@ -42,7 +42,8 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if ['j', 'k', 'J', 'K'].contains(&key) {
-        let cursor = app::cursor();
+        let cursor = app::captured_cursor();
+
         match key {
             'j' => cursor.next(),
             'k' => cursor.previous(),
@@ -85,7 +86,24 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'l' {
-        let cursor = app::cursor();
+        let cursor = app::captured_cursor();
+
+        let menu = app::menu();
+        if menu.is_enabled() {
+            let elements = menu.elements();
+            if let Some(element) = elements.get(menu.cursor().current()) {
+                app::set_path(&element.path());
+                menu.toggle_enable();
+
+                let cursor = app::cursor();
+                cursor.reset();
+                cursor.resize(misc::child_files_len(&element.path()));
+                cursor.cache.write().unwrap().reset();
+            }
+
+            return Ok(false);
+        }
+
         if cursor.is_selection_mode() {
             cursor.toggle_selection();
         }
@@ -135,12 +153,16 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'M' {
-        if app::get_view_shift() == 0 {
-            app::set_view_shift(20);
-        } else {
-            app::set_view_shift(0);
+        if !menu::is_opened() || app::menu().is_enabled() {
+            app::menu().toggle_enable();
         }
+
+        menu::toggle_open();
         canvas_cache::clear();
+    }
+
+    if key == 'n' {
+        app::menu().toggle_enable();
     }
 
     Ok(false)

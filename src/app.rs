@@ -1,4 +1,4 @@
-use crate::{cursor::Cursor, disable_tui, enable_tui, error::*, misc, thread};
+use crate::{cursor::Cursor, disable_tui, enable_tui, error::*, menu::Menu, misc, thread};
 use once_cell::sync::Lazy;
 use std::{
     path::PathBuf,
@@ -15,6 +15,8 @@ static ROW: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(100));
 static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
+
+static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
 
 pub async fn launch(path: &PathBuf) -> EpResult<()> {
     init(path)?;
@@ -76,6 +78,18 @@ pub fn set_row(new_value: u16) {
 
 pub fn cursor() -> &'static Cursor {
     &*CURSOR
+}
+
+pub fn menu() -> &'static Menu {
+    &*MENU
+}
+
+pub fn captured_cursor() -> &'static Cursor {
+    if MENU.is_enabled() {
+        MENU.cursor()
+    } else {
+        cursor()
+    }
 }
 
 pub fn get_view_shift() -> u16 {

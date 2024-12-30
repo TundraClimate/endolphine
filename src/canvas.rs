@@ -340,7 +340,10 @@ fn render_menu() -> EpResult<()> {
 
     let row = app::get_row();
 
-    di_menu_line!(0, "This is Menu")?;
+    di_menu_line!(
+        0,
+        format!("This is Menu {}", app::menu().cursor().current())
+    )?;
 
     for i in 1..row {
         di_menu_line!(i, "")?;
