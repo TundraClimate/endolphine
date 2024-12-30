@@ -168,8 +168,10 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         canvas_cache::clear();
     }
 
-    if key == 'n' {
-        app::menu().toggle_enable();
+    if key == 'm' {
+        if menu::is_opened() {
+            app::menu().toggle_enable();
+        }
     }
 
     Ok(false)
