@@ -309,9 +309,14 @@ macro_rules! log {
 macro_rules! di_menu_line {
     ($row:expr, $text:expr) => {{
         let slide = crate::app::get_view_shift();
+        let bg = if crate::app::menu().is_enabled() {
+            crate::color::MENU_BG
+        } else {
+            crate::color::MENU_BG_DARK
+        };
         crossterm::execute!(
             std::io::stdout(),
-            crossterm::style::SetBackgroundColor(crate::color::MENU_BG),
+            crossterm::style::SetBackgroundColor(bg),
             crate::canvas::OverWrite(slide, $row),
             crossterm::cursor::MoveTo(0, $row),
             crossterm::style::Print($text),
