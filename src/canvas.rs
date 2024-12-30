@@ -138,43 +138,59 @@ fn render_body() -> EpResult<()> {
     let cursor = app::cursor();
     let page = cursor.current() / page_size as usize + 1;
     let pagenated = pagenate(&child_files, page_size, page);
+
     for rel_i in 0..(app::get_row().saturating_sub(4)) {
         let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
+        let is_cursor_pos = cursor.current() == abs_i;
+
         if let Some(f) = pagenated.get(rel_i as usize) {
-            let c = if cursor.current() == abs_i { ">" } else { " " };
-            let filename = colored_file_name(&f);
-            let under_file_name = SetBackgroundColor(if cursor.is_selected(abs_i) {
-                color::SELECTED
-            } else if cursor.current() == abs_i {
-                color::UNDER_CURSOR
-            } else {
-                color::APP_BG
-            });
-            let bsize = colored_bsize(&f);
-            let time = colored_last_modified(&f);
-            let permission = format_permissions(permission(&f));
-            di_view_line!(
-                format!(
-                    "{}{}{}{}{}{}",
-                    rel_i, c, filename, under_file_name, permission, bsize
-                ),
-                rel_i + 2,
-                Print(format!(
-                    "{} | {} {} {} {}{}{} ",
-                    c,
-                    permission,
-                    bsize,
-                    time,
-                    under_file_name,
-                    filename,
-                    SetBackgroundColor(color::APP_BG)
-                )),
-            )?;
+            render_file_line(rel_i, is_cursor_pos, f, cursor.is_selected(abs_i))?;
         } else {
-            di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))?;
+            render_empty_line(rel_i)?;
         }
     }
     Ok(())
+}
+
+fn render_file_line(
+    rel_i: u16,
+    is_cursor_pos: bool,
+    file: &PathBuf,
+    is_selected: bool,
+) -> EpResult<()> {
+    let c = if is_cursor_pos { ">" } else { " " };
+    let filename = colored_file_name(&file);
+    let under_name_color = SetBackgroundColor(if is_selected {
+        color::SELECTED
+    } else if is_cursor_pos {
+        color::UNDER_CURSOR
+    } else {
+        color::APP_BG
+    });
+    let bsize = colored_bsize(&file);
+    let time = colored_last_modified(&file);
+    let permission = format_permissions(permission(&file));
+    di_view_line!(
+        format!(
+            "{}{}{}{}{}{}{}",
+            rel_i, c, filename, under_name_color, permission, bsize, time
+        ),
+        rel_i + 2,
+        Print(format!(
+            "{} | {} {} {} {}{}{}",
+            c,
+            permission,
+            bsize,
+            time,
+            under_name_color,
+            filename,
+            SetBackgroundColor(color::APP_BG)
+        )),
+    )
+}
+
+fn render_empty_line(rel_i: u16) -> EpResult<()> {
+    di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
 }
 
 fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<PathBuf> {
