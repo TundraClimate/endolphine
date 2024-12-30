@@ -340,13 +340,24 @@ fn render_menu() -> EpResult<()> {
 
     let row = app::get_row();
 
-    di_menu_line!(
-        0,
-        format!("This is Menu {}", app::menu().cursor().current())
-    )?;
+    di_menu_line!(0, format!("This is Menu"))?;
+    di_menu_line!(1, format!("{}", "-".repeat(slide_len as usize - 1)))?;
 
-    for i in 1..row {
-        di_menu_line!(i, "")?;
+    let menu = app::menu();
+    let elements = menu.elements();
+    let cursor = menu.cursor().current();
+    for i in 2..row {
+        if let Some(element) = elements.get(i as usize - 2) {
+            let tag = element
+                .tag()
+                .chars()
+                .take(slide_len as usize - 1)
+                .collect::<String>();
+            let cur = if i - 2 == cursor as u16 { ">" } else { " " };
+            di_menu_line!(i, format!("{} | {}", cur, tag))?;
+        } else {
+            di_menu_line!(i, "")?;
+        }
     }
 
     Ok(())

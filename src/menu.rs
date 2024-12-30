@@ -84,6 +84,10 @@ impl MenuElement {
         }
     }
 
+    pub fn tag(&self) -> String {
+        self.tag.clone()
+    }
+
     pub fn path(&self) -> PathBuf {
         self.path.clone()
     }
