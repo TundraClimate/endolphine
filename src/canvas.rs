@@ -395,11 +395,13 @@ fn render_menu() -> EpResult<()> {
                 i,
                 format!("{}{}", cur, element.tag()),
                 format!(
-                    "{} |{} {} {}",
+                    "{} |{} {}{} {}{}",
                     cur,
                     under_name_color,
+                    SetForegroundColor(color::MENU_TAG_COLOR),
                     tag,
-                    SetBackgroundColor(menu_bg())
+                    SetBackgroundColor(menu_bg()),
+                    ResetColor,
                 )
             )?;
         } else {

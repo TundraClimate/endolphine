@@ -38,3 +38,4 @@ const_color!(UNDER_CURSOR, 85);
 const_color!(MENU_BG, 90);
 const_color!(MENU_BG_DARK, 50);
 const_color!(MENU_UNDER_CURSOR, 70);
+const_color!(MENU_TAG_COLOR, 85, 240, 180);
