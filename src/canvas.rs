@@ -379,13 +379,13 @@ fn render_menu() -> EpResult<()> {
     let cursor = menu.cursor().current() as u16;
     for i in 2..row - 1 {
         if let Some(element) = elements.get(i as usize - 2) {
-            let tag = element
-                .tag()
-                .chars()
-                .take(slide_len as usize - 1)
-                .collect::<String>();
-
-            render_menu_line(i, tag, i - 2 == cursor, menu.is_enabled())?;
+            render_menu_line(
+                i,
+                element.tag(),
+                slide_len,
+                i - 2 == cursor,
+                menu.is_enabled(),
+            )?;
         } else {
             di_menu_line!(i, "empty", "")?;
         }
@@ -397,9 +397,11 @@ fn render_menu() -> EpResult<()> {
 fn render_menu_line(
     row: u16,
     tag: String,
+    slide_len: u16,
     is_cursor_pos: bool,
     menu_enabled: bool,
 ) -> EpResult<()> {
+    let tag = tag.chars().take(slide_len as usize - 1).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(if is_cursor_pos && menu_enabled {
         color::MENU_UNDER_CURSOR
