@@ -101,6 +101,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
                 app::set_path(&path);
                 menu.toggle_enable();
+                canvas_cache::clear();
 
                 let cursor = app::cursor();
                 cursor.reset();
