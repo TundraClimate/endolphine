@@ -322,6 +322,7 @@ macro_rules! di_menu_line {
             crossterm::cursor::MoveTo(0, $row),
             crossterm::style::Print($text),
             crossterm::cursor::MoveTo(slide - 1, $row),
+            crossterm::style::SetBackgroundColor(bg),
             crossterm::style::Print(']'),
         )
         .map_err(|_| EpError::DisplayMenuLineFailed)
@@ -351,7 +352,7 @@ fn render_menu() -> EpResult<()> {
 
     let menu = app::menu();
     let elements = menu.elements();
-    let cursor = menu.cursor().current();
+    let cursor = menu.cursor().current() as u16;
     for i in 2..row {
         if let Some(element) = elements.get(i as usize - 2) {
             let tag = element
@@ -359,8 +360,24 @@ fn render_menu() -> EpResult<()> {
                 .chars()
                 .take(slide_len as usize - 1)
                 .collect::<String>();
-            let cur = if i - 2 == cursor as u16 { ">" } else { " " };
-            di_menu_line!(i, format!("{} | {}", cur, tag))?;
+            let cur = if i - 2 == cursor { ">" } else { " " };
+            let under_name_color = SetBackgroundColor(if !app::menu().is_enabled() {
+                color::MENU_BG_DARK
+            } else if i - 2 == cursor {
+                color::MENU_UNDER_CURSOR
+            } else {
+                color::MENU_BG
+            });
+            di_menu_line!(
+                i,
+                format!(
+                    "{} |{} {} {}",
+                    cur,
+                    under_name_color,
+                    tag,
+                    SetBackgroundColor(color::MENU_BG)
+                )
+            )?;
         } else {
             di_menu_line!(i, "")?;
         }
