@@ -16,13 +16,21 @@ macro_rules! di_view_line {
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
-                crossterm::style::SetBackgroundColor(crate::color::APP_BG),
+                crossterm::style::SetBackgroundColor(crate::canvas::app_bg()),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
                 $($cmd),+,
                 crossterm::style::ResetColor
             ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
         } else { Ok(()) }
     }};
+}
+
+pub fn app_bg() -> Color {
+    if app::menu().is_enabled() {
+        color::APP_BG_DARK
+    } else {
+        color::APP_BG
+    }
 }
 
 pub fn render() -> EpResult<()> {
@@ -162,7 +170,7 @@ fn render_file_line(
     } else if is_cursor_pos {
         color::UNDER_CURSOR
     } else {
-        color::APP_BG
+        app_bg()
     });
     let bsize = colored_bsize(&file);
     let time = colored_last_modified(&file);
@@ -181,7 +189,7 @@ fn render_file_line(
             time,
             under_name_color,
             filename,
-            SetBackgroundColor(color::APP_BG)
+            SetBackgroundColor(app_bg())
         )),
     )
 }
