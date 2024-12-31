@@ -347,7 +347,7 @@ fn render_menu() -> EpResult<()> {
 
     let row = app::get_row();
 
-    di_menu_line!(0, format!("This is Menu"))?;
+    di_menu_line!(0, format!(" Select to Move "))?;
     di_menu_line!(1, format!("{}", "-".repeat(slide_len as usize - 1)))?;
 
     let menu = app::menu();
