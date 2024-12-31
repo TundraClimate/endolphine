@@ -384,30 +384,41 @@ fn render_menu() -> EpResult<()> {
                 .chars()
                 .take(slide_len as usize - 1)
                 .collect::<String>();
-            let is_cursor_pos = i - 2 == cursor;
-            let cur = if is_cursor_pos { ">" } else { " " };
-            let under_name_color = SetBackgroundColor(if is_cursor_pos && menu.is_enabled() {
-                color::MENU_UNDER_CURSOR
-            } else {
-                menu_bg()
-            });
-            di_menu_line!(
-                i,
-                format!("{}{}", cur, element.tag()),
-                format!(
-                    "{} |{} {}{} {}{}",
-                    cur,
-                    under_name_color,
-                    SetForegroundColor(color::MENU_TAG_COLOR),
-                    tag,
-                    SetBackgroundColor(menu_bg()),
-                    ResetColor,
-                )
-            )?;
+
+            render_menu_line(i, tag, i - 2 == cursor, menu.is_enabled())?;
         } else {
             di_menu_line!(i, "empty", "")?;
         }
     }
 
+    Ok(())
+}
+
+fn render_menu_line(
+    row: u16,
+    tag: String,
+    is_cursor_pos: bool,
+    menu_enabled: bool,
+) -> EpResult<()> {
+    let cur = if is_cursor_pos { ">" } else { " " };
+    let under_name_color = SetBackgroundColor(if is_cursor_pos && menu_enabled {
+        color::MENU_UNDER_CURSOR
+    } else {
+        menu_bg()
+    });
+
+    di_menu_line!(
+        row,
+        format!("{}{}", cur, tag),
+        format!(
+            "{} |{} {}{} {}{}",
+            cur,
+            under_name_color,
+            SetForegroundColor(color::MENU_TAG_COLOR),
+            tag,
+            SetBackgroundColor(menu_bg()),
+            ResetColor,
+        )
+    )?;
     Ok(())
 }
