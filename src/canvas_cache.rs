@@ -19,7 +19,3 @@ pub fn get(key: (u16, u8)) -> String {
 pub fn clear() {
     CACHE.write().unwrap().clear();
 }
-
-pub fn contain_key(key: (u16, u8)) -> bool {
-    CACHE.read().unwrap().contains_key(&key)
-}
