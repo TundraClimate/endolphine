@@ -312,11 +312,7 @@ macro_rules! di_menu_line {
         if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::app::get_row() != 0 {
             crate::canvas_cache::insert(($row, 1), $tag.to_string());
             let slide = crate::app::get_view_shift();
-            let bg = if crate::app::menu().is_enabled() {
-                crate::color::MENU_BG
-            } else {
-                crate::color::MENU_BG_DARK
-            };
+            let bg = menu_bg();
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::style::SetBackgroundColor(bg),
@@ -344,6 +340,14 @@ impl Command for OverWrite {
     }
 }
 
+fn menu_bg() -> Color {
+    if app::menu().is_enabled() {
+        color::MENU_BG
+    } else {
+        color::MENU_BG_DARK
+    }
+}
+
 fn render_menu() -> EpResult<()> {
     let slide_len = app::get_view_shift();
     if slide_len == 0 {
@@ -365,13 +369,12 @@ fn render_menu() -> EpResult<()> {
                 .chars()
                 .take(slide_len as usize - 1)
                 .collect::<String>();
-            let cur = if i - 2 == cursor { ">" } else { " " };
-            let under_name_color = SetBackgroundColor(if !app::menu().is_enabled() {
-                color::MENU_BG_DARK
-            } else if i - 2 == cursor {
+            let is_cursor_pos = i - 2 == cursor;
+            let cur = if is_cursor_pos { ">" } else { " " };
+            let under_name_color = SetBackgroundColor(if is_cursor_pos && menu.is_enabled() {
                 color::MENU_UNDER_CURSOR
             } else {
-                color::MENU_BG
+                menu_bg()
             });
             di_menu_line!(
                 i,
@@ -381,7 +384,7 @@ fn render_menu() -> EpResult<()> {
                     cur,
                     under_name_color,
                     tag,
-                    SetBackgroundColor(color::MENU_BG)
+                    SetBackgroundColor(menu_bg())
                 )
             )?;
         } else {
