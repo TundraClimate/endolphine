@@ -11,8 +11,8 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 #[macro_export]
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get($row) != &$tag && crate::app::get_row() != 0 {
-            crate::canvas_cache::insert($row, $tag.to_string());
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::app::get_row() != 0 {
+            crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
@@ -116,7 +116,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         Print(colored_bar(color::DEFAULT_BAR, bar_length))
     )?;
 
-    if !canvas_cache::contain_key(row + 1) {
+    if !canvas_cache::contain_key((row + 1, 0)) {
         di_view_line!("empty", row + 1, Print(""))?;
     }
 
@@ -308,24 +308,29 @@ macro_rules! log {
 
 #[macro_export]
 macro_rules! di_menu_line {
-    ($row:expr, $text:expr) => {{
-        let slide = crate::app::get_view_shift();
-        let bg = if crate::app::menu().is_enabled() {
-            crate::color::MENU_BG
+    ($row:expr, $tag:expr, $text:expr) => {{
+        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::app::get_row() != 0 {
+            crate::canvas_cache::insert(($row, 1), $tag.to_string());
+            let slide = crate::app::get_view_shift();
+            let bg = if crate::app::menu().is_enabled() {
+                crate::color::MENU_BG
+            } else {
+                crate::color::MENU_BG_DARK
+            };
+            crossterm::execute!(
+                std::io::stdout(),
+                crossterm::style::SetBackgroundColor(bg),
+                crate::canvas::OverWrite(slide, $row),
+                crossterm::cursor::MoveTo(0, $row),
+                crossterm::style::Print($text),
+                crossterm::cursor::MoveTo(slide - 1, $row),
+                crossterm::style::SetBackgroundColor(bg),
+                crossterm::style::Print(']'),
+            )
+            .map_err(|_| EpError::DisplayMenuLineFailed)
         } else {
-            crate::color::MENU_BG_DARK
-        };
-        crossterm::execute!(
-            std::io::stdout(),
-            crossterm::style::SetBackgroundColor(bg),
-            crate::canvas::OverWrite(slide, $row),
-            crossterm::cursor::MoveTo(0, $row),
-            crossterm::style::Print($text),
-            crossterm::cursor::MoveTo(slide - 1, $row),
-            crossterm::style::SetBackgroundColor(bg),
-            crossterm::style::Print(']'),
-        )
-        .map_err(|_| EpError::DisplayMenuLineFailed)
+            Ok(())
+        }
     }};
 }
 
@@ -347,8 +352,8 @@ fn render_menu() -> EpResult<()> {
 
     let row = app::get_row();
 
-    di_menu_line!(0, format!(" Select to Move "))?;
-    di_menu_line!(1, format!("{}", "-".repeat(slide_len as usize - 1)))?;
+    di_menu_line!(0, "title", format!(" Select to Move "))?;
+    di_menu_line!(1, "sep", format!("{}", "-".repeat(slide_len as usize - 1)))?;
 
     let menu = app::menu();
     let elements = menu.elements();
@@ -370,6 +375,7 @@ fn render_menu() -> EpResult<()> {
             });
             di_menu_line!(
                 i,
+                format!("{}{}", cur, element.tag()),
                 format!(
                     "{} |{} {} {}",
                     cur,
@@ -379,7 +385,7 @@ fn render_menu() -> EpResult<()> {
                 )
             )?;
         } else {
-            di_menu_line!(i, "")?;
+            di_menu_line!(i, "empty", "")?;
         }
     }
 

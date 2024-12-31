@@ -1,13 +1,13 @@
 use once_cell::sync::Lazy;
 use std::{collections::HashMap, sync::RwLock};
 
-static CACHE: Lazy<RwLock<HashMap<u16, String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 
-pub fn insert(key: u16, tag: String) {
+pub fn insert(key: (u16, u8), tag: String) {
     CACHE.write().unwrap().insert(key, tag);
 }
 
-pub fn get(key: u16) -> String {
+pub fn get(key: (u16, u8)) -> String {
     CACHE
         .read()
         .unwrap()
@@ -20,6 +20,6 @@ pub fn clear() {
     CACHE.write().unwrap().clear();
 }
 
-pub fn contain_key(key: u16) -> bool {
+pub fn contain_key(key: (u16, u8)) -> bool {
     CACHE.read().unwrap().contains_key(&key)
 }
