@@ -33,6 +33,14 @@ pub fn app_bg() -> Color {
     }
 }
 
+fn bar_color() -> Color {
+    if app::menu().is_enabled() {
+        color::BAR_DARK
+    } else {
+        color::BAR
+    }
+}
+
 pub fn render() -> EpResult<()> {
     let (cols, rows) = terminal::size().unwrap_or((100, 100));
 
@@ -99,7 +107,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
-        SetBackgroundColor(color::DEFAULT_BAR),
+        SetBackgroundColor(bar_color()),
         SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
         page,
         SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
@@ -109,7 +117,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     di_view_line!(
         format!("{}{}", page, len),
         1,
-        Print(colored_bar(color::DEFAULT_BAR, bar_length)),
+        Print(colored_bar(bar_color(), bar_length)),
         MoveTo(app::get_view_shift(), 1),
         Print(page_area),
     )?;
@@ -121,7 +129,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
     di_view_line!(
         "footer_bar",
         row,
-        Print(colored_bar(color::DEFAULT_BAR, bar_length))
+        Print(colored_bar(bar_color(), bar_length))
     )?;
 
     if !canvas_cache::contain_key((row + 1, 0)) {

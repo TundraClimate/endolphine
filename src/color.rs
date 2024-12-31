@@ -20,7 +20,8 @@ macro_rules! const_color {
 
 const_color!(APP_BG, 60);
 const_color!(APP_BG_DARK, 30);
-const_color!(DEFAULT_BAR, 150);
+const_color!(BAR, 150);
+const_color!(BAR_DARK, 120);
 const_color!(HEADER_CURRENT_PATH_ON_DARK, 150);
 const_color!(HEADER_BAR_TEXT_DEFAULT, 40);
 const_color!(HEADER_BAR_TEXT_LIGHT, 100);
