@@ -371,8 +371,8 @@ fn render_menu() -> EpResult<()> {
 
     let row = app::get_row();
 
-    di_menu_line!(0, "title", format!(" Select to Move "))?;
-    di_menu_line!(1, "sep", format!("{}", "-".repeat(slide_len as usize - 1)))?;
+    di_menu_line!(0, "title", " Select to Move ")?;
+    di_menu_line!(1, "sep", "-".repeat(slide_len as usize - 1))?;
 
     let menu = app::menu();
     let elements = menu.elements();
