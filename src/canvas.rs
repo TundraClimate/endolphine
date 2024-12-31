@@ -1,4 +1,4 @@
-use crate::{app, canvas_cache, color, error::*, misc};
+use crate::{app, color, error::*, misc};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -25,7 +25,7 @@ macro_rules! di_view_line {
     }};
 }
 
-pub fn app_bg() -> Color {
+fn app_bg() -> Color {
     if app::menu().is_enabled() {
         color::APP_BG_DARK
     } else {
@@ -131,10 +131,6 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         row,
         Print(colored_bar(bar_color(), bar_length))
     )?;
-
-    if !canvas_cache::contain_key((row + 1, 0)) {
-        di_view_line!("empty", row + 1, Print(""))?;
-    }
 
     Ok(())
 }
@@ -314,11 +310,14 @@ macro_rules! log {
     ($text:expr) => {{
         let row = crate::app::get_row();
         let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
-        crate::di_view_line!(
-            format!("{}", ts),
-            row - 1,
-            crossterm::style::Print(format!("{} {}", ts, $text))
+        let ts = if $text == "" { " ".to_string() } else { ts };
+        crossterm::execute!(
+            std::io::stdout(),
+            crossterm::cursor::MoveTo(0, row),
+            crossterm::style::Print(format!("{} {}", ts, $text)),
+            crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
         )
+        .map_err(|_| crate::error::EpError::Log)
     }};
 }
 
@@ -378,7 +377,7 @@ fn render_menu() -> EpResult<()> {
     let menu = app::menu();
     let elements = menu.elements();
     let cursor = menu.cursor().current() as u16;
-    for i in 2..row {
+    for i in 2..row - 1 {
         if let Some(element) = elements.get(i as usize - 2) {
             let tag = element
                 .tag()

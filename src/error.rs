@@ -16,6 +16,9 @@ pub enum EpError {
     #[error("di_menu_line error")]
     DisplayMenuLineFailed,
 
+    #[error("logging error")]
+    Log,
+
     #[error("command failed")]
     CommandExecute(String, String),
 }
@@ -27,6 +30,7 @@ impl EpError {
             Self::InitFailed => EpError::wrapped_panic("application init failed"),
             Self::DisplayViewLineFailed => EpError::wrapped_panic("cannot display texts"),
             Self::DisplayMenuLineFailed => EpError::wrapped_panic("cannot display texts"),
+            Self::Log => EpError::wrapped_panic("cant logging texts"),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("command \"{}\" failed: {}", command, kind))
             }
