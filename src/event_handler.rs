@@ -170,10 +170,12 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'm' {
-        if menu::is_opened() {
-            app::menu().toggle_enable();
-            canvas_cache::clear();
+        if !menu::is_opened() {
+            menu::toggle_open();
         }
+
+        app::menu().toggle_enable();
+        canvas_cache::clear();
     }
 
     Ok(false)
