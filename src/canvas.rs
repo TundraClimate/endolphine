@@ -176,18 +176,20 @@ fn render_file_line(
     } else {
         app_bg()
     });
+    let filetype = colored_file_type(file);
     let bsize = colored_bsize(&file);
     let time = colored_last_modified(&file);
     let permission = format_permissions(permission(&file));
     di_view_line!(
         format!(
-            "{}{}{}{}{}{}{}",
-            rel_i, c, filename, under_name_color, permission, bsize, time
+            "{}{}{}{}{}{}{}{}",
+            rel_i, c, filename, filetype, under_name_color, permission, bsize, time
         ),
         rel_i + 2,
         Print(format!(
-            "{} | {} {} {} {}{}{}",
+            "{} | {}{} {} {} {}{}{}",
             c,
+            filetype,
             permission,
             bsize,
             time,
@@ -212,6 +214,19 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
         .get(current_page - 1)
         .map(|p| p.to_vec())
         .unwrap_or(vec![])
+}
+
+fn colored_file_type(path: &PathBuf) -> String {
+    format!(
+        "{}{}",
+        SetForegroundColor(color::PERMISSION_TYPE),
+        match path {
+            path if path.is_symlink() => 'l',
+            path if path.is_dir() => 'd',
+            path if path.is_file() => '-',
+            _ => 'o',
+        }
+    )
 }
 
 fn colored_file_name(path: &PathBuf) -> String {

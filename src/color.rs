@@ -25,6 +25,7 @@ const_color!(BAR_DARK, 120);
 const_color!(HEADER_CURRENT_PATH_ON_DARK, 150);
 const_color!(HEADER_BAR_TEXT_DEFAULT, 40);
 const_color!(HEADER_BAR_TEXT_LIGHT, 100);
+const_color!(PERMISSION_TYPE, 30, 150, 230);
 const_color!(PERMISSION_READ, 100, 220, 150);
 const_color!(PERMISSION_WRITE, 240, 170, 70);
 const_color!(PERMISSION_EXE, 250, 250, 60);
