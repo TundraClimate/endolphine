@@ -1,4 +1,6 @@
-use crate::{cursor::Cursor, disable_tui, enable_tui, error::*, menu::Menu, misc, thread};
+use crate::{
+    cursor::Cursor, disable_tui, enable_tui, error::*, input::Input, menu::Menu, misc, thread,
+};
 use once_cell::sync::Lazy;
 use std::{
     path::PathBuf,
@@ -17,6 +19,8 @@ static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
+
+static INPUT: Lazy<Input> = Lazy::new(|| Input::default());
 
 pub async fn launch(path: &PathBuf) -> EpResult<()> {
     init(path)?;
@@ -98,6 +102,10 @@ pub fn get_view_shift() -> u16 {
 
 pub fn set_view_shift(new_value: u16) {
     VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
+}
+
+pub fn input() -> &'static Input {
+    &*INPUT
 }
 
 #[macro_export]
