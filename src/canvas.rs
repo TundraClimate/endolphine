@@ -216,7 +216,7 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
 
 fn colored_file_name(path: &PathBuf) -> String {
     format!(
-        "{}{}",
+        "{}{}{}",
         SetForegroundColor(match path {
             path if !path.exists() => color::PATH_NAME_BROKEN,
             path if path.is_symlink() => color::PATH_NAME_SYMLINK,
@@ -224,8 +224,25 @@ fn colored_file_name(path: &PathBuf) -> String {
             path if path.is_file() => color::PATH_NAME_FILE,
             _ => color::PATH_NAME_BROKEN,
         }),
-        misc::file_name(path)
+        misc::file_name(path),
+        if let Some(target) = symlink_target(path) {
+            format!(" -> {}", target)
+        } else {
+            "".into()
+        }
     )
+}
+
+fn symlink_target(path: &PathBuf) -> Option<String> {
+    if !path.is_symlink() {
+        return None;
+    }
+
+    if let Ok(link) = path.read_link() {
+        Some(link.to_str().unwrap().into())
+    } else {
+        Some("Broken symlink".into())
+    }
 }
 
 fn colored_bsize(path: &PathBuf) -> String {
