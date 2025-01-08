@@ -40,16 +40,12 @@ impl Input {
         }
     }
 
-    pub fn drain(&self) -> Option<String> {
-        let mut lock = self.buffer.write().unwrap();
-        let Some(ref mut buf) = *lock else {
+    pub fn buffer_load(&self) -> Option<String> {
+        let lock = self.buffer.read().unwrap();
+        let Some(ref buf) = *lock else {
             return None;
         };
 
-        let inner = buf.clone();
-
-        *lock = None;
-
-        Some(inner)
+        Some(buf.clone())
     }
 }

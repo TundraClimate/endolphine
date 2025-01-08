@@ -39,6 +39,10 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
         KeyCode::Esc => input.toggle_enable(),
         KeyCode::Char(c) => input.buffer_push(c),
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
+        KeyCode::Enter => {
+            crate::log!(format!("{:?}", input.buffer_load()))?;
+            input.toggle_enable();
+        }
         _ => {}
     }
 
