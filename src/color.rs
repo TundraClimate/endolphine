@@ -36,6 +36,7 @@ const_color!(PATH_NAME_BROKEN, 200, 0, 0);
 const_color!(LAST_MODIFIED_TIME, 130, 70, 255);
 const_color!(SELECTED, 235, 140, 0);
 const_color!(UNDER_CURSOR, 85);
+const_color!(INPUT_BG, 40, 40, 80);
 const_color!(MENU_BG, 90);
 const_color!(MENU_BG_DARK, 50);
 const_color!(MENU_UNDER_CURSOR, 70);

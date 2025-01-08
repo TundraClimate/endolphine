@@ -152,12 +152,50 @@ fn render_body() -> EpResult<()> {
         let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
+        if is_cursor_pos && app::input_use(|i| i.is_enable()) {
+            render_input_line(rel_i)?;
+            continue;
+        }
+
         if let Some(f) = pagenated.get(rel_i as usize) {
             render_file_line(rel_i, is_cursor_pos, f, cursor.is_selected(abs_i))?;
         } else {
             render_empty_line(rel_i)?;
         }
     }
+    Ok(())
+}
+
+macro_rules! di_input_line {
+    ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::app::get_row() != 0 {
+            crate::canvas_cache::insert(($row, 0), $tag.to_string());
+            crossterm::execute!(
+                std::io::stdout(),
+                crossterm::cursor::MoveTo(crate::app::get_view_shift() + 39, $row),
+                crossterm::style::SetBackgroundColor(crate::color::INPUT_BG),
+                crossterm::style::Print(" ".repeat(25)),
+                crossterm::cursor::MoveTo(crate::app::get_view_shift() + 39, $row),
+                $($cmd),+,
+                crossterm::style::Print("▏"),
+                crossterm::style::ResetColor
+            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
+        } else { Ok(()) }
+    }};
+}
+
+fn render_input_line(rel_i: u16) -> EpResult<()> {
+    let Some(buf) = app::input_use(|i| i.buffer_load().clone()) else {
+        return Ok(());
+    };
+
+    let buf: String = {
+        let size = buf.chars().count();
+        buf.chars().skip(size.saturating_sub(20)).collect()
+    };
+
+    di_input_line!(format!("input{}", buf), rel_i + 2, Print(buf))?;
+
     Ok(())
 }
 
