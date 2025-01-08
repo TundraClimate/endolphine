@@ -20,7 +20,7 @@ static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
 
-static INPUT: Lazy<Input> = Lazy::new(|| Input::default());
+static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
 
 pub async fn launch(path: &PathBuf) -> EpResult<()> {
     init(path)?;
@@ -104,8 +104,13 @@ pub fn set_view_shift(new_value: u16) {
     VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
 }
 
-pub fn input() -> &'static Input {
+pub fn input() -> &'static RwLock<Input> {
     &*INPUT
+}
+
+pub fn input_use<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
+    let mut lock = input().write().unwrap();
+    f(&mut *lock)
 }
 
 #[macro_export]
