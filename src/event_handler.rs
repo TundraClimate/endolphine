@@ -40,8 +40,9 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
         KeyCode::Char(c) => input.buffer_push(c),
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
         KeyCode::Enter => {
-            crate::log!(format!("{:?}", input.buffer_load()))?;
-            input.toggle_enable();
+            input.complete_input();
+            let res = input.drain_storage();
+            crate::log!(format!("{:?}", res))?;
         }
         _ => {}
     }
@@ -201,7 +202,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'i' {
-        app::input_use(|i| i.toggle_enable());
+        app::input_use_mut(|i| i.toggle_enable());
         crate::log!("Input Mode")?;
     }
 

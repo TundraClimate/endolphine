@@ -1,10 +1,14 @@
 pub struct Input {
     buffer: Option<String>,
+    storage: Option<String>,
 }
 
 impl Default for Input {
     fn default() -> Self {
-        Input { buffer: None }
+        Input {
+            buffer: None,
+            storage: None,
+        }
     }
 }
 
@@ -34,11 +38,19 @@ impl Input {
         }
     }
 
-    pub fn buffer_load(&self) -> Option<String> {
-        let Some(ref buf) = self.buffer else {
-            return None;
-        };
+    pub fn buffer_load<'a>(&'a self) -> &'a Option<String> {
+        &self.buffer
+    }
 
-        Some(buf.clone())
+    pub fn complete_input(&mut self) {
+        self.storage = self.buffer.clone();
+        self.toggle_enable();
+    }
+
+    pub fn drain_storage(&mut self) -> Option<String> {
+        let tmp = self.storage.clone();
+        self.storage = None;
+
+        tmp
     }
 }
