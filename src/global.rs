@@ -10,7 +10,8 @@ use std::{
 };
 
 static PATH: Lazy<RwLock<PathBuf>> = Lazy::new(|| RwLock::new(PathBuf::new()));
-static HEIGHT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(100));
+static CANVAS_SIZE: Lazy<(AtomicU16, AtomicU16)> =
+    Lazy::new(|| (AtomicU16::new(100), AtomicU16::new(100)));
 static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
@@ -20,8 +21,9 @@ static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::ne
 pub fn init(path: &PathBuf) -> EpResult<()> {
     set_path(&path);
 
-    let (_, row) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
-    set_height(row);
+    let (width, height) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
+    set_width(width);
+    set_height(height);
 
     let c = misc::child_files_len(&path);
     CURSOR.resize(c);
@@ -38,12 +40,20 @@ pub fn set_path(new_path: &PathBuf) {
     *lock = new_path.clone();
 }
 
+pub fn get_width() -> u16 {
+    CANVAS_SIZE.0.load(Ordering::Relaxed)
+}
+
+pub fn set_width(new_value: u16) {
+    CANVAS_SIZE.0.swap(new_value, Ordering::Relaxed);
+}
+
 pub fn get_height() -> u16 {
-    HEIGHT.load(Ordering::Relaxed)
+    CANVAS_SIZE.1.load(Ordering::Relaxed)
 }
 
 pub fn set_height(new_value: u16) {
-    HEIGHT.swap(new_value, Ordering::Relaxed);
+    CANVAS_SIZE.1.swap(new_value, Ordering::Relaxed);
 }
 
 pub fn cursor() -> &'static Cursor {

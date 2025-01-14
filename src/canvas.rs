@@ -3,7 +3,7 @@ use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal::{self, Clear, ClearType},
+    terminal::{Clear, ClearType},
     Command,
 };
 use si_scale::helpers;
@@ -83,19 +83,24 @@ macro_rules! log {
 }
 
 pub fn render() -> EpResult<()> {
-    let (cols, rows) = terminal::size().unwrap_or((100, 100));
+    let (width, height) = (global::get_width(), global::get_height());
 
-    if rows <= 4 {
+    if height <= 4 {
         return Ok(());
     }
 
-    render_header(cols)?;
+    render_header(width)?;
 
-    render_body()?;
+    if height > 4 {
+        render_body()?;
+    }
 
-    render_footer(rows - 2, cols)?;
+    render_footer(height - 2, width)?;
 
-    render_menu()?;
+    if width > 0 {
+        render_menu()?;
+    }
+
     Ok(())
 }
 
@@ -177,11 +182,6 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 
 fn render_body() -> EpResult<()> {
     let height = misc::body_height();
-
-    if height == 0 {
-        return Ok(());
-    }
-
     let path = global::get_path();
     let child_files = misc::sorted_child_files(&path);
     let cursor = global::cursor();
