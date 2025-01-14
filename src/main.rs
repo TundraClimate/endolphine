@@ -12,7 +12,6 @@ mod global;
 mod input;
 mod menu;
 mod misc;
-mod thread;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]

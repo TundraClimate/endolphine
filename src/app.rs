@@ -1,8 +1,12 @@
-use crate::{error::*, global, thread};
+use crate::{canvas, error::*, event_handler, global};
 use std::{
     path::PathBuf,
-    sync::{atomic::AtomicBool, Arc},
+    sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    },
 };
+use tokio::time::{self, Duration, Instant};
 
 #[macro_export]
 macro_rules! enable_tui {
@@ -48,12 +52,12 @@ pub async fn launch(path: &PathBuf) -> EpResult<()> {
 
     let process_handle = {
         let q = quit_flag.clone();
-        tokio::spawn(async move { thread::process(q).await })
+        tokio::spawn(async move { process(q).await })
     };
 
     let ui_handle = {
         let q = quit_flag.clone();
-        tokio::spawn(async move { thread::ui(q).await })
+        tokio::spawn(async move { ui(q).await })
     };
 
     process_handle.await.unwrap()?;
@@ -70,6 +74,34 @@ fn init(path: &PathBuf) -> EpResult<()> {
     };
 
     global::init(&path)?;
+
+    Ok(())
+}
+
+pub async fn process(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
+    loop {
+        if event_handler::handle_event().await? {
+            quit_flag.swap(true, Ordering::Relaxed);
+            break;
+        }
+    }
+
+    Ok(())
+}
+
+pub async fn ui(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
+    while !quit_flag.load(Ordering::Relaxed) {
+        let start = Instant::now();
+
+        {
+            canvas::render()?;
+        }
+
+        let elapsed = start.elapsed();
+        if elapsed < Duration::from_millis(50) {
+            time::sleep(Duration::from_millis(50) - elapsed).await;
+        }
+    }
 
     Ok(())
 }
