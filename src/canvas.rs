@@ -8,7 +8,6 @@ use crossterm::{
 use si_scale::helpers;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
-#[macro_export]
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
         if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
@@ -22,6 +21,63 @@ macro_rules! di_view_line {
                 crossterm::style::ResetColor
             ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
         } else { Ok(()) }
+    }};
+}
+
+macro_rules! di_input_line {
+    ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
+            crate::canvas_cache::insert(($row, 0), $tag.to_string());
+            crossterm::execute!(
+                std::io::stdout(),
+                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
+                crossterm::style::SetBackgroundColor(crate::color::INPUT_BG),
+                crossterm::style::Print(" ".repeat(25)),
+                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
+                $($cmd),+,
+                crossterm::style::Print("▏"),
+                crossterm::style::ResetColor
+            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
+        } else { Ok(()) }
+    }};
+}
+
+macro_rules! di_menu_line {
+    ($row:expr, $tag:expr, $text:expr) => {{
+        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_height() != 0 {
+            crate::canvas_cache::insert(($row, 1), $tag.to_string());
+            let slide = crate::global::get_view_shift();
+            let bg = crate::color::menu_bg();
+            crossterm::execute!(
+                std::io::stdout(),
+                crossterm::style::SetBackgroundColor(bg),
+                crate::canvas::OverWrite(slide, $row),
+                crossterm::cursor::MoveTo(0, $row),
+                crossterm::style::Print($text),
+                crossterm::cursor::MoveTo(slide - 1, $row),
+                crossterm::style::SetBackgroundColor(bg),
+                crossterm::style::Print(']'),
+            )
+            .map_err(|_| EpError::DisplayMenuLineFailed)
+        } else {
+            Ok(())
+        }
+    }};
+}
+
+#[macro_export]
+macro_rules! log {
+    ($text:expr) => {{
+        let row = crate::global::get_height();
+        let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
+        let ts = if $text == "" { " ".to_string() } else { ts };
+        crossterm::execute!(
+            std::io::stdout(),
+            crossterm::cursor::MoveTo(0, row),
+            crossterm::style::Print(format!("{} {}", ts, $text)),
+            crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
+        )
+        .map_err(|_| crate::error::EpError::Log)
     }};
 }
 
@@ -147,24 +203,6 @@ fn render_body() -> EpResult<()> {
         }
     }
     Ok(())
-}
-
-macro_rules! di_input_line {
-    ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
-            crate::canvas_cache::insert(($row, 0), $tag.to_string());
-            crossterm::execute!(
-                std::io::stdout(),
-                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
-                crossterm::style::SetBackgroundColor(crate::color::INPUT_BG),
-                crossterm::style::Print(" ".repeat(25)),
-                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
-                $($cmd),+,
-                crossterm::style::Print("▏"),
-                crossterm::style::ResetColor
-            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
-        } else { Ok(()) }
-    }};
 }
 
 fn render_input_line(rel_i: u16) -> EpResult<()> {
@@ -356,46 +394,6 @@ fn fpermission(permission: Option<&char>, index: usize) -> String {
         _ => color::PERMISSION_EXE,
     };
     SetForegroundColor(color).to_string() + permission.unwrap_or(&'-').to_string().as_str()
-}
-
-#[macro_export]
-macro_rules! log {
-    ($text:expr) => {{
-        let row = crate::global::get_height();
-        let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
-        let ts = if $text == "" { " ".to_string() } else { ts };
-        crossterm::execute!(
-            std::io::stdout(),
-            crossterm::cursor::MoveTo(0, row),
-            crossterm::style::Print(format!("{} {}", ts, $text)),
-            crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
-        )
-        .map_err(|_| crate::error::EpError::Log)
-    }};
-}
-
-#[macro_export]
-macro_rules! di_menu_line {
-    ($row:expr, $tag:expr, $text:expr) => {{
-        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_height() != 0 {
-            crate::canvas_cache::insert(($row, 1), $tag.to_string());
-            let slide = crate::global::get_view_shift();
-            let bg = crate::color::menu_bg();
-            crossterm::execute!(
-                std::io::stdout(),
-                crossterm::style::SetBackgroundColor(bg),
-                crate::canvas::OverWrite(slide, $row),
-                crossterm::cursor::MoveTo(0, $row),
-                crossterm::style::Print($text),
-                crossterm::cursor::MoveTo(slide - 1, $row),
-                crossterm::style::SetBackgroundColor(bg),
-                crossterm::style::Print(']'),
-            )
-            .map_err(|_| EpError::DisplayMenuLineFailed)
-        } else {
-            Ok(())
-        }
-    }};
 }
 
 struct OverWrite(u16, u16);
