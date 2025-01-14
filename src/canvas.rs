@@ -182,13 +182,11 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 
 fn render_body() -> EpResult<()> {
     let height = misc::body_height();
-    let path = global::get_path();
-    let child_files = misc::sorted_child_files(&path);
     let cursor = global::cursor();
     let page = cursor.current() / height as usize + 1;
-    let pagenated = pagenate(&child_files, height, page);
+    let pagenated = pagenate(&misc::sorted_child_files(&global::get_path()), height, page);
 
-    for rel_i in 0..misc::body_height() {
+    for rel_i in 0..height {
         let abs_i = (height as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
