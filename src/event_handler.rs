@@ -1,4 +1,4 @@
-use crate::{app, canvas_cache, error::*, menu, misc};
+use crate::{canvas_cache, error::*, global, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::{path::PathBuf, process::Command};
 
@@ -7,8 +7,8 @@ pub async fn handle_event() -> EpResult<bool> {
         match event {
             Event::Key(key) => return Ok(handle_key_event(key).await?),
             Event::Resize(_, row) => {
-                app::set_row(row);
-                app::cursor().resize(misc::child_files_len(&app::get_path()));
+                global::set_row(row);
+                global::cursor().resize(misc::child_files_len(&global::get_path()));
                 canvas_cache::clear();
             }
             _ => {}
@@ -19,7 +19,7 @@ pub async fn handle_event() -> EpResult<bool> {
 }
 
 async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
-    if app::input_use(|i| i.is_enable()) {
+    if global::input_use(|i| i.is_enable()) {
         handle_input_mode(key)?;
         return Ok(false);
     }
@@ -34,7 +34,7 @@ async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
 }
 
 fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
-    let mut input = app::input().write().unwrap();
+    let mut input = global::input().write().unwrap();
     match key.code {
         KeyCode::Esc => input.disable(),
         KeyCode::Char(c) => input.buffer_push(c),
@@ -51,7 +51,7 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
 }
 
 fn handle_esc_key() -> EpResult<()> {
-    let cursor = app::cursor();
+    let cursor = global::cursor();
     if cursor.is_selection_mode() {
         cursor.toggle_selection();
     }
@@ -65,7 +65,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if ['j', 'k', 'J', 'K'].contains(&key) {
-        let cursor = app::captured_cursor();
+        let cursor = global::captured_cursor();
 
         match key {
             'j' => cursor.next(),
@@ -77,19 +77,19 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'h' {
-        let cursor = app::cursor();
+        let cursor = global::cursor();
         if cursor.is_selection_mode() {
             cursor.toggle_selection();
         }
 
-        let path = app::get_path();
+        let path = global::get_path();
 
         if path == PathBuf::from("/") {
             return Ok(false);
         }
 
         let parent = misc::parent(&path);
-        app::set_path(&parent);
+        global::set_path(&parent);
         canvas_cache::clear();
 
         let child_files = misc::sorted_child_files(&path);
@@ -109,9 +109,9 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'l' {
-        let cursor = app::captured_cursor();
+        let cursor = global::captured_cursor();
 
-        let menu = app::menu();
+        let menu = global::menu();
         if menu.is_enabled() {
             let elements = menu.elements();
             if let Some(element) = elements.get(menu.cursor().current()) {
@@ -122,11 +122,11 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                     return Ok(false);
                 }
 
-                app::set_path(&path);
+                global::set_path(&path);
                 menu.toggle_enable();
                 canvas_cache::clear();
 
-                let cursor = app::cursor();
+                let cursor = global::cursor();
                 cursor.reset();
                 cursor.resize(misc::child_files_len(&path));
                 cursor.cache.write().unwrap().reset();
@@ -139,7 +139,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             cursor.toggle_selection();
         }
 
-        let path = app::get_path();
+        let path = global::get_path();
         let child_files = misc::sorted_child_files(&path);
 
         if child_files.len() == 0 {
@@ -156,7 +156,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         if metadata.is_dir() {
             let child_files = misc::sorted_child_files(target_path);
 
-            app::set_path(target_path);
+            global::set_path(target_path);
             cursor.reset();
             cursor.resize(child_files.len());
 
@@ -180,12 +180,12 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'V' {
-        app::cursor().toggle_selection();
+        global::cursor().toggle_selection();
     }
 
     if key == 'M' {
-        if !menu::is_opened() || app::menu().is_enabled() {
-            app::menu().toggle_enable();
+        if !menu::is_opened() || global::menu().is_enabled() {
+            global::menu().toggle_enable();
         }
 
         menu::toggle_open();
@@ -197,12 +197,12 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             menu::toggle_open();
         }
 
-        app::menu().toggle_enable();
+        global::menu().toggle_enable();
         canvas_cache::clear();
     }
 
     if key == 'i' {
-        app::input_use_mut(|i| i.enable(""));
+        global::input_use_mut(|i| i.enable(""));
         crate::log!("Input Mode")?;
     }
 

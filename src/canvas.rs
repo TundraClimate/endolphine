@@ -1,4 +1,4 @@
-use crate::{app, color, error::*, misc};
+use crate::{color, error::*, global, misc};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -11,11 +11,11 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 #[macro_export]
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::app::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_row() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
-                crossterm::cursor::MoveTo(crate::app::get_view_shift(), $row),
+                crossterm::cursor::MoveTo(crate::global::get_view_shift(), $row),
                 crossterm::style::SetBackgroundColor(crate::canvas::app_bg()),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
                 $($cmd),+,
@@ -26,7 +26,7 @@ macro_rules! di_view_line {
 }
 
 fn app_bg() -> Color {
-    if app::menu().is_enabled() {
+    if global::menu().is_enabled() {
         color::APP_BG_DARK
     } else {
         color::APP_BG
@@ -34,7 +34,7 @@ fn app_bg() -> Color {
 }
 
 fn bar_color() -> Color {
-    if app::menu().is_enabled() {
+    if global::menu().is_enabled() {
         color::BAR_DARK
     } else {
         color::BAR
@@ -68,7 +68,7 @@ fn colored_bar(color: Color, len: u16) -> String {
 }
 
 fn render_header(bar_length: u16) -> EpResult<()> {
-    let current_path = app::get_path();
+    let current_path = global::get_path();
     let filename = format!("{}/", misc::file_name(&current_path));
 
     let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {
@@ -99,11 +99,11 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         Print(format!(" {} in {}", filename, pwd))
     )?;
 
-    let cursor = app::cursor();
+    let cursor = global::cursor();
 
-    let page_size = app::get_row().saturating_sub(4);
+    let page_size = global::get_row().saturating_sub(4);
     let page = cursor.current() / page_size as usize + 1;
-    let len = misc::child_files_len(&app::get_path());
+    let len = misc::child_files_len(&global::get_path());
 
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
@@ -118,7 +118,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         format!("{}{}", page, len),
         1,
         Print(colored_bar(bar_color(), bar_length)),
-        MoveTo(app::get_view_shift(), 1),
+        MoveTo(global::get_view_shift(), 1),
         Print(page_area),
     )?;
 
@@ -136,23 +136,23 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 }
 
 fn render_body() -> EpResult<()> {
-    let page_size = app::get_row().saturating_sub(4);
+    let page_size = global::get_row().saturating_sub(4);
 
     if page_size == 0 {
         return Ok(());
     }
 
-    let path = app::get_path();
+    let path = global::get_path();
     let child_files = misc::sorted_child_files(&path);
-    let cursor = app::cursor();
+    let cursor = global::cursor();
     let page = cursor.current() / page_size as usize + 1;
     let pagenated = pagenate(&child_files, page_size, page);
 
-    for rel_i in 0..(app::get_row().saturating_sub(4)) {
+    for rel_i in 0..(global::get_row().saturating_sub(4)) {
         let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
-        if is_cursor_pos && app::input_use(|i| i.is_enable()) {
+        if is_cursor_pos && global::input_use(|i| i.is_enable()) {
             render_input_line(rel_i)?;
             continue;
         }
@@ -168,14 +168,14 @@ fn render_body() -> EpResult<()> {
 
 macro_rules! di_input_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::app::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_row() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
-                crossterm::cursor::MoveTo(crate::app::get_view_shift() + 39, $row),
+                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
                 crossterm::style::SetBackgroundColor(crate::color::INPUT_BG),
                 crossterm::style::Print(" ".repeat(25)),
-                crossterm::cursor::MoveTo(crate::app::get_view_shift() + 39, $row),
+                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
                 $($cmd),+,
                 crossterm::style::Print("▏"),
                 crossterm::style::ResetColor
@@ -185,7 +185,7 @@ macro_rules! di_input_line {
 }
 
 fn render_input_line(rel_i: u16) -> EpResult<()> {
-    let Some(buf) = app::input_use(|i| i.buffer_load().clone()) else {
+    let Some(buf) = global::input_use(|i| i.buffer_load().clone()) else {
         return Ok(());
     };
 
@@ -378,7 +378,7 @@ fn fpermission(permission: Option<&char>, index: usize) -> String {
 #[macro_export]
 macro_rules! log {
     ($text:expr) => {{
-        let row = crate::app::get_row();
+        let row = crate::global::get_row();
         let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
         let ts = if $text == "" { " ".to_string() } else { ts };
         crossterm::execute!(
@@ -394,9 +394,9 @@ macro_rules! log {
 #[macro_export]
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $text:expr) => {{
-        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::app::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_row() != 0 {
             crate::canvas_cache::insert(($row, 1), $tag.to_string());
-            let slide = crate::app::get_view_shift();
+            let slide = crate::global::get_view_shift();
             let bg = menu_bg();
             crossterm::execute!(
                 std::io::stdout(),
@@ -426,7 +426,7 @@ impl Command for OverWrite {
 }
 
 fn menu_bg() -> Color {
-    if app::menu().is_enabled() {
+    if global::menu().is_enabled() {
         color::MENU_BG
     } else {
         color::MENU_BG_DARK
@@ -434,17 +434,17 @@ fn menu_bg() -> Color {
 }
 
 fn render_menu() -> EpResult<()> {
-    let slide_len = app::get_view_shift();
+    let slide_len = global::get_view_shift();
     if slide_len == 0 {
         return Ok(());
     }
 
-    let row = app::get_row();
+    let row = global::get_row();
 
     di_menu_line!(0, "title", " Select to Cd ")?;
     di_menu_line!(1, "sep", "-".repeat(slide_len as usize - 1))?;
 
-    let menu = app::menu();
+    let menu = global::menu();
     let elements = menu.elements();
     let cursor = menu.cursor().current() as u16;
     for i in 2..row - 1 {

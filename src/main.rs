@@ -8,6 +8,7 @@ mod color;
 mod cursor;
 mod error;
 mod event_handler;
+mod global;
 mod input;
 mod menu;
 mod misc;

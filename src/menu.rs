@@ -1,4 +1,4 @@
-use crate::{app, cursor::Cursor};
+use crate::{cursor::Cursor, global};
 use std::{
     path::{Path, PathBuf},
     sync::atomic::{AtomicBool, Ordering},
@@ -8,14 +8,14 @@ const MENU_LENGTH: u16 = 20;
 
 pub fn toggle_open() {
     if is_opened() {
-        app::set_view_shift(0);
+        global::set_view_shift(0);
     } else {
-        app::set_view_shift(MENU_LENGTH);
+        global::set_view_shift(MENU_LENGTH);
     }
 }
 
 pub fn is_opened() -> bool {
-    let shift = app::get_view_shift();
+    let shift = global::get_view_shift();
     shift == MENU_LENGTH
 }
 
