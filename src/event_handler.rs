@@ -1,4 +1,4 @@
-use crate::{canvas_cache, error::*, global, menu, misc};
+use crate::{error::*, global, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::{path::PathBuf, process::Command};
 
@@ -9,7 +9,7 @@ pub async fn handle_event() -> EpResult<bool> {
             Event::Resize(_, row) => {
                 global::set_height(row);
                 global::cursor().resize(misc::child_files_len(&global::get_path()));
-                canvas_cache::clear();
+                global::cache_clear();
             }
             _ => {}
         }
@@ -90,7 +90,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
         let parent = misc::parent(&path);
         global::set_path(&parent);
-        canvas_cache::clear();
+        global::cache_clear();
 
         let child_files = misc::sorted_child_files(&path);
         {
@@ -124,7 +124,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
                 global::set_path(&path);
                 menu.toggle_enable();
-                canvas_cache::clear();
+                global::cache_clear();
 
                 let cursor = global::cursor();
                 cursor.reset();
@@ -175,7 +175,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                 .status()
                 .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
             crate::enable_tui!()?;
-            canvas_cache::clear();
+            global::cache_clear();
         }
     }
 
@@ -189,7 +189,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         }
 
         menu::toggle_open();
-        canvas_cache::clear();
+        global::cache_clear();
     }
 
     if key == 'm' {
@@ -198,7 +198,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         }
 
         global::menu().toggle_enable();
-        canvas_cache::clear();
+        global::cache_clear();
     }
 
     if key == 'i' {

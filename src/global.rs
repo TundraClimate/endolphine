@@ -1,6 +1,7 @@
 use crate::{cursor::Cursor, error::*, input::Input, menu::Menu, misc};
 use once_cell::sync::Lazy;
 use std::{
+    collections::HashMap,
     path::PathBuf,
     sync::{
         atomic::{AtomicU16, Ordering},
@@ -14,6 +15,7 @@ static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
 static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
+static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 
 pub fn init(path: &PathBuf) -> EpResult<()> {
     set_path(&path);
@@ -80,4 +82,16 @@ pub fn input_use<F: FnOnce(&Input) -> R, R>(f: F) -> R {
 pub fn input_use_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
     let mut lock = input().write().unwrap();
     f(&mut *lock)
+}
+
+pub fn cache_insert(key: (u16, u8), tag: String) {
+    CACHE.write().unwrap().insert(key, tag);
+}
+
+pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
+    CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
+}
+
+pub fn cache_clear() {
+    CACHE.write().unwrap().clear();
 }

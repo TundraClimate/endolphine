@@ -1,4 +1,4 @@
-use crate::{canvas_cache, color, error::*, global, misc};
+use crate::{color, error::*, global, misc};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -11,8 +11,8 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !canvas_cache::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
-            canvas_cache::insert(($row, 0), $tag.to_string());
+        if !global::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
+            global::cache_insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
                 MoveTo(global::get_view_shift(), $row),
@@ -27,8 +27,8 @@ macro_rules! di_view_line {
 
 macro_rules! di_input_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !canvas_cache::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
-            canvas_cache::insert(($row, 0), $tag.to_string());
+        if !global::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
+            global::cache_insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
                 MoveTo(global::get_view_shift() + 39, $row),
@@ -45,8 +45,8 @@ macro_rules! di_input_line {
 
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $($cmd:expr),+ $(,)?) => {{
-        if !canvas_cache::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
-            canvas_cache::insert(($row, 1), $tag.to_string());
+        if !global::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
+            global::cache_insert(($row, 1), $tag.to_string());
             let slide = global::get_view_shift();
             let bg = color::menu_bg();
             crossterm::execute!(
