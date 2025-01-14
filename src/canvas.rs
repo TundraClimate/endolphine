@@ -1,62 +1,63 @@
-use crate::{color, error::*, global, misc};
+use crate::{canvas_cache, color, error::*, global, misc};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal, Command,
+    terminal::{self, Clear, ClearType},
+    Command,
 };
 use si_scale::helpers;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !crate::canvas_cache::cache_match(($row, 0), &$tag) && crate::global::get_height() != 0 {
-            crate::canvas_cache::insert(($row, 0), $tag.to_string());
+        if !canvas_cache::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
+            canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
-                crossterm::cursor::MoveTo(crate::global::get_view_shift(), $row),
-                crossterm::style::SetBackgroundColor(crate::color::app_bg()),
-                crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
+                MoveTo(global::get_view_shift(), $row),
+                SetBackgroundColor(color::app_bg()),
+                Clear(ClearType::UntilNewLine),
                 $($cmd),+,
-                crossterm::style::ResetColor
-            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
+                ResetColor
+            ).map_err(|_| EpError::DisplayViewLineFailed)
         } else { Ok(()) }
     }};
 }
 
 macro_rules! di_input_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !crate::canvas_cache::cache_match(($row, 0), &$tag) && crate::global::get_height() != 0 {
-            crate::canvas_cache::insert(($row, 0), $tag.to_string());
+        if !canvas_cache::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
+            canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
-                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
-                crossterm::style::SetBackgroundColor(crate::color::INPUT_BG),
-                crossterm::style::Print(" ".repeat(25)),
-                crossterm::cursor::MoveTo(crate::global::get_view_shift() + 39, $row),
+                MoveTo(global::get_view_shift() + 39, $row),
+                SetBackgroundColor(color::INPUT_BG),
+                Print(" ".repeat(25)),
+                MoveTo(global::get_view_shift() + 39, $row),
                 $($cmd),+,
-                crossterm::style::Print("▏"),
-                crossterm::style::ResetColor
-            ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
+                Print("▏"),
+                ResetColor
+            ).map_err(|_| EpError::DisplayViewLineFailed)
         } else { Ok(()) }
     }};
 }
 
 macro_rules! di_menu_line {
-    ($row:expr, $tag:expr, $text:expr) => {{
-        if !crate::canvas_cache::cache_match(($row, 1), &$tag) && crate::global::get_height() != 0 {
-            crate::canvas_cache::insert(($row, 1), $tag.to_string());
-            let slide = crate::global::get_view_shift();
-            let bg = crate::color::menu_bg();
+    ($row:expr, $tag:expr, $($cmd:expr),+ $(,)?) => {{
+        if !canvas_cache::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
+            canvas_cache::insert(($row, 1), $tag.to_string());
+            let slide = global::get_view_shift();
+            let bg = color::menu_bg();
             crossterm::execute!(
                 std::io::stdout(),
-                crossterm::style::SetBackgroundColor(bg),
-                crate::canvas::OverWrite(slide, $row),
-                crossterm::cursor::MoveTo(0, $row),
-                crossterm::style::Print($text),
-                crossterm::cursor::MoveTo(slide - 1, $row),
-                crossterm::style::SetBackgroundColor(bg),
-                crossterm::style::Print(']'),
+                SetBackgroundColor(bg),
+                OverWrite(slide, $row),
+                MoveTo(0, $row),
+                $($cmd)+,
+                MoveTo(slide - 1, $row),
+                SetBackgroundColor(bg),
+                Print(']'),
             )
             .map_err(|_| EpError::DisplayMenuLineFailed)
         } else {
@@ -412,8 +413,8 @@ fn render_menu() -> EpResult<()> {
         return Ok(());
     }
 
-    di_menu_line!(0, "title", " Select to Cd ")?;
-    di_menu_line!(1, "sep", "-".repeat(slide_len as usize - 1))?;
+    di_menu_line!(0, "title", Print(" Select to Cd "))?;
+    di_menu_line!(1, "sep", Print("-".repeat(slide_len as usize - 1)))?;
 
     let menu = global::menu();
     let elements = menu.elements();
@@ -428,7 +429,7 @@ fn render_menu() -> EpResult<()> {
                 menu.is_enabled(),
             )?;
         } else {
-            di_menu_line!(i, "empty", "")?;
+            di_menu_line!(i, "empty", Print(""))?;
         }
     }
 
@@ -453,7 +454,7 @@ fn render_menu_line(
     di_menu_line!(
         row,
         format!("{}{}", cur, tag),
-        format!(
+        Print(format!(
             "{} |{} {}{} {}{}",
             cur,
             under_name_color,
@@ -461,7 +462,7 @@ fn render_menu_line(
             tag,
             SetBackgroundColor(color::menu_bg()),
             ResetColor,
-        )
+        ))
     )?;
     Ok(())
 }
