@@ -36,7 +36,7 @@ async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
 fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
     let mut input = app::input().write().unwrap();
     match key.code {
-        KeyCode::Esc => input.toggle_enable(),
+        KeyCode::Esc => input.disable(),
         KeyCode::Char(c) => input.buffer_push(c),
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
         KeyCode::Enter => {
@@ -202,7 +202,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'i' {
-        app::input_use_mut(|i| i.toggle_enable());
+        app::input_use_mut(|i| i.enable(""));
         crate::log!("Input Mode")?;
     }
 

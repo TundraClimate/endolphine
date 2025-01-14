@@ -17,13 +17,12 @@ impl Input {
         self.buffer.is_some()
     }
 
-    pub fn toggle_enable(&mut self) {
-        let buffer = &mut self.buffer;
-        if buffer.is_some() {
-            *buffer = None;
-        } else {
-            *buffer = Some(String::new());
-        }
+    pub fn enable(&mut self, initial: &str) {
+        self.buffer = Some(String::from(initial));
+    }
+
+    pub fn disable(&mut self) {
+        self.buffer = None;
     }
 
     pub fn buffer_push(&mut self, c: char) {
@@ -44,7 +43,7 @@ impl Input {
 
     pub fn complete_input(&mut self) {
         self.storage = self.buffer.clone();
-        self.toggle_enable();
+        self.disable();
     }
 
     pub fn drain_storage(&mut self) -> Option<String> {
