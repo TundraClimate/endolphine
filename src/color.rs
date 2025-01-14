@@ -1,4 +1,5 @@
 use crossterm::style::Color;
+use std::path::PathBuf;
 
 macro_rules! const_color {
     ($name:ident, $r:expr, $g:expr, $b:expr) => {
@@ -63,5 +64,41 @@ pub fn menu_bg() -> Color {
         MENU_BG
     } else {
         MENU_BG_DARK
+    }
+}
+
+pub fn path_name(path: &PathBuf) -> Color {
+    match path {
+        path if !path.exists() => PATH_NAME_BROKEN,
+        path if path.is_symlink() => PATH_NAME_SYMLINK,
+        path if path.is_dir() => PATH_NAME_DIRECTORY,
+        path if path.is_file() => PATH_NAME_FILE,
+        _ => PATH_NAME_BROKEN,
+    }
+}
+
+pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
+    if is_selected {
+        SELECTED
+    } else if is_cursor_pos {
+        UNDER_CURSOR
+    } else {
+        app_bg()
+    }
+}
+
+pub fn menu_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
+    if is_cursor_pos && is_enable {
+        MENU_UNDER_CURSOR
+    } else {
+        menu_bg()
+    }
+}
+
+pub fn permission(index: usize) -> Color {
+    match index % 3 {
+        0 => PERMISSION_READ,
+        1 => PERMISSION_WRITE,
+        _ => PERMISSION_EXE,
     }
 }

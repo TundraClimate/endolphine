@@ -229,13 +229,7 @@ fn render_file_line(
 ) -> EpResult<()> {
     let c = if is_cursor_pos { ">" } else { " " };
     let filename = colored_file_name(&file);
-    let under_name_color = SetBackgroundColor(if is_selected {
-        color::SELECTED
-    } else if is_cursor_pos {
-        color::UNDER_CURSOR
-    } else {
-        color::app_bg()
-    });
+    let under_name_color = SetBackgroundColor(color::item_bg(is_selected, is_cursor_pos));
     let filetype = colored_file_type(file);
     let bsize = colored_bsize(&file);
     let time = colored_last_modified(&file);
@@ -292,13 +286,7 @@ fn colored_file_type(path: &PathBuf) -> String {
 fn colored_file_name(path: &PathBuf) -> String {
     format!(
         "{}{}{}",
-        SetForegroundColor(match path {
-            path if !path.exists() => color::PATH_NAME_BROKEN,
-            path if path.is_symlink() => color::PATH_NAME_SYMLINK,
-            path if path.is_dir() => color::PATH_NAME_DIRECTORY,
-            path if path.is_file() => color::PATH_NAME_FILE,
-            _ => color::PATH_NAME_BROKEN,
-        }),
+        SetForegroundColor(color::path_name(path)),
         misc::file_name(path),
         if let Some(target) = symlink_target(path) {
             format!(" -> {}", target)
@@ -389,12 +377,11 @@ fn format_permissions(permission: Vec<char>) -> String {
 }
 
 fn fpermission(permission: Option<&char>, index: usize) -> String {
-    let color = match index % 3 {
-        0 => color::PERMISSION_READ,
-        1 => color::PERMISSION_WRITE,
-        _ => color::PERMISSION_EXE,
-    };
-    SetForegroundColor(color).to_string() + permission.unwrap_or(&'-').to_string().as_str()
+    format!(
+        "{}{}",
+        SetForegroundColor(color::permission(index)),
+        permission.unwrap_or(&'-')
+    )
 }
 
 struct OverWrite(u16, u16);
@@ -445,11 +432,7 @@ fn render_menu_line(
 ) -> EpResult<()> {
     let tag = tag.chars().take(slide_len as usize - 1).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
-    let under_name_color = SetBackgroundColor(if is_cursor_pos && menu_enabled {
-        color::MENU_UNDER_CURSOR
-    } else {
-        color::menu_bg()
-    });
+    let under_name_color = SetBackgroundColor(color::menu_item_bg(is_cursor_pos, menu_enabled));
 
     di_menu_line!(
         row,
