@@ -7,7 +7,7 @@ pub async fn handle_event() -> EpResult<bool> {
         match event {
             Event::Key(key) => return Ok(handle_key_event(key).await?),
             Event::Resize(_, row) => {
-                global::set_row(row);
+                global::set_height(row);
                 global::cursor().resize(misc::child_files_len(&global::get_path()));
                 canvas_cache::clear();
             }

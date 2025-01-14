@@ -11,7 +11,7 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 #[macro_export]
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
@@ -101,8 +101,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 
     let cursor = global::cursor();
 
-    let page_size = global::get_row().saturating_sub(4);
-    let page = cursor.current() / page_size as usize + 1;
+    let page = cursor.current() / misc::body_height() as usize + 1;
     let len = misc::child_files_len(&global::get_path());
 
     let page_area = format!(
@@ -136,20 +135,20 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 }
 
 fn render_body() -> EpResult<()> {
-    let page_size = global::get_row().saturating_sub(4);
+    let height = misc::body_height();
 
-    if page_size == 0 {
+    if height == 0 {
         return Ok(());
     }
 
     let path = global::get_path();
     let child_files = misc::sorted_child_files(&path);
     let cursor = global::cursor();
-    let page = cursor.current() / page_size as usize + 1;
-    let pagenated = pagenate(&child_files, page_size, page);
+    let page = cursor.current() / height as usize + 1;
+    let pagenated = pagenate(&child_files, height, page);
 
-    for rel_i in 0..(global::get_row().saturating_sub(4)) {
-        let abs_i = (page_size as usize * (page - 1)) + rel_i as usize;
+    for rel_i in 0..misc::body_height() {
+        let abs_i = (height as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
         if is_cursor_pos && global::input_use(|i| i.is_enable()) {
@@ -168,7 +167,7 @@ fn render_body() -> EpResult<()> {
 
 macro_rules! di_input_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
@@ -378,7 +377,7 @@ fn fpermission(permission: Option<&char>, index: usize) -> String {
 #[macro_export]
 macro_rules! log {
     ($text:expr) => {{
-        let row = crate::global::get_row();
+        let row = crate::global::get_height();
         let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
         let ts = if $text == "" { " ".to_string() } else { ts };
         crossterm::execute!(
@@ -394,7 +393,7 @@ macro_rules! log {
 #[macro_export]
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $text:expr) => {{
-        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_row() != 0 {
+        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 1), $tag.to_string());
             let slide = crate::global::get_view_shift();
             let bg = menu_bg();
@@ -439,15 +438,13 @@ fn render_menu() -> EpResult<()> {
         return Ok(());
     }
 
-    let row = global::get_row();
-
     di_menu_line!(0, "title", " Select to Cd ")?;
     di_menu_line!(1, "sep", "-".repeat(slide_len as usize - 1))?;
 
     let menu = global::menu();
     let elements = menu.elements();
     let cursor = menu.cursor().current() as u16;
-    for i in 2..row - 1 {
+    for i in 2..misc::body_height() + 3 {
         if let Some(element) = elements.get(i as usize - 2) {
             render_menu_line(
                 i,

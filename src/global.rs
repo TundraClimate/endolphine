@@ -9,7 +9,7 @@ use std::{
 };
 
 static PATH: Lazy<RwLock<PathBuf>> = Lazy::new(|| RwLock::new(PathBuf::new()));
-static ROW: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(100));
+static HEIGHT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(100));
 static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
@@ -19,7 +19,7 @@ pub fn init(path: &PathBuf) -> EpResult<()> {
     set_path(&path);
 
     let (_, row) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
-    set_row(row);
+    set_height(row);
 
     let c = misc::child_files_len(&path);
     CURSOR.resize(c);
@@ -36,12 +36,12 @@ pub fn set_path(new_path: &PathBuf) {
     *lock = new_path.clone();
 }
 
-pub fn get_row() -> u16 {
-    ROW.load(Ordering::Relaxed)
+pub fn get_height() -> u16 {
+    HEIGHT.load(Ordering::Relaxed)
 }
 
-pub fn set_row(new_value: u16) {
-    ROW.swap(new_value, Ordering::Relaxed);
+pub fn set_height(new_value: u16) {
+    HEIGHT.swap(new_value, Ordering::Relaxed);
 }
 
 pub fn cursor() -> &'static Cursor {

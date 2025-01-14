@@ -1,3 +1,4 @@
+use crate::global;
 use std::path::PathBuf;
 
 pub fn file_name<'a>(path: &'a PathBuf) -> &'a str {
@@ -58,4 +59,8 @@ pub fn child_files_len(path: &PathBuf) -> usize {
         Ok(d) => d.count(),
         Err(_) => 0,
     }
+}
+
+pub fn body_height() -> u16 {
+    global::get_height().saturating_sub(4)
 }
