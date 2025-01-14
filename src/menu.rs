@@ -56,8 +56,8 @@ impl Menu {
         self.cursor().resize(self.elements.len());
     }
 
-    pub fn elements(&self) -> Vec<MenuElement> {
-        self.elements.clone()
+    pub fn elements<'a>(&'a self) -> &'a Vec<MenuElement> {
+        &self.elements
     }
 
     pub fn toggle_enable(&self) {
@@ -84,11 +84,11 @@ impl MenuElement {
         }
     }
 
-    pub fn tag(&self) -> String {
-        self.tag.clone()
+    pub fn tag<'a>(&'a self) -> &'a str {
+        &self.tag
     }
 
-    pub fn path(&self) -> PathBuf {
-        self.path.clone()
+    pub fn path<'a>(&'a self) -> &'a PathBuf {
+        &self.path
     }
 }

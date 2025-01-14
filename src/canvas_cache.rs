@@ -7,13 +7,8 @@ pub fn insert(key: (u16, u8), tag: String) {
     CACHE.write().unwrap().insert(key, tag);
 }
 
-pub fn get(key: (u16, u8)) -> String {
-    CACHE
-        .read()
-        .unwrap()
-        .get(&key)
-        .unwrap_or(&String::new())
-        .clone()
+pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
+    CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
 }
 
 pub fn clear() {

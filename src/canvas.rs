@@ -10,7 +10,7 @@ use std::{os::unix::fs::PermissionsExt, path::PathBuf};
 
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
+        if !crate::canvas_cache::cache_match(($row, 0), &$tag) && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
@@ -26,7 +26,7 @@ macro_rules! di_view_line {
 
 macro_rules! di_input_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if &crate::canvas_cache::get(($row, 0)) != &$tag && crate::global::get_height() != 0 {
+        if !crate::canvas_cache::cache_match(($row, 0), &$tag) && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 0), $tag.to_string());
             crossterm::execute!(
                 std::io::stdout(),
@@ -44,7 +44,7 @@ macro_rules! di_input_line {
 
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $text:expr) => {{
-        if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_height() != 0 {
+        if !crate::canvas_cache::cache_match(($row, 1), &$tag) && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 1), $tag.to_string());
             let slide = crate::global::get_view_shift();
             let bg = crate::color::menu_bg();
@@ -437,7 +437,7 @@ fn render_menu() -> EpResult<()> {
 
 fn render_menu_line(
     row: u16,
-    tag: String,
+    tag: &str,
     slide_len: u16,
     is_cursor_pos: bool,
     menu_enabled: bool,
