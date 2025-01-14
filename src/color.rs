@@ -41,3 +41,27 @@ const_color!(MENU_BG, 90);
 const_color!(MENU_BG_DARK, 50);
 const_color!(MENU_UNDER_CURSOR, 70);
 const_color!(MENU_TAG_COLOR, 85, 240, 180);
+
+pub fn app_bg() -> Color {
+    if crate::global::menu().is_enabled() {
+        APP_BG_DARK
+    } else {
+        APP_BG
+    }
+}
+
+pub fn bar_color() -> Color {
+    if crate::global::menu().is_enabled() {
+        BAR_DARK
+    } else {
+        BAR
+    }
+}
+
+pub fn menu_bg() -> Color {
+    if crate::global::menu().is_enabled() {
+        MENU_BG
+    } else {
+        MENU_BG_DARK
+    }
+}

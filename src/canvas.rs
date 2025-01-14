@@ -16,29 +16,13 @@ macro_rules! di_view_line {
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(crate::global::get_view_shift(), $row),
-                crossterm::style::SetBackgroundColor(crate::canvas::app_bg()),
+                crossterm::style::SetBackgroundColor(crate::color::app_bg()),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
                 $($cmd),+,
                 crossterm::style::ResetColor
             ).map_err(|_| crate::error::EpError::DisplayViewLineFailed)
         } else { Ok(()) }
     }};
-}
-
-fn app_bg() -> Color {
-    if global::menu().is_enabled() {
-        color::APP_BG_DARK
-    } else {
-        color::APP_BG
-    }
-}
-
-fn bar_color() -> Color {
-    if global::menu().is_enabled() {
-        color::BAR_DARK
-    } else {
-        color::BAR
-    }
 }
 
 pub fn render() -> EpResult<()> {
@@ -106,7 +90,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
-        SetBackgroundColor(bar_color()),
+        SetBackgroundColor(color::bar_color()),
         SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
         page,
         SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
@@ -116,7 +100,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     di_view_line!(
         format!("{}{}", page, len),
         1,
-        Print(colored_bar(bar_color(), bar_length)),
+        Print(colored_bar(color::bar_color(), bar_length)),
         MoveTo(global::get_view_shift(), 1),
         Print(page_area),
     )?;
@@ -128,7 +112,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
     di_view_line!(
         "footer_bar",
         row,
-        Print(colored_bar(bar_color(), bar_length))
+        Print(colored_bar(color::bar_color(), bar_length))
     )?;
 
     Ok(())
@@ -211,7 +195,7 @@ fn render_file_line(
     } else if is_cursor_pos {
         color::UNDER_CURSOR
     } else {
-        app_bg()
+        color::app_bg()
     });
     let filetype = colored_file_type(file);
     let bsize = colored_bsize(&file);
@@ -232,7 +216,7 @@ fn render_file_line(
             time,
             under_name_color,
             filename,
-            SetBackgroundColor(app_bg())
+            SetBackgroundColor(color::app_bg())
         )),
     )
 }
@@ -396,7 +380,7 @@ macro_rules! di_menu_line {
         if &crate::canvas_cache::get(($row, 1)) != &$tag && crate::global::get_height() != 0 {
             crate::canvas_cache::insert(($row, 1), $tag.to_string());
             let slide = crate::global::get_view_shift();
-            let bg = menu_bg();
+            let bg = crate::color::menu_bg();
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::style::SetBackgroundColor(bg),
@@ -421,14 +405,6 @@ impl Command for OverWrite {
         write!(f, "\x1B[{};{}H", self.1 + 1, 0)?;
         write!(f, "{}", " ".repeat(self.0 as usize))?;
         Ok(())
-    }
-}
-
-fn menu_bg() -> Color {
-    if global::menu().is_enabled() {
-        color::MENU_BG
-    } else {
-        color::MENU_BG_DARK
     }
 }
 
@@ -473,7 +449,7 @@ fn render_menu_line(
     let under_name_color = SetBackgroundColor(if is_cursor_pos && menu_enabled {
         color::MENU_UNDER_CURSOR
     } else {
-        menu_bg()
+        color::menu_bg()
     });
 
     di_menu_line!(
@@ -485,7 +461,7 @@ fn render_menu_line(
             under_name_color,
             SetForegroundColor(color::MENU_TAG_COLOR),
             tag,
-            SetBackgroundColor(menu_bg()),
+            SetBackgroundColor(color::menu_bg()),
             ResetColor,
         )
     )?;
