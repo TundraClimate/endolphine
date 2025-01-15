@@ -44,6 +44,7 @@ impl EpError {
     fn wrapped_panic(text: &str) -> EpResult<()> {
         crate::disable_tui!()?;
 
-        panic!("{text}")
+        eprintln!("app exit: {text}");
+        std::process::exit(1);
     }
 }
