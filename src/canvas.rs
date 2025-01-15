@@ -422,15 +422,17 @@ fn render_menu() -> EpResult<()> {
     di_menu_line!(1, "sep", Print("-".repeat(slide_len as usize - 1)))?;
 
     let menu = global::menu();
-    let elements = menu.elements();
-    let cursor = menu.cursor().current() as u16;
+    let cursor = menu.cursor();
+
     for i in 2..misc::body_height() + 3 {
-        if let Some(element) = elements.get(i as usize - 2) {
+        if let Some(element) = menu.elements().get(i as usize - 2) {
+            let is_cursor_pos = i as usize - 2 == cursor.current();
+
             render_menu_line(
                 i,
                 element.tag(),
                 slide_len,
-                i - 2 == cursor,
+                is_cursor_pos,
                 menu.is_enabled(),
             )?;
         } else {
