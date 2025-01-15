@@ -319,6 +319,13 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
+        {
+            let cursor = global::cursor();
+            if cursor.is_selection_mode() {
+                cursor.toggle_selection();
+            }
+        }
+
         global::input_use_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
     }
