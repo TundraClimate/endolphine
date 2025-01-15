@@ -72,14 +72,15 @@ fn handle_action(content: &str, act: String) {
             }
 
             if let Err(e) = if content.ends_with("/") {
-                std::fs::create_dir(path)
+                std::fs::create_dir(&path)
             } else {
-                std::fs::write(path, "")
+                std::fs::write(&path, "")
             } {
                 crate::log!(format!("Add new file failed: {}", e.kind()));
                 return;
             }
 
+            global::cursor().resize(misc::child_files_len(&global::get_path()));
             crate::log!(format!("\"{}\" create successful.", &content))
         }
         "RmFileOrDirectory" => {
@@ -113,6 +114,7 @@ fn handle_action(content: &str, act: String) {
                     return;
                 }
 
+                global::cursor().resize(misc::child_files_len(&global::get_path()));
                 crate::log!(format!("\"{}\" delete successful.", name));
             } else {
                 crate::log!("Delete file failed: target cannot find.");
