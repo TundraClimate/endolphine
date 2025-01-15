@@ -78,6 +78,43 @@ fn handle_action(content: String, act: String) {
 
             crate::log!(format!("\"{}\" create successful.", &content))
         }
+        "RmFileOrDirectory" => {
+            if !["y", "Y", "d"].contains(&content.as_str()) {
+                return;
+            }
+
+            if let Some(under_cursor_file) =
+                misc::sorted_child_files(&global::get_path()).get(global::cursor().current())
+            {
+                let Ok(metadata) = under_cursor_file.symlink_metadata() else {
+                    crate::log!("Delete file failed: cannot access metadata.");
+                    return;
+                };
+
+                if !under_cursor_file.exists() && !metadata.is_symlink() {
+                    crate::log!("Delete file failed: target not exists.");
+                    return;
+                }
+
+                let name = misc::file_name(under_cursor_file);
+
+                let res = if under_cursor_file.is_dir() {
+                    std::fs::remove_dir_all(under_cursor_file)
+                } else {
+                    std::fs::remove_file(under_cursor_file)
+                };
+
+                if let Err(e) = res {
+                    crate::log!(format!("Delete file failed: {}", e.kind()));
+                    return;
+                }
+
+                crate::log!(format!("\"{}\" delete successful.", name));
+            } else {
+                crate::log!("Delete file failed: target cannot find.");
+                return;
+            }
+        }
         _ => {}
     }
 }
@@ -234,8 +271,28 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'a' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
         global::input_use_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
+    }
+
+    if key == 'd' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        if let Some(under_cursor_file) =
+            misc::sorted_child_files(&global::get_path()).get(global::cursor().current())
+        {
+            global::input_use_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
+            crate::log!(format!(
+                "Delete \"{}\" ? (y/Y/d)",
+                misc::file_name(under_cursor_file)
+            ));
+        }
     }
 
     Ok(false)
