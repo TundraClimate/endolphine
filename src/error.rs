@@ -1,3 +1,7 @@
+use std::sync::{
+    atomic::{AtomicBool, Ordering},
+    Arc,
+};
 use thiserror::Error;
 
 pub type EpResult<T> = Result<T, EpError>;
@@ -24,25 +28,27 @@ pub enum EpError {
 }
 
 impl EpError {
-    pub fn handle(&self) {
+    pub fn handle(&self, quit_flag: Arc<AtomicBool>) {
+        let f = quit_flag.clone();
         let res = match self {
-            Self::SwitchScreen => panic!("cannot switch Alternate screen"),
-            Self::InitFailed => EpError::wrapped_panic("application init failed"),
-            Self::DisplayViewLineFailed => EpError::wrapped_panic("cannot display texts"),
-            Self::DisplayMenuLineFailed => EpError::wrapped_panic("cannot display texts"),
-            Self::Log => EpError::wrapped_panic("cant logging texts"),
+            Self::SwitchScreen => EpError::tui_exit("cannot switch Alternate screen", quit_flag),
+            Self::InitFailed => EpError::tui_exit("application init failed", quit_flag),
+            Self::DisplayViewLineFailed => EpError::tui_exit("cannot display texts", quit_flag),
+            Self::DisplayMenuLineFailed => EpError::tui_exit("cannot display texts", quit_flag),
+            Self::Log => EpError::tui_exit("cant logging texts", quit_flag),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("command \"{}\" failed: {}", command, kind))
             }
         };
 
         if let Err(e) = res {
-            e.handle();
+            e.handle(f);
         }
     }
 
-    fn wrapped_panic(text: &str) -> EpResult<()> {
+    fn tui_exit(text: &str, quit_flag: Arc<AtomicBool>) -> EpResult<()> {
         crate::disable_tui!()?;
+        quit_flag.swap(true, Ordering::Relaxed);
 
         eprintln!("app exit: {text}");
         std::process::exit(1);

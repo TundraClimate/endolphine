@@ -60,8 +60,8 @@ pub async fn launch(path: &PathBuf) -> EpResult<()> {
         tokio::spawn(async move { ui(q).await })
     };
 
-    process_handle.await.unwrap()?;
-    ui_handle.await.unwrap()?;
+    process_handle.await.unwrap();
+    ui_handle.await.unwrap();
 
     disable_tui!()?;
 
@@ -78,23 +78,30 @@ fn init(path: &PathBuf) -> EpResult<()> {
     Ok(())
 }
 
-pub async fn process(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
+pub async fn process(quit_flag: Arc<AtomicBool>) {
     loop {
-        if event_handler::handle_event().await? {
-            quit_flag.swap(true, Ordering::Relaxed);
-            break;
+        let quit_flag = quit_flag.clone();
+        match event_handler::handle_event().await {
+            Ok(is_quit) => {
+                if is_quit {
+                    quit_flag.swap(true, Ordering::Relaxed);
+                    break;
+                }
+            }
+            Err(e) => e.handle(quit_flag),
         }
     }
-
-    Ok(())
 }
 
-pub async fn ui(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
+pub async fn ui(quit_flag: Arc<AtomicBool>) {
     while !quit_flag.load(Ordering::Relaxed) {
+        let quit_flag = quit_flag.clone();
         let start = Instant::now();
 
         {
-            canvas::render()?;
+            if let Err(e) = canvas::render() {
+                e.handle(quit_flag);
+            }
         }
 
         let elapsed = start.elapsed();
@@ -102,6 +109,4 @@ pub async fn ui(quit_flag: Arc<AtomicBool>) -> EpResult<()> {
             time::sleep(Duration::from_millis(50) - elapsed).await;
         }
     }
-
-    Ok(())
 }

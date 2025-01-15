@@ -22,7 +22,5 @@ struct Args {
 #[tokio::main]
 async fn main() {
     let args = Args::parse();
-    if let Err(e) = app::launch(&args.path).await {
-        e.handle();
-    }
+    app::launch(&args.path).await.expect("unrecoverable error");
 }
