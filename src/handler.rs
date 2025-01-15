@@ -48,7 +48,7 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
                 let Some(content) = content else { return };
 
                 if let Some(action) = act {
-                    handle_action(content, action);
+                    handle_action(content.trim(), action);
                 }
             });
         }
@@ -58,7 +58,7 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
     Ok(())
 }
 
-fn handle_action(content: String, act: String) {
+fn handle_action(content: &str, act: String) {
     match act.as_str() {
         "AddNewFileOrDirectory" => {
             let path = global::get_path().join(&content);
@@ -79,7 +79,7 @@ fn handle_action(content: String, act: String) {
             crate::log!(format!("\"{}\" create successful.", &content))
         }
         "RmFileOrDirectory" => {
-            if !["y", "Y", "d"].contains(&content.as_str()) {
+            if !["y", "Y", "d"].contains(&content) {
                 return;
             }
 
