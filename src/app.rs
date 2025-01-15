@@ -80,7 +80,6 @@ fn init(path: &PathBuf) -> EpResult<()> {
 
 pub async fn process(quit_flag: Arc<AtomicBool>) {
     loop {
-        let quit_flag = quit_flag.clone();
         match event_handler::handle_event().await {
             Ok(is_quit) => {
                 if is_quit {
@@ -88,19 +87,18 @@ pub async fn process(quit_flag: Arc<AtomicBool>) {
                     break;
                 }
             }
-            Err(e) => e.handle(quit_flag),
+            Err(e) => e.handle(),
         }
     }
 }
 
 pub async fn ui(quit_flag: Arc<AtomicBool>) {
     while !quit_flag.load(Ordering::Relaxed) {
-        let quit_flag = quit_flag.clone();
         let start = Instant::now();
 
         {
             if let Err(e) = canvas::render() {
-                e.handle(quit_flag);
+                e.handle();
             }
         }
 

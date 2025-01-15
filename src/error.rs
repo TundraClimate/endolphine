@@ -1,7 +1,3 @@
-use std::sync::{
-    atomic::{AtomicBool, Ordering},
-    Arc,
-};
 use thiserror::Error;
 
 pub type EpResult<T> = Result<T, EpError>;
@@ -28,27 +24,28 @@ pub enum EpError {
 }
 
 impl EpError {
-    pub fn handle(&self, quit_flag: Arc<AtomicBool>) {
-        let f = quit_flag.clone();
+    pub fn handle(&self) {
         let res = match self {
-            Self::SwitchScreen => EpError::tui_exit("cannot switch Alternate screen", quit_flag),
-            Self::InitFailed => EpError::tui_exit("application init failed", quit_flag),
-            Self::DisplayViewLineFailed => EpError::tui_exit("cannot display texts", quit_flag),
-            Self::DisplayMenuLineFailed => EpError::tui_exit("cannot display texts", quit_flag),
-            Self::Log => EpError::tui_exit("cant logging texts", quit_flag),
+            Self::SwitchScreen => {
+                eprintln!("cannot switch Alternate screen");
+                std::process::exit(1);
+            }
+            Self::InitFailed => EpError::tui_exit("application init failed"),
+            Self::DisplayViewLineFailed => EpError::tui_exit("cannot display texts"),
+            Self::DisplayMenuLineFailed => EpError::tui_exit("cannot display texts"),
+            Self::Log => EpError::tui_exit("cant logging texts"),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("command \"{}\" failed: {}", command, kind))
             }
         };
 
         if let Err(e) = res {
-            e.handle(f);
+            e.handle();
         }
     }
 
-    fn tui_exit(text: &str, quit_flag: Arc<AtomicBool>) -> EpResult<()> {
+    fn tui_exit(text: &str) -> EpResult<()> {
         crate::disable_tui!()?;
-        quit_flag.swap(true, Ordering::Relaxed);
 
         eprintln!("app exit: {text}");
         std::process::exit(1);
