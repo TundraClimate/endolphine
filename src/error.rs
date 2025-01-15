@@ -4,10 +4,10 @@ pub type EpResult<T> = Result<T, EpError>;
 
 #[derive(Error, Debug)]
 pub enum EpError {
-    #[error("cannot switch Alternate screen")]
+    #[error("Cannot switch Alternate screen")]
     SwitchScreen,
 
-    #[error("init error")]
+    #[error("Init error")]
     InitFailed,
 
     #[error("di_view_line error")]
@@ -16,10 +16,10 @@ pub enum EpError {
     #[error("di_menu_line error")]
     DisplayMenuLineFailed,
 
-    #[error("logging error")]
+    #[error("Logging error")]
     Log,
 
-    #[error("command failed")]
+    #[error("Command failed")]
     CommandExecute(String, String),
 }
 
@@ -27,15 +27,15 @@ impl EpError {
     pub fn handle(&self) {
         let res = match self {
             Self::SwitchScreen => {
-                eprintln!("cannot switch Alternate screen");
+                eprintln!("Cannot switch Alternate screen");
                 std::process::exit(1);
             }
-            Self::InitFailed => EpError::tui_exit("application init failed"),
-            Self::DisplayViewLineFailed => EpError::tui_exit("cannot display texts"),
-            Self::DisplayMenuLineFailed => EpError::tui_exit("cannot display texts"),
-            Self::Log => EpError::tui_exit("cant logging texts"),
+            Self::InitFailed => EpError::tui_exit("Application init failed"),
+            Self::DisplayViewLineFailed => EpError::tui_exit("Cannot display texts"),
+            Self::DisplayMenuLineFailed => EpError::tui_exit("Cannot display texts"),
+            Self::Log => EpError::tui_exit("Cant logging texts"),
             Self::CommandExecute(command, kind) => {
-                crate::log!(format!("command \"{}\" failed: {}", command, kind))
+                crate::log!(format!("Command \"{}\" failed: {}", command, kind))
             }
         };
 
