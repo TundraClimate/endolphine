@@ -159,6 +159,35 @@ fn handle_action(content: &str, act: String) {
             global::cursor().resize(misc::child_files_len(&global::get_path()));
             crate::log!(format!("{} items delete successful.", selected.len()));
         }
+        "Rename" => {
+            let path = global::get_path();
+            if let Some(under_cursor_file) =
+                misc::sorted_child_files(&path).get(global::cursor().current())
+            {
+                let renamed = path.join(&content);
+
+                let Ok(metadata) = under_cursor_file.symlink_metadata() else {
+                    crate::log!("Rename failed: cannot access metadata.");
+                    return;
+                };
+
+                if !under_cursor_file.exists() && !metadata.is_symlink() {
+                    crate::log!(format!("Rename failed: \"{}\" is not exists.", &content));
+                    return;
+                }
+
+                if let Err(e) = std::fs::rename(under_cursor_file, &renamed) {
+                    crate::log!(format!("Rename failed: {}", e.kind()));
+                    return;
+                }
+
+                crate::log!(format!(
+                    "\"{}\" renamed to \"{}\"",
+                    misc::file_name(under_cursor_file),
+                    misc::file_name(&renamed)
+                ));
+            }
+        }
         _ => {}
     }
 }
@@ -356,6 +385,26 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                 "Delete \"{}\" ? (y/Y/d)",
                 misc::file_name(under_cursor_file)
             ));
+        }
+    }
+
+    if key == 'r' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        let cursor = global::cursor();
+
+        if cursor.is_selection_mode() {
+            cursor.toggle_selection();
+        }
+
+        if let Some(under_cursor_file) =
+            misc::sorted_child_files(&global::get_path()).get(cursor.current())
+        {
+            let name = misc::file_name(under_cursor_file);
+            global::input_use_mut(|i| i.enable(&name, Some("Rename".into())));
+            crate::log!(format!("Enter new name for \"{}\"", name));
         }
     }
 
