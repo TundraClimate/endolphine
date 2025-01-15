@@ -45,21 +45,14 @@ impl Input {
     }
 
     pub fn complete_input(&mut self) {
-        self.storage = self.buffer.clone();
-        self.disable();
+        self.storage = self.buffer.take();
     }
 
     pub fn drain_storage(&mut self) -> Option<String> {
-        let tmp = self.storage.clone();
-        self.storage = None;
-
-        tmp
+        std::mem::replace(&mut self.storage, None)
     }
 
     pub fn drain_action(&mut self) -> Option<String> {
-        let tmp = self.action.clone();
-        self.action = None;
-
-        tmp
+        std::mem::replace(&mut self.action, None)
     }
 }
