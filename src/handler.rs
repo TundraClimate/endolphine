@@ -75,6 +75,8 @@ fn handle_action(content: String, act: String) {
                 crate::log!(format!("Add new file failed: {}", e.kind()));
                 return;
             };
+
+            crate::log!(format!("\"{}\" create successful.", &content))
         }
         _ => {}
     }
