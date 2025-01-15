@@ -121,6 +121,44 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
         }
+        "RmSelected" => {
+            if !["y", "Y", "d"].contains(&content) {
+                return;
+            }
+
+            let cursor = global::cursor();
+
+            let selected = misc::sorted_child_files(&global::get_path())
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .collect::<Vec<_>>();
+
+            for target in &selected {
+                let Ok(metadata) = target.symlink_metadata() else {
+                    crate::log!("Delete file failed: cannot access metadata.");
+                    return;
+                };
+
+                if !target.exists() && !metadata.is_symlink() {
+                    crate::log!("Delete file failed: target not exists.");
+                    return;
+                }
+
+                let res = if target.is_dir() {
+                    std::fs::remove_dir_all(target)
+                } else {
+                    std::fs::remove_file(target)
+                };
+
+                if let Err(e) = res {
+                    crate::log!(format!("Delete file failed: {}", e.kind()));
+                    return;
+                }
+            }
+            global::cursor().resize(misc::child_files_len(&global::get_path()));
+            crate::log!(format!("{} items delete successful.", selected.len()));
+        }
         _ => {}
     }
 }
@@ -290,8 +328,21 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
+        let cursor = global::cursor();
+
+        if cursor.is_selection_mode() {
+            let selected_files = misc::sorted_child_files(&global::get_path())
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .collect::<Vec<_>>();
+            global::input_use_mut(|i| i.enable("", Some("RmSelected".into())));
+            crate::log!(format!("Delete {} items ? (y/Y/d)", selected_files.len()));
+            return Ok(false);
+        }
+
         if let Some(under_cursor_file) =
-            misc::sorted_child_files(&global::get_path()).get(global::cursor().current())
+            misc::sorted_child_files(&global::get_path()).get(cursor.current())
         {
             global::input_use_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
             crate::log!(format!(
