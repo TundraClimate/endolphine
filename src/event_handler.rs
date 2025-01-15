@@ -42,13 +42,42 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
         KeyCode::Enter => {
             input.complete_input();
-            let res = input.drain_storage();
-            crate::log!(format!("{:?}", res), true);
+            let content = input.drain_storage();
+            let act = input.drain_action();
+            tokio::task::spawn_blocking(|| {
+                let Some(content) = content else { return };
+
+                if let Some(action) = act {
+                    handle_action(content, action);
+                }
+            });
         }
         _ => {}
     }
 
     Ok(())
+}
+
+fn handle_action(content: String, act: String) {
+    match act.as_str() {
+        "AddNewFileOrDirectory" => {
+            let path = global::get_path().join(&content);
+
+            if path.exists() {
+                crate::log!(format!(
+                    "Add new file failed: \"{}\" is already exists.",
+                    &content
+                ));
+                return;
+            }
+
+            if let Err(e) = std::fs::write(path, "") {
+                crate::log!(format!("Add new file failed: {}", e.kind()));
+                return;
+            };
+        }
+        _ => {}
+    }
 }
 
 fn handle_esc_key() -> EpResult<()> {
@@ -202,9 +231,9 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         global::cache_clear();
     }
 
-    if key == 'i' {
-        global::input_use_mut(|i| i.enable(""));
-        crate::log!("Input Mode", true);
+    if key == 'a' {
+        global::input_use_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
+        crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
     }
 
     Ok(false)

@@ -1,6 +1,7 @@
 pub struct Input {
     buffer: Option<String>,
     storage: Option<String>,
+    action: Option<String>,
 }
 
 impl Default for Input {
@@ -8,6 +9,7 @@ impl Default for Input {
         Input {
             buffer: None,
             storage: None,
+            action: None,
         }
     }
 }
@@ -17,8 +19,9 @@ impl Input {
         self.buffer.is_some()
     }
 
-    pub fn enable(&mut self, initial: &str) {
+    pub fn enable(&mut self, initial: &str, action: Option<String>) {
         self.buffer = Some(String::from(initial));
+        self.action = action;
     }
 
     pub fn disable(&mut self) {
@@ -49,6 +52,13 @@ impl Input {
     pub fn drain_storage(&mut self) -> Option<String> {
         let tmp = self.storage.clone();
         self.storage = None;
+
+        tmp
+    }
+
+    pub fn drain_action(&mut self) -> Option<String> {
+        let tmp = self.action.clone();
+        self.action = None;
 
         tmp
     }
