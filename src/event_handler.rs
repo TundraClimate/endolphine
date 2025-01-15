@@ -43,7 +43,7 @@ fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
         KeyCode::Enter => {
             input.complete_input();
             let res = input.drain_storage();
-            crate::log!(format!("{:?}", res))?;
+            crate::log!(format!("{:?}", res), true)?;
         }
         _ => {}
     }
@@ -204,7 +204,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
     if key == 'i' {
         global::input_use_mut(|i| i.enable(""));
-        crate::log!("Input Mode")?;
+        crate::log!("Input Mode", true)?;
     }
 
     Ok(false)
