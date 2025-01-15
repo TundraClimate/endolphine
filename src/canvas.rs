@@ -225,28 +225,21 @@ fn render_file_line(
     file: &PathBuf,
     is_selected: bool,
 ) -> EpResult<()> {
+    let body_row = BodyRow::new(file);
     let c = if is_cursor_pos { ">" } else { " " };
-    let filename = colored_file_name(&file);
     let under_name_color = SetBackgroundColor(color::item_bg(is_selected, is_cursor_pos));
-    let filetype = colored_file_type(file);
-    let bsize = colored_bsize(&file);
-    let time = colored_last_modified(&file);
-    let permission = format_permissions(permission(&file));
     di_view_line!(
-        format!(
-            "{}{}{}{}{}{}{}{}",
-            rel_i, c, filename, filetype, under_name_color, permission, bsize, time
-        ),
+        format!("{}{}{}{}", rel_i, body_row.gen_key(), c, under_name_color),
         rel_i + 2,
         Print(format!(
             "{} | {}{} {} {} {}{}{}",
             c,
-            filetype,
-            permission,
-            bsize,
-            time,
+            body_row.filetype,
+            body_row.permission,
+            body_row.bsize,
+            body_row.time,
             under_name_color,
-            filename,
+            body_row.filename,
             SetBackgroundColor(color::app_bg())
         )),
     )
@@ -268,118 +261,145 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
         .unwrap_or(vec![])
 }
 
-fn colored_file_type(path: &PathBuf) -> String {
-    format!(
-        "{}{}",
-        SetForegroundColor(color::PERMISSION_TYPE),
-        match path {
-            path if path.is_symlink() => 'l',
-            path if path.is_dir() => 'd',
-            path if path.is_file() => '-',
-            _ => 'o',
-        }
-    )
+struct BodyRow {
+    filename: String,
+    filetype: String,
+    bsize: String,
+    time: String,
+    permission: String,
 }
 
-fn colored_file_name(path: &PathBuf) -> String {
-    format!(
-        "{}{}{}",
-        SetForegroundColor(color::path_name(path)),
-        misc::file_name(path),
-        if let Some(target) = symlink_target(path) {
-            format!(" -> {}", target)
+impl BodyRow {
+    fn new(path: &PathBuf) -> Self {
+        Self {
+            filename: Self::colored_file_name(path),
+            filetype: Self::colored_file_type(path),
+            bsize: Self::colored_bsize(path),
+            time: Self::colored_last_modified(path),
+            permission: Self::colored_permission(Self::format_permission(path)),
+        }
+    }
+
+    fn gen_key(&self) -> String {
+        format!(
+            "{}{}{}{}{}",
+            self.filename, self.filetype, self.bsize, self.time, self.permission
+        )
+    }
+
+    fn colored_file_type(path: &PathBuf) -> String {
+        format!(
+            "{}{}",
+            SetForegroundColor(color::PERMISSION_TYPE),
+            match path {
+                path if path.is_symlink() => 'l',
+                path if path.is_dir() => 'd',
+                path if path.is_file() => '-',
+                _ => 'o',
+            }
+        )
+    }
+
+    fn colored_file_name(path: &PathBuf) -> String {
+        format!(
+            "{}{}{}",
+            SetForegroundColor(color::path_name(path)),
+            misc::file_name(path),
+            if let Some(target) = Self::symlink_target(path) {
+                format!(" -> {}", target)
+            } else {
+                "".into()
+            }
+        )
+    }
+
+    fn symlink_target(path: &PathBuf) -> Option<String> {
+        if !path.is_symlink() {
+            return None;
+        }
+
+        if let Ok(link) = path.read_link() {
+            Some(link.to_str().unwrap().into())
         } else {
-            "".into()
+            Some("Broken symlink".into())
         }
-    )
-}
-
-fn symlink_target(path: &PathBuf) -> Option<String> {
-    if !path.is_symlink() {
-        return None;
     }
 
-    if let Ok(link) = path.read_link() {
-        Some(link.to_str().unwrap().into())
-    } else {
-        Some("Broken symlink".into())
+    fn colored_bsize(path: &PathBuf) -> String {
+        let Ok(metadata) = path.symlink_metadata() else {
+            return String::from("       x");
+        };
+        if metadata.is_dir() {
+            "       -".into()
+        } else {
+            let size = metadata.len();
+
+            format!("{:>8}", helpers::bytes1(size as f64))
+        }
     }
-}
 
-fn colored_bsize(path: &PathBuf) -> String {
-    let Ok(metadata) = path.symlink_metadata() else {
-        return String::from("       x");
-    };
-    if metadata.is_dir() {
-        "       -".into()
-    } else {
-        let size = metadata.len();
+    fn colored_last_modified(path: &PathBuf) -> String {
+        let Ok(metadata) = path.symlink_metadata() else {
+            return String::from("       x");
+        };
+        let Ok(modified) = metadata.modified() else {
+            return String::from("       x");
+        };
+        let datetime: DateTime<Local> = DateTime::from(modified);
 
-        format!("{:>8}", helpers::bytes1(size as f64))
+        format!(
+            "{}{}",
+            SetForegroundColor(color::LAST_MODIFIED_TIME),
+            datetime.format("%y %m/%d %H:%M")
+        )
     }
-}
 
-fn colored_last_modified(path: &PathBuf) -> String {
-    let Ok(metadata) = path.symlink_metadata() else {
-        return String::from("       x");
-    };
-    let Ok(modified) = metadata.modified() else {
-        return String::from("       x");
-    };
-    let datetime: DateTime<Local> = DateTime::from(modified);
+    fn format_permission(path: &PathBuf) -> Vec<char> {
+        let Ok(metadata) = path.symlink_metadata() else {
+            return "---------".chars().collect();
+        };
+        let mode = metadata.permissions().mode();
 
-    format!(
-        "{}{}",
-        SetForegroundColor(color::LAST_MODIFIED_TIME),
-        datetime.format("%y %m/%d %H:%M")
-    )
-}
+        let permissions = format!(
+            "{}{}{}{}{}{}{}{}{}",
+            if mode & 0o400 != 0 { "r" } else { "-" },
+            if mode & 0o200 != 0 { "w" } else { "-" },
+            if mode & 0o100 != 0 { "x" } else { "-" },
+            if mode & 0o040 != 0 { "r" } else { "-" },
+            if mode & 0o020 != 0 { "w" } else { "-" },
+            if mode & 0o010 != 0 { "x" } else { "-" },
+            if mode & 0o004 != 0 { "r" } else { "-" },
+            if mode & 0o002 != 0 { "w" } else { "-" },
+            if mode & 0o001 != 0 { "x" } else { "-" },
+        );
 
-fn permission(path: &PathBuf) -> Vec<char> {
-    let Ok(metadata) = path.symlink_metadata() else {
-        return "---------".chars().collect();
-    };
-    let mode = metadata.permissions().mode();
+        permissions.chars().collect()
+    }
 
-    let permissions = format!(
-        "{}{}{}{}{}{}{}{}{}",
-        if mode & 0o400 != 0 { "r" } else { "-" },
-        if mode & 0o200 != 0 { "w" } else { "-" },
-        if mode & 0o100 != 0 { "x" } else { "-" },
-        if mode & 0o040 != 0 { "r" } else { "-" },
-        if mode & 0o020 != 0 { "w" } else { "-" },
-        if mode & 0o010 != 0 { "x" } else { "-" },
-        if mode & 0o004 != 0 { "r" } else { "-" },
-        if mode & 0o002 != 0 { "w" } else { "-" },
-        if mode & 0o001 != 0 { "x" } else { "-" },
-    );
+    fn colored_permission(permission: Vec<char>) -> String {
+        permission
+            .chunks(3)
+            .enumerate()
+            .map(|(i, chunk)| {
+                let (read, write, exe) = (chunk.get(0), chunk.get(1), chunk.get(2));
+                format!(
+                    "{}{}{}",
+                    Self::colored_permission_element(read, i * 3),
+                    Self::colored_permission_element(write, i * 3 + 1),
+                    Self::colored_permission_element(exe, i * 3 + 2)
+                )
+            })
+            .collect::<Vec<_>>()
+            .join("")
+    }
 
-    permissions.chars().collect()
-}
-
-fn format_permissions(permission: Vec<char>) -> String {
-    permission
-        .chunks(3)
-        .enumerate()
-        .map(|(i, chunk)| {
-            let (read, write, exe) = (chunk.get(0), chunk.get(1), chunk.get(2));
-            format!(
-                "{}{}{}",
-                fpermission(read, i * 3),
-                fpermission(write, i * 3 + 1),
-                fpermission(exe, i * 3 + 2)
-            )
-        })
-        .collect::<Vec<_>>()
-        .join("")
-}
-
-fn fpermission(permission: Option<&char>, index: usize) -> String {
-    format!(
-        "{}{}",
-        SetForegroundColor(color::permission(index)),
-        permission.unwrap_or(&'-')
-    )
+    fn colored_permission_element(permission: Option<&char>, index: usize) -> String {
+        format!(
+            "{}{}",
+            SetForegroundColor(color::permission(index)),
+            permission.unwrap_or(&'-')
+        )
+    }
 }
 
 struct OverWrite(u16, u16);
