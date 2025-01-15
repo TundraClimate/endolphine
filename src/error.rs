@@ -35,7 +35,8 @@ impl EpError {
             Self::DisplayMenuLineFailed => EpError::tui_exit("Cannot display texts"),
             Self::Log => EpError::tui_exit("Cant logging texts"),
             Self::CommandExecute(command, kind) => {
-                crate::log!(format!("Command \"{}\" failed: {}", command, kind))
+                crate::log!(format!("Command \"{}\" failed: {}", command, kind));
+                Ok(())
             }
         };
 

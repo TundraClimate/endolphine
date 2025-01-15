@@ -70,13 +70,14 @@ macro_rules! di_menu_line {
 macro_rules! log {
     ($text:expr) => {{
         let row = crate::global::get_height();
-        crossterm::execute!(
+        if let Err(_) = crossterm::execute!(
             std::io::stdout(),
             crossterm::cursor::MoveTo(0, row),
             crossterm::style::Print($text),
             crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
-        )
-        .map_err(|_| crate::error::EpError::Log)
+        ) {
+            crate::error::EpError::Log.handle();
+        };
     }};
 
     ($text:expr, $is_dbg:expr) => {{
@@ -84,15 +85,16 @@ macro_rules! log {
             let row = crate::global::get_height();
             let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
             let ts = if $text == "" { " ".to_string() } else { ts };
-            crossterm::execute!(
+            if let Err(_) = crossterm::execute!(
                 std::io::stdout(),
                 crossterm::cursor::MoveTo(0, row),
                 crossterm::style::Print(format!("{} {}", ts, $text)),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
-            )
-            .map_err(|_| crate::error::EpError::Log)
+            ) {
+                crate::error::EpError::Log.handle();
+            };
         } else {
-            crate::log!($text)
+            crate::log!($text);
         }
     }};
 }
