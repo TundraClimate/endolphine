@@ -1,4 +1,4 @@
-use crate::{canvas, error::*, event_handler, global};
+use crate::{canvas, error::*, global, handler};
 use std::{
     path::PathBuf,
     sync::{
@@ -80,7 +80,7 @@ fn init(path: &PathBuf) -> EpResult<()> {
 
 pub async fn process(quit_flag: Arc<AtomicBool>) {
     loop {
-        match event_handler::handle_event().await {
+        match handler::handle_event().await {
             Ok(is_quit) => {
                 if is_quit {
                     quit_flag.swap(true, Ordering::Relaxed);
