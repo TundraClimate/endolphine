@@ -4,7 +4,6 @@ use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
     terminal::{Clear, ClearType},
-    Command,
 };
 use si_scale::helpers;
 use std::{os::unix::fs::PermissionsExt, path::PathBuf};
@@ -52,7 +51,8 @@ macro_rules! di_menu_line {
             crossterm::execute!(
                 std::io::stdout(),
                 SetBackgroundColor(bg),
-                OverWrite(slide, $row),
+                MoveTo(0, $row),
+                Print(" ".repeat(slide as usize)),
                 MoveTo(0, $row),
                 $($cmd)+,
                 MoveTo(slide - 1, $row),
@@ -399,16 +399,6 @@ impl BodyRow {
             SetForegroundColor(color::permission(index)),
             permission.unwrap_or(&'-')
         )
-    }
-}
-
-struct OverWrite(u16, u16);
-
-impl Command for OverWrite {
-    fn write_ansi(&self, f: &mut impl std::fmt::Write) -> std::fmt::Result {
-        write!(f, "\x1B[{};{}H", self.1 + 1, 0)?;
-        write!(f, "{}", " ".repeat(self.0 as usize))?;
-        Ok(())
     }
 }
 
