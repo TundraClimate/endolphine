@@ -71,10 +71,14 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
 
-            if let Err(e) = std::fs::write(path, "") {
+            if let Err(e) = if content.ends_with("/") {
+                std::fs::create_dir(path)
+            } else {
+                std::fs::write(path, "")
+            } {
                 crate::log!(format!("Add new file failed: {}", e.kind()));
                 return;
-            };
+            }
 
             crate::log!(format!("\"{}\" create successful.", &content))
         }
