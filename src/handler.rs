@@ -309,6 +309,11 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == 'h' {
+        let menu = global::menu();
+        if menu.is_enabled() {
+            return Ok(false);
+        }
+
         let cursor = global::cursor();
         if cursor.is_selection_mode() {
             cursor.toggle_selection();
