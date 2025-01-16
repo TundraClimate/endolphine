@@ -188,6 +188,96 @@ fn handle_action(content: &str, act: String) {
                 ));
             }
         }
+        "PasteIsOverWrite" => {
+            let files = match clipboard::read_clipboard() {
+                Ok(text) => text
+                    .lines()
+                    .filter_map(|f| {
+                        f.starts_with("file://")
+                            .then_some(f.replacen("file://", "", 1))
+                    })
+                    .map(PathBuf::from)
+                    .filter(|f| {
+                        f.symlink_metadata()
+                            .ok()
+                            .map_or(false, |m| m.is_symlink() || f.exists())
+                    })
+                    .collect::<Vec<PathBuf>>(),
+                Err(e) => {
+                    crate::log!(format!("Paste failed: {}", e.kind()));
+                    return;
+                }
+            };
+
+            let current_path = global::get_path();
+            let overwrite_mode = ["y", "Y", "p"].contains(&content);
+
+            for file in files.into_iter() {
+                let Ok(metadata) = file.symlink_metadata() else {
+                    continue;
+                };
+
+                if !file.exists() && !metadata.is_symlink() {
+                    continue;
+                }
+
+                let copied_path = current_path.join(misc::file_name(&file));
+
+                if metadata.is_file() || metadata.is_symlink() {
+                    if !copied_path
+                        .symlink_metadata()
+                        .ok()
+                        .map_or(false, |m| m.is_symlink() || copied_path.exists())
+                        || overwrite_mode
+                    {
+                        if &file == &copied_path {
+                            crate::log!("Paste failed: dest and source is similar.");
+                            continue;
+                        }
+
+                        if let Err(e) = std::fs::copy(&file, &copied_path) {
+                            crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                        }
+                    }
+                }
+
+                if metadata.is_dir() {
+                    for entry in walkdir::WalkDir::new(&file)
+                        .into_iter()
+                        .filter_map(Result::ok)
+                    {
+                        let Ok(rel_path) = entry.path().strip_prefix(&file) else {
+                            continue;
+                        };
+
+                        let copied_path = copied_path.join(rel_path);
+                        if !copied_path
+                            .symlink_metadata()
+                            .ok()
+                            .map_or(false, |m| m.is_symlink() || copied_path.exists())
+                            || overwrite_mode
+                        {
+                            if &file == &copied_path {
+                                crate::log!("Paste failed: dest and source is similar.");
+                                continue;
+                            }
+
+                            let parent = misc::parent(&copied_path);
+                            if !parent.exists() {
+                                if let Err(e) = std::fs::create_dir_all(parent) {
+                                    crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                                    continue;
+                                }
+                            }
+
+                            if let Err(e) = std::fs::copy(&entry.path(), &copied_path) {
+                                crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                            }
+                        }
+                    }
+                }
+            }
+        }
         _ => {}
     }
 }
@@ -450,6 +540,20 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
             crate::log!(format!("Yanked \"{}\"", misc::file_name(under_cursor_file)));
         }
+    }
+
+    if key == 'p' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        if !clipboard::is_cmd_installed() {
+            crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
+            return Ok(false);
+        }
+
+        global::input_use_mut(|i| i.enable("", Some("PasteIsOverWrite".into())));
+        crate::log!("Is overwrite paste? (y/Y/p)");
     }
 
     Ok(false)

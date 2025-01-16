@@ -16,7 +16,7 @@ fn window_system() -> WindowSystem {
     }
 }
 
-const WAYLAND_CB_CMD: &str = "wl-copy";
+const WAYLAND_CB_CMD: [&str; 2] = ["wl-copy", "wl-paste"];
 const X11_CB_CMD: &str = "xclip";
 
 pub fn is_cmd_installed() -> bool {
@@ -25,6 +25,10 @@ pub fn is_cmd_installed() -> bool {
 
 pub fn clip(text: &str, ty: &str) -> std::io::Result<()> {
     WindowSystem::clip(text, ty)
+}
+
+pub fn read_clipboard() -> std::io::Result<String> {
+    WindowSystem::read_clipboard()
 }
 
 impl WindowSystem {
@@ -36,12 +40,18 @@ impl WindowSystem {
     }
 
     fn wayland_cbcmd_installed() -> bool {
-        Command::new(WAYLAND_CB_CMD)
+        Command::new(WAYLAND_CB_CMD[0])
             .arg("--version")
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .status()
             .is_ok_and(|s| s.success())
+            && Command::new(WAYLAND_CB_CMD[1])
+                .arg("--version")
+                .stdout(Stdio::null())
+                .stderr(Stdio::null())
+                .status()
+                .is_ok_and(|s| s.success())
     }
 
     fn x11_cbcmd_installed() -> bool {
@@ -61,7 +71,7 @@ impl WindowSystem {
     }
 
     fn wayland_clip(text: &str, ty: &str) -> std::io::Result<()> {
-        let cmd = Command::new(WAYLAND_CB_CMD)
+        let cmd = Command::new(WAYLAND_CB_CMD[0])
             .args(["-t", ty])
             .stdout(Stdio::null())
             .stderr(Stdio::null())
@@ -88,5 +98,29 @@ impl WindowSystem {
         }
 
         Ok(())
+    }
+
+    fn read_clipboard() -> std::io::Result<String> {
+        match window_system() {
+            WindowSystem::Wayland => Self::wayland_read(),
+            WindowSystem::X11 => Self::x11_read(),
+        }
+    }
+
+    fn wayland_read() -> std::io::Result<String> {
+        let output = Command::new(WAYLAND_CB_CMD[1])
+            .stderr(Stdio::null())
+            .output()?;
+        let output = String::from_utf8_lossy(output.stdout.as_slice());
+        Ok(String::from(output))
+    }
+
+    fn x11_read() -> std::io::Result<String> {
+        let output = Command::new(X11_CB_CMD)
+            .args(["-selection", "clipboard", "-o"])
+            .stderr(Stdio::null())
+            .output()?;
+        let output = String::from_utf8_lossy(output.stdout.as_slice());
+        Ok(String::from(output))
     }
 }
