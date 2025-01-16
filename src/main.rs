@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 mod app;
 mod canvas;
+mod clipboard;
 mod color;
 mod cursor;
 mod error;

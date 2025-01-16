@@ -1,4 +1,4 @@
-use crate::{error::*, global, menu, misc};
+use crate::{clipboard, error::*, global, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::{path::PathBuf, process::Command};
 
@@ -405,6 +405,50 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             let name = misc::file_name(under_cursor_file);
             global::input_use_mut(|i| i.enable(&name, Some("Rename".into())));
             crate::log!(format!("Enter new name for \"{}\"", name));
+        }
+    }
+
+    if key == 'y' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        if !clipboard::is_cmd_installed() {
+            crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+            return Ok(false);
+        }
+
+        let cursor = global::cursor();
+
+        if cursor.is_selection_mode() {
+            let selected_files = misc::sorted_child_files(&global::get_path())
+                .into_iter()
+                .enumerate()
+                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .map(|f| format!("file://{}", f.to_string_lossy()))
+                .collect::<Vec<_>>();
+
+            if let Err(e) = clipboard::clip(&selected_files.join("\n"), "text/uri-list") {
+                crate::log!(format!("Yank failed: {}", e.kind()));
+                return Ok(false);
+            }
+
+            cursor.toggle_selection();
+            crate::log!(format!("Yanked {} items", selected_files.len()));
+            return Ok(false);
+        }
+
+        if let Some(under_cursor_file) =
+            misc::sorted_child_files(&global::get_path()).get(cursor.current())
+        {
+            let text = format!("file://{}", under_cursor_file.to_string_lossy());
+
+            if let Err(e) = clipboard::clip(&text, "text/uri-list") {
+                crate::log!(format!("Yank failed: {}", e.kind()));
+                return Ok(false);
+            }
+
+            crate::log!(format!("Yanked \"{}\"", misc::file_name(under_cursor_file)));
         }
     }
 
