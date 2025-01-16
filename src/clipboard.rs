@@ -27,8 +27,8 @@ pub fn clip(text: &str, ty: &str) -> std::io::Result<()> {
     WindowSystem::clip(text, ty)
 }
 
-pub fn read_clipboard() -> std::io::Result<String> {
-    WindowSystem::read_clipboard()
+pub fn read_clipboard(ty: &str) -> std::io::Result<String> {
+    WindowSystem::read_clipboard(ty)
 }
 
 impl WindowSystem {
@@ -100,24 +100,25 @@ impl WindowSystem {
         Ok(())
     }
 
-    fn read_clipboard() -> std::io::Result<String> {
+    fn read_clipboard(ty: &str) -> std::io::Result<String> {
         match window_system() {
-            WindowSystem::Wayland => Self::wayland_read(),
-            WindowSystem::X11 => Self::x11_read(),
+            WindowSystem::Wayland => Self::wayland_read(ty),
+            WindowSystem::X11 => Self::x11_read(ty),
         }
     }
 
-    fn wayland_read() -> std::io::Result<String> {
+    fn wayland_read(ty: &str) -> std::io::Result<String> {
         let output = Command::new(WAYLAND_CB_CMD[1])
+            .args(["-t", ty])
             .stderr(Stdio::null())
             .output()?;
         let output = String::from_utf8_lossy(output.stdout.as_slice());
         Ok(String::from(output))
     }
 
-    fn x11_read() -> std::io::Result<String> {
+    fn x11_read(ty: &str) -> std::io::Result<String> {
         let output = Command::new(X11_CB_CMD)
-            .args(["-selection", "clipboard", "-o"])
+            .args(["-selection", "clipboard", "-t", ty, "-o"])
             .stderr(Stdio::null())
             .output()?;
         let output = String::from_utf8_lossy(output.stdout.as_slice());

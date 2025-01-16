@@ -189,7 +189,7 @@ fn handle_action(content: &str, act: String) {
             }
         }
         "PasteIsOverWrite" => {
-            let files = match clipboard::read_clipboard() {
+            let files = match clipboard::read_clipboard("text/uri-list") {
                 Ok(text) => text
                     .lines()
                     .filter_map(|f| {
