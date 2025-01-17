@@ -1,4 +1,4 @@
-use crate::{clipboard, error::*, global, menu, misc};
+use crate::{clipboard, error::*, global, input::Input, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::{path::PathBuf, process::Command};
 
@@ -21,7 +21,7 @@ pub async fn handle_event() -> EpResult<bool> {
 
 async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     if global::input_use(|i| i.is_enable()) {
-        handle_input_mode(key)?;
+        global::input_use_mut(|i| handle_input_mode(i, key))?;
         return Ok(false);
     }
 
@@ -34,8 +34,7 @@ async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     Ok(false)
 }
 
-fn handle_input_mode(key: KeyEvent) -> EpResult<()> {
-    let mut input = global::input().write().unwrap();
+fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
     match key.code {
         KeyCode::Esc => input.disable(),
         KeyCode::Char(c) => input.buffer_push(c),
@@ -557,8 +556,20 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        global::input_use_mut(|i| i.enable("", Some("PasteIsOverWrite".into())));
-        crate::log!("Is overwrite paste? (y/Y/p)");
+        global::input_use_mut(|i| {
+            let default_paste_input = "y";
+
+            i.enable(default_paste_input, Some("PasteIsOverWrite".into()));
+
+            //FIXME should impl force_mode
+            if true {
+                handle_input_mode(i, KeyEvent::from(KeyCode::Enter))?;
+            } else {
+                crate::log!("Is overwrite paste? (y/Y/p)");
+            };
+
+            Ok::<(), EpError>(())
+        })?;
     }
 
     Ok(false)
