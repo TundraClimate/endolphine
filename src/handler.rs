@@ -283,6 +283,7 @@ fn handle_action(content: &str, act: String) {
                         }
                     }
                 }
+                global::cursor().resize(misc::child_files_len(&global::get_path()));
             }
         }
         _ => {}
