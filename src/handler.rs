@@ -227,14 +227,14 @@ fn handle_action(content: &str, act: String) {
                             .file_stem()
                             .map(|s| String::from(s.to_string_lossy()))
                             .unwrap_or(String::new());
-                        PathBuf::from(
+                        current_path.join(PathBuf::from(
                             if let Some(extension) = copied.extension().map(|e| e.to_string_lossy())
                             {
                                 format!("{}_Copy.{}", stem, extension)
                             } else {
                                 format!("{}_Copy", stem)
                             },
-                        )
+                        ))
                     } else {
                         copied
                     }
