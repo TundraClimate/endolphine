@@ -220,7 +220,25 @@ fn handle_action(content: &str, act: String) {
                     continue;
                 }
 
-                let copied_path = current_path.join(misc::file_name(&file));
+                let copied_path = {
+                    let copied = current_path.join(misc::file_name(&file));
+                    if &copied == &file {
+                        let stem = copied
+                            .file_stem()
+                            .map(|s| String::from(s.to_string_lossy()))
+                            .unwrap_or(String::new());
+                        PathBuf::from(
+                            if let Some(extension) = copied.extension().map(|e| e.to_string_lossy())
+                            {
+                                format!("{}_Copy.{}", stem, extension)
+                            } else {
+                                format!("{}_Copy", stem)
+                            },
+                        )
+                    } else {
+                        copied
+                    }
+                };
 
                 if metadata.is_file() || metadata.is_symlink() {
                     if !copied_path
@@ -229,11 +247,6 @@ fn handle_action(content: &str, act: String) {
                         .map_or(false, |m| m.is_symlink() || copied_path.exists())
                         || overwrite_mode
                     {
-                        if &file == &copied_path {
-                            crate::log!("Paste failed: dest and source is similar.");
-                            continue;
-                        }
-
                         if let Err(e) = std::fs::copy(&file, &copied_path) {
                             crate::log!(format!("Paste failed: \"{}\"", e.kind()));
                         }
@@ -256,11 +269,6 @@ fn handle_action(content: &str, act: String) {
                             .map_or(false, |m| m.is_symlink() || copied_path.exists())
                             || overwrite_mode
                         {
-                            if &file == &copied_path {
-                                crate::log!("Paste failed: dest and source is similar.");
-                                continue;
-                            }
-
                             let parent = misc::parent(&copied_path);
                             if !parent.exists() {
                                 if let Err(e) = std::fs::create_dir_all(parent) {
