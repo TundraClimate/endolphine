@@ -187,7 +187,7 @@ fn handle_action(content: &str, act: String) {
                 ));
             }
         }
-        "PasteIsOverWrite" => {
+        "Paste" => {
             let files = match clipboard::read_clipboard("text/uri-list") {
                 Ok(text) => text
                     .lines()
@@ -568,7 +568,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         global::input_use_mut(|i| {
             let default_paste_input = "y";
 
-            i.enable(default_paste_input, Some("PasteIsOverWrite".into()));
+            i.enable(default_paste_input, Some("Paste".into()));
 
             //FIXME should impl force_mode
             if true {
