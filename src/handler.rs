@@ -36,7 +36,10 @@ async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
 
 fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
     match key.code {
-        KeyCode::Esc => input.disable(),
+        KeyCode::Esc => {
+            input.disable();
+            global::cache_clear();
+        }
         KeyCode::Char(c) => input.buffer_push(c),
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
         KeyCode::Enter => {

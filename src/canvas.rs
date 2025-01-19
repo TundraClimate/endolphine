@@ -24,24 +24,6 @@ macro_rules! di_view_line {
     }};
 }
 
-macro_rules! di_input_line {
-    ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !global::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
-            global::cache_insert(($row, 0), $tag.to_string());
-            crossterm::execute!(
-                std::io::stdout(),
-                MoveTo(global::get_view_shift() + 39, $row),
-                SetBackgroundColor(color::INPUT_BG),
-                Print(" ".repeat(25)),
-                MoveTo(global::get_view_shift() + 39, $row),
-                $($cmd),+,
-                Print("▏"),
-                ResetColor
-            ).map_err(|_| EpError::DisplayViewLineFailed)
-        } else { Ok(()) }
-    }};
-}
-
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $($cmd:expr),+ $(,)?) => {{
         if !global::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
@@ -231,7 +213,17 @@ fn render_input_line(rel_i: u16) -> EpResult<()> {
         buf.chars().skip(size.saturating_sub(20)).collect()
     };
 
-    di_input_line!(format!("input{}", buf), rel_i + 2, Print(buf))?;
+    crossterm::execute!(
+        std::io::stdout(),
+        MoveTo(global::get_view_shift() + 39, rel_i + 2),
+        SetBackgroundColor(color::INPUT_BG),
+        Print(" ".repeat(25)),
+        MoveTo(global::get_view_shift() + 39, rel_i + 2),
+        Print(buf),
+        Print("▏"),
+        ResetColor
+    )
+    .map_err(|_| EpError::DisplayViewLineFailed)?;
 
     Ok(())
 }
