@@ -203,27 +203,36 @@ fn render_body() -> EpResult<()> {
     Ok(())
 }
 
-fn render_input_line(rel_i: u16) -> EpResult<()> {
+fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()> {
     let Some(buf) = global::input_use(|i| i.buffer_load().clone()) else {
         return Ok(());
     };
 
     let buf: String = {
         let size = buf.chars().count();
-        buf.chars().skip(size.saturating_sub(20)).collect()
+        buf.chars()
+            .skip(size.saturating_sub(width as usize))
+            .collect()
     };
 
     crossterm::execute!(
         std::io::stdout(),
-        MoveTo(global::get_view_shift() + 39, rel_i + 2),
+        MoveTo(pos.0, pos.1),
         SetBackgroundColor(color::INPUT_BG),
-        Print(" ".repeat(25)),
-        MoveTo(global::get_view_shift() + 39, rel_i + 2),
+        Print(" ".repeat((padding.0 + width + padding.1) as usize)),
+        MoveTo(pos.0 + padding.0, pos.1),
         Print(buf),
         Print("▏"),
         ResetColor
     )
     .map_err(|_| EpError::DisplayViewLineFailed)?;
+
+    Ok(())
+}
+
+fn render_input_line(rel_i: u16) -> EpResult<()> {
+    let name_col = 39;
+    render_input((global::get_view_shift() + name_col, rel_i + 2), 20, (0, 5))?;
 
     Ok(())
 }
