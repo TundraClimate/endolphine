@@ -44,6 +44,8 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
         KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
         KeyCode::Enter => {
             input.complete_input();
+            global::cache_clear();
+
             let content = input.drain_storage();
             let act = input.drain_action();
             tokio::task::spawn_blocking(|| {
