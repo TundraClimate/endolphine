@@ -64,3 +64,17 @@ pub fn child_files_len(path: &PathBuf) -> usize {
 pub fn body_height() -> u16 {
     global::get_height().saturating_sub(4)
 }
+
+pub fn next_match_from_search() {
+    let cursor = global::cursor();
+
+    let child_files = sorted_child_files(&global::get_path());
+    let first_match_pos = child_files[cursor.current() + 1..]
+        .iter()
+        .chain(child_files[..cursor.current()].iter())
+        .position(|f| global::is_match_text(|m| file_name(f).contains(m)))
+        .map(|pos| pos + 1)
+        .unwrap_or(0);
+
+    cursor.shift_loop(first_match_pos as isize);
+}

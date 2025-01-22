@@ -55,4 +55,8 @@ impl Input {
     pub fn drain_action(&mut self) -> Option<String> {
         std::mem::replace(&mut self.action, None)
     }
+
+    pub fn load_action(&self) -> &Option<String> {
+        &self.action
+    }
 }

@@ -71,6 +71,18 @@ impl Cursor {
         }
     }
 
+    pub fn shift_loop(&self, val: isize) {
+        if val.is_positive() {
+            if val as usize + self.current() < self.size.load(Ordering::Relaxed) {
+                self.shift(val);
+            } else {
+                self.swap_id((self.current() + val as usize) - self.size.load(Ordering::Relaxed));
+            }
+        } else {
+            self.shift(val);
+        }
+    }
+
     pub fn reset(&self) {
         self.swap_id(0);
     }

@@ -40,8 +40,20 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
             input.disable();
             global::cache_clear();
         }
-        KeyCode::Char(c) => input.buffer_push(c),
-        KeyCode::Delete | KeyCode::Backspace => input.buffer_pop(),
+        KeyCode::Char(c) => {
+            input.buffer_push(c);
+            if input.load_action() == &Some("Search".to_owned()) {
+                global::matcher_update(|m| m.push(c));
+            }
+        }
+        KeyCode::Delete | KeyCode::Backspace => {
+            input.buffer_pop();
+            if input.load_action() == &Some("Search".to_owned()) {
+                global::matcher_update(|m| {
+                    m.pop();
+                });
+            }
+        }
         KeyCode::Enter => {
             input.complete_input();
             global::cache_clear();
@@ -290,6 +302,10 @@ fn handle_action(content: &str, act: String) {
                 }
                 global::cursor().resize(misc::child_files_len(&global::get_path()));
             }
+        }
+        "Search" => {
+            misc::next_match_from_search();
+            crate::log!(format!("/{}", global::read_matcher()));
         }
         _ => {}
     }
@@ -585,6 +601,35 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
 
             Ok::<(), EpError>(())
         })?;
+    }
+
+    if key == '/' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        let cursor = global::cursor();
+
+        if cursor.is_selection_mode() {
+            cursor.toggle_selection();
+        }
+
+        global::matcher_update(|m| m.clear());
+        global::input_use_mut(|i| i.enable("/", Some("Search".to_string())));
+    }
+
+    if key == 'n' {
+        if global::menu().is_enabled() {
+            return Ok(false);
+        }
+
+        let cursor = global::cursor();
+
+        if cursor.is_selection_mode() {
+            cursor.toggle_selection();
+        }
+
+        misc::next_match_from_search();
     }
 
     Ok(false)

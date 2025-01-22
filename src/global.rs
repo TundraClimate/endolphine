@@ -17,6 +17,7 @@ static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
 static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
 static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
+static MATCHER_TEXT: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::new()));
 
 pub fn init(path: &PathBuf) -> EpResult<()> {
     set_path(&path);
@@ -104,4 +105,19 @@ pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
 
 pub fn cache_clear() {
     CACHE.write().unwrap().clear();
+}
+
+pub fn matcher_update<F: FnOnce(&mut String) -> ()>(f: F) {
+    let mut lock = MATCHER_TEXT.write().unwrap();
+    f(&mut lock);
+}
+
+pub fn is_match_text<F: FnOnce(&str) -> bool>(f: F) -> bool {
+    let lock = MATCHER_TEXT.read().unwrap();
+    f(&lock)
+}
+
+pub fn read_matcher() -> String {
+    let lock = MATCHER_TEXT.read().unwrap();
+    lock.to_owned()
 }
