@@ -243,23 +243,13 @@ fn render_file_line(
     file: &PathBuf,
     is_selected: bool,
 ) -> EpResult<()> {
-    let body_row = BodyRow::new(file);
     let c = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(color::item_bg(is_selected, is_cursor_pos));
+    let body_row = BodyRow::new(file, c.into(), under_name_color);
     di_view_line!(
-        format!("{}{}{}{}", rel_i, body_row.gen_key(), c, under_name_color),
+        format!("{}{}", rel_i, body_row.gen_key()),
         rel_i + 2,
-        Print(format!(
-            "{} | {}{} {} {} {}{}{}",
-            c,
-            body_row.filetype,
-            body_row.permission,
-            body_row.bsize,
-            body_row.time,
-            under_name_color,
-            body_row.filename,
-            SetBackgroundColor(color::app_bg())
-        )),
+        Print(body_row),
     )
 }
 
@@ -280,28 +270,38 @@ fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<Pat
 }
 
 struct BodyRow {
+    cursor: String,
     filename: String,
     filetype: String,
     bsize: String,
     time: String,
     permission: String,
+    under_name_color: SetBackgroundColor,
 }
 
 impl BodyRow {
-    fn new(path: &PathBuf) -> Self {
+    fn new(path: &PathBuf, cursor: String, under_name_color: SetBackgroundColor) -> Self {
         Self {
+            cursor,
             filename: Self::colored_file_name(path),
             filetype: Self::colored_file_type(path),
             bsize: Self::colored_bsize(path),
             time: Self::colored_last_modified(path),
             permission: Self::colored_permission(Self::format_permission(path)),
+            under_name_color,
         }
     }
 
     fn gen_key(&self) -> String {
         format!(
-            "{}{}{}{}{}",
-            self.filename, self.filetype, self.bsize, self.time, self.permission
+            "{}{}{}{}{}{}{}",
+            self.cursor,
+            self.filename,
+            self.filetype,
+            self.bsize,
+            self.time,
+            self.permission,
+            self.under_name_color
         )
     }
 
@@ -416,6 +416,23 @@ impl BodyRow {
             "{}{}",
             SetForegroundColor(color::permission(index)),
             permission.unwrap_or(&'-')
+        )
+    }
+}
+
+impl std::fmt::Display for BodyRow {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} | {}{} {} {} {}{}{}",
+            self.cursor,
+            self.filetype,
+            self.permission,
+            self.bsize,
+            self.time,
+            self.under_name_color,
+            self.filename,
+            SetBackgroundColor(color::app_bg())
         )
     }
 }
