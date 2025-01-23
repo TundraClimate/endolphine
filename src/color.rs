@@ -42,6 +42,7 @@ const_color!(MENU_BG, 90);
 const_color!(MENU_BG_DARK, 50);
 const_color!(MENU_UNDER_CURSOR, 70);
 const_color!(MENU_TAG_COLOR, 85, 240, 180);
+const_color!(FILENAME_SURROUND, 100);
 
 pub fn app_bg() -> Color {
     if crate::global::menu().is_enabled() {

@@ -318,11 +318,34 @@ impl BodyRow {
         )
     }
 
+    fn surround_from_matcher(text: String) -> String {
+        let mut pos = 0usize;
+        let mut pat_len = 0usize;
+        if global::is_match_text(|m| {
+            pat_len = m.len();
+            !m.is_empty() && (&text).find(m).inspect(|p| pos = *p).is_some()
+        }) {
+            let end_pos = pos + pat_len;
+            let surround_color = SetBackgroundColor(color::FILENAME_SURROUND);
+            let reset_color = SetBackgroundColor(color::app_bg());
+            format!(
+                "{}{}{}{}{}",
+                &text[..pos],
+                surround_color,
+                &text[pos..end_pos],
+                reset_color,
+                &text[end_pos..]
+            )
+        } else {
+            text
+        }
+    }
+
     fn colored_file_name(path: &PathBuf) -> String {
         format!(
             "{}{}{}",
             SetForegroundColor(color::path_name(path)),
-            misc::file_name(path),
+            Self::surround_from_matcher(misc::file_name(path).to_owned()),
             if let Some(target) = Self::symlink_target(path) {
                 format!(" -> {}", target)
             } else {
