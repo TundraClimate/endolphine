@@ -629,7 +629,9 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             cursor.toggle_selection();
         }
 
-        misc::next_match_from_search();
+        if !global::is_match_text(|m| m.is_empty()) {
+            misc::next_match_from_search();
+        }
     }
 
     Ok(false)
