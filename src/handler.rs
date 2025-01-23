@@ -320,6 +320,16 @@ fn handle_esc_key() -> EpResult<()> {
     Ok(())
 }
 
+fn move_current_dir(path: &PathBuf) {
+    let cursor = global::cursor();
+    if cursor.is_selection_mode() {
+        cursor.toggle_selection();
+    }
+    global::set_path(path);
+    global::cache_clear();
+    global::matcher_update(|m| m.clear());
+}
+
 async fn handle_char_key(key: char) -> EpResult<bool> {
     if key == 'Q' {
         return Ok(true);
@@ -343,11 +353,6 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = global::cursor();
-        if cursor.is_selection_mode() {
-            cursor.toggle_selection();
-        }
-
         let path = global::get_path();
 
         if path == PathBuf::from("/") {
@@ -355,9 +360,9 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         }
 
         let parent = misc::parent(&path);
-        global::set_path(&parent);
-        global::cache_clear();
+        move_current_dir(&parent);
 
+        let cursor = global::cursor();
         let child_files = misc::sorted_child_files(&path);
         {
             if let Some(target_path) = child_files.get(cursor.current()) {
@@ -388,9 +393,8 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                     return Ok(false);
                 }
 
-                global::set_path(&path);
+                move_current_dir(&path);
                 menu.toggle_enable();
-                global::cache_clear();
 
                 let cursor = global::cursor();
                 cursor.reset();
@@ -399,10 +403,6 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             }
 
             return Ok(false);
-        }
-
-        if cursor.is_selection_mode() {
-            cursor.toggle_selection();
         }
 
         let path = global::get_path();
@@ -422,7 +422,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         if metadata.is_dir() {
             let child_files = misc::sorted_child_files(target_path);
 
-            global::set_path(target_path);
+            move_current_dir(target_path);
             cursor.reset();
             cursor.resize(child_files.len());
 
