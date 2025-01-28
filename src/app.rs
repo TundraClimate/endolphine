@@ -1,6 +1,6 @@
 use crate::{canvas, error::*, global, handler};
 use std::{
-    path::PathBuf,
+    path::Path,
     sync::{
         atomic::{AtomicBool, Ordering},
         Arc,
@@ -22,7 +22,7 @@ macro_rules! enable_tui {
                 crossterm::terminal::DisableLineWrap
             )
         }
-        .map_err(|_| crate::error::EpError::SwitchScreen)
+        .map_err(|_| $crate::error::EpError::SwitchScreen)
     };
 }
 
@@ -40,11 +40,11 @@ macro_rules! disable_tui {
                 crossterm::terminal::EnableLineWrap,
             )
         }
-        .map_err(|_| crate::error::EpError::SwitchScreen)
+        .map_err(|_| $crate::error::EpError::SwitchScreen)
     };
 }
 
-pub async fn launch(path: &PathBuf) -> EpResult<()> {
+pub async fn launch(path: &Path) -> EpResult<()> {
     init(path)?;
     enable_tui!()?;
 
@@ -68,7 +68,7 @@ pub async fn launch(path: &PathBuf) -> EpResult<()> {
     Ok(())
 }
 
-fn init(path: &PathBuf) -> EpResult<()> {
+fn init(path: &Path) -> EpResult<()> {
     let Ok(path) = path.canonicalize() else {
         return Err(EpError::InitFailed);
     };

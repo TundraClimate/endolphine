@@ -1,7 +1,7 @@
 use crate::global;
-use std::path::PathBuf;
+use std::path::{Path, PathBuf};
 
-pub fn file_name<'a>(path: &'a PathBuf) -> &'a str {
+pub fn file_name(path: &PathBuf) -> &str {
     if path == &PathBuf::from("/") {
         return "";
     }
@@ -12,13 +12,13 @@ pub fn file_name<'a>(path: &'a PathBuf) -> &'a str {
         .unwrap_or("_OsIncompatible_")
 }
 
-pub fn parent(path: &PathBuf) -> PathBuf {
+pub fn parent(path: &Path) -> PathBuf {
     path.parent()
         .map(|p| p.to_path_buf())
         .unwrap_or(PathBuf::from("/"))
 }
 
-pub fn child_files(path: &PathBuf) -> Vec<PathBuf> {
+pub fn child_files(path: &Path) -> Vec<PathBuf> {
     if !path.is_dir() || !path.exists() {
         return vec![];
     }
@@ -31,9 +31,9 @@ pub fn child_files(path: &PathBuf) -> Vec<PathBuf> {
     }
 }
 
-fn sort_files(files: &mut Vec<PathBuf>) {
+fn sort_files(files: &mut [PathBuf]) {
     files.sort_by_key(|p| {
-        let name = file_name(&p);
+        let name = file_name(p);
         let priority = match name.chars().next() {
             Some('.') => 2,
             Some(c) if c.is_lowercase() => 0,
@@ -44,13 +44,13 @@ fn sort_files(files: &mut Vec<PathBuf>) {
     });
 }
 
-pub fn sorted_child_files(path: &PathBuf) -> Vec<PathBuf> {
+pub fn sorted_child_files(path: &Path) -> Vec<PathBuf> {
     let mut c = child_files(path);
     sort_files(&mut c);
     c
 }
 
-pub fn child_files_len(path: &PathBuf) -> usize {
+pub fn child_files_len(path: &Path) -> usize {
     if !path.is_dir() || !path.exists() {
         return 0;
     }

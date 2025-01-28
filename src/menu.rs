@@ -56,7 +56,7 @@ impl Menu {
         self.cursor().resize(self.elements.len());
     }
 
-    pub fn elements<'a>(&'a self) -> &'a Vec<MenuElement> {
+    pub fn elements(&self) -> &Vec<MenuElement> {
         &self.elements
     }
 
@@ -84,11 +84,11 @@ impl MenuElement {
         }
     }
 
-    pub fn tag<'a>(&'a self) -> &'a str {
+    pub fn tag(&self) -> &str {
         &self.tag
     }
 
-    pub fn path<'a>(&'a self) -> &'a PathBuf {
+    pub fn path(&self) -> &PathBuf {
         &self.path
     }
 }

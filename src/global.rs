@@ -2,7 +2,7 @@ use crate::{cursor::Cursor, error::*, input::Input, menu::Menu, misc};
 use once_cell::sync::Lazy;
 use std::{
     collections::HashMap,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicU16, Ordering},
         RwLock,
@@ -12,21 +12,21 @@ use std::{
 static PATH: Lazy<RwLock<PathBuf>> = Lazy::new(|| RwLock::new(PathBuf::new()));
 static CANVAS_SIZE: Lazy<(AtomicU16, AtomicU16)> =
     Lazy::new(|| (AtomicU16::new(100), AtomicU16::new(100)));
-static CURSOR: Lazy<Cursor> = Lazy::new(|| Cursor::new());
+static CURSOR: Lazy<Cursor> = Lazy::new(Cursor::new);
 static VIEW_SHIFT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
-static MENU: Lazy<Menu> = Lazy::new(|| Menu::default());
+static MENU: Lazy<Menu> = Lazy::new(Menu::default);
 static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
 static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 static MATCHER_TEXT: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::new()));
 
-pub fn init(path: &PathBuf) -> EpResult<()> {
-    set_path(&path);
+pub fn init(path: &Path) -> EpResult<()> {
+    set_path(path);
 
     let (width, height) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
     set_width(width);
     set_height(height);
 
-    let c = misc::child_files_len(&path);
+    let c = misc::child_files_len(path);
     CURSOR.resize(c);
 
     Ok(())
@@ -36,9 +36,9 @@ pub fn get_path() -> PathBuf {
     (*PATH.read().unwrap()).clone()
 }
 
-pub fn set_path(new_path: &PathBuf) {
+pub fn set_path(new_path: &Path) {
     let mut lock = PATH.write().unwrap();
-    *lock = new_path.clone();
+    *lock = new_path.to_path_buf();
 }
 
 pub fn get_width() -> u16 {
@@ -58,7 +58,7 @@ pub fn set_height(new_value: u16) {
 }
 
 pub fn cursor() -> &'static Cursor {
-    &*CURSOR
+    &CURSOR
 }
 
 pub fn captured_cursor() -> &'static Cursor {
@@ -70,7 +70,7 @@ pub fn captured_cursor() -> &'static Cursor {
 }
 
 pub fn menu() -> &'static Menu {
-    &*MENU
+    &MENU
 }
 
 pub fn get_view_shift() -> u16 {
@@ -82,17 +82,17 @@ pub fn set_view_shift(new_value: u16) {
 }
 
 pub fn input() -> &'static RwLock<Input> {
-    &*INPUT
+    &INPUT
 }
 
 pub fn input_use<F: FnOnce(&Input) -> R, R>(f: F) -> R {
     let lock = input().read().unwrap();
-    f(&*lock)
+    f(&lock)
 }
 
 pub fn input_use_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
     let mut lock = input().write().unwrap();
-    f(&mut *lock)
+    f(&mut lock)
 }
 
 pub fn cache_insert(key: (u16, u8), tag: String) {
@@ -107,7 +107,7 @@ pub fn cache_clear() {
     CACHE.write().unwrap().clear();
 }
 
-pub fn matcher_update<F: FnOnce(&mut String) -> ()>(f: F) {
+pub fn matcher_update<F: FnOnce(&mut String)>(f: F) {
     let mut lock = MATCHER_TEXT.write().unwrap();
     f(&mut lock);
 }

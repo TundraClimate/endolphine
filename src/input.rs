@@ -1,17 +1,8 @@
+#[derive(Default)]
 pub struct Input {
     buffer: Option<String>,
     storage: Option<String>,
     action: Option<String>,
-}
-
-impl Default for Input {
-    fn default() -> Self {
-        Input {
-            buffer: None,
-            storage: None,
-            action: None,
-        }
-    }
 }
 
 impl Input {
@@ -40,7 +31,7 @@ impl Input {
         }
     }
 
-    pub fn buffer_load<'a>(&'a self) -> &'a Option<String> {
+    pub fn buffer_load(&self) -> &Option<String> {
         &self.buffer
     }
 
@@ -49,11 +40,11 @@ impl Input {
     }
 
     pub fn drain_storage(&mut self) -> Option<String> {
-        std::mem::replace(&mut self.storage, None)
+        self.storage.take()
     }
 
     pub fn drain_action(&mut self) -> Option<String> {
-        std::mem::replace(&mut self.action, None)
+        self.action.take()
     }
 
     pub fn load_action(&self) -> &Option<String> {

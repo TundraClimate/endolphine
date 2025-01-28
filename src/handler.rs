@@ -1,11 +1,14 @@
 use crate::{clipboard, error::*, global, input::Input, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use std::{path::PathBuf, process::Command};
+use std::{
+    path::{Path, PathBuf},
+    process::Command,
+};
 
 pub async fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
         match event {
-            Event::Key(key) => return Ok(handle_key_event(key).await?),
+            Event::Key(key) => return handle_key_event(key).await,
             Event::Resize(width, height) => {
                 global::set_width(width);
                 global::set_height(height);
@@ -77,7 +80,7 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
 fn handle_action(content: &str, act: String) {
     match act.as_str() {
         "AddNewFileOrDirectory" => {
-            let path = global::get_path().join(&content);
+            let path = global::get_path().join(content);
 
             if path.exists() {
                 crate::log!(format!(
@@ -134,7 +137,6 @@ fn handle_action(content: &str, act: String) {
                 crate::log!(format!("\"{}\" delete successful.", name));
             } else {
                 crate::log!("Delete file failed: target cannot find.");
-                return;
             }
         }
         "RmSelected" => {
@@ -180,7 +182,7 @@ fn handle_action(content: &str, act: String) {
             if let Some(under_cursor_file) =
                 misc::sorted_child_files(&path).get(global::cursor().current())
             {
-                let renamed = path.join(&content);
+                let renamed = path.join(content);
 
                 let Ok(metadata) = under_cursor_file.symlink_metadata() else {
                     crate::log!("Rename failed: cannot access metadata.");
@@ -216,7 +218,7 @@ fn handle_action(content: &str, act: String) {
                     .filter(|f| {
                         f.symlink_metadata()
                             .ok()
-                            .map_or(false, |m| m.is_symlink() || f.exists())
+                            .is_some_and(|m| m.is_symlink() || f.exists())
                     })
                     .collect::<Vec<PathBuf>>(),
                 Err(e) => {
@@ -239,11 +241,11 @@ fn handle_action(content: &str, act: String) {
 
                 let copied_path = {
                     let copied = current_path.join(misc::file_name(&file));
-                    if &copied == &file {
+                    if copied == file {
                         let stem = copied
                             .file_stem()
                             .map(|s| String::from(s.to_string_lossy()))
-                            .unwrap_or(String::new());
+                            .unwrap_or_default();
                         current_path.join(PathBuf::from(
                             if let Some(extension) = copied.extension().map(|e| e.to_string_lossy())
                             {
@@ -257,16 +259,15 @@ fn handle_action(content: &str, act: String) {
                     }
                 };
 
-                if metadata.is_file() || metadata.is_symlink() {
-                    if !copied_path
+                if (metadata.is_file() || metadata.is_symlink())
+                    && (!copied_path
                         .symlink_metadata()
                         .ok()
-                        .map_or(false, |m| m.is_symlink() || copied_path.exists())
-                        || overwrite_mode
-                    {
-                        if let Err(e) = std::fs::copy(&file, &copied_path) {
-                            crate::log!(format!("Paste failed: \"{}\"", e.kind()));
-                        }
+                        .is_some_and(|m| m.is_symlink() || copied_path.exists())
+                        || overwrite_mode)
+                {
+                    if let Err(e) = std::fs::copy(&file, &copied_path) {
+                        crate::log!(format!("Paste failed: \"{}\"", e.kind()));
                     }
                 }
 
@@ -283,7 +284,7 @@ fn handle_action(content: &str, act: String) {
                         if !copied_path
                             .symlink_metadata()
                             .ok()
-                            .map_or(false, |m| m.is_symlink() || copied_path.exists())
+                            .is_some_and(|m| m.is_symlink() || copied_path.exists())
                             || overwrite_mode
                         {
                             let parent = misc::parent(&copied_path);
@@ -294,7 +295,7 @@ fn handle_action(content: &str, act: String) {
                                 }
                             }
 
-                            if let Err(e) = std::fs::copy(&entry.path(), &copied_path) {
+                            if let Err(e) = std::fs::copy(entry.path(), &copied_path) {
                                 crate::log!(format!("Paste failed: \"{}\"", e.kind()));
                             }
                         }
@@ -320,7 +321,7 @@ fn handle_esc_key() -> EpResult<()> {
     Ok(())
 }
 
-fn move_current_dir(path: &PathBuf) {
+fn move_current_dir(path: &Path) {
     let cursor = global::cursor();
     if cursor.is_selection_mode() {
         cursor.toggle_selection();
@@ -367,7 +368,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         {
             if let Some(target_path) = child_files.get(cursor.current()) {
                 let mut cur = cursor.cache.write().unwrap();
-                cur.wrap_node(&target_path);
+                cur.wrap_node(target_path);
             }
         }
         cursor.reset();
@@ -393,12 +394,12 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                     return Ok(false);
                 }
 
-                move_current_dir(&path);
+                move_current_dir(path);
                 menu.toggle_enable();
 
                 let cursor = global::cursor();
                 cursor.reset();
-                cursor.resize(misc::child_files_len(&path));
+                cursor.resize(misc::child_files_len(path));
                 cursor.cache.write().unwrap().reset();
             }
 
@@ -408,7 +409,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         let path = global::get_path();
         let child_files = misc::sorted_child_files(&path);
 
-        if child_files.len() == 0 {
+        if child_files.is_empty() {
             return Ok(false);
         }
 
@@ -437,7 +438,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             let editor = option_env!("EDITOR").unwrap_or("vi");
             crate::disable_tui!()?;
             Command::new(editor)
-                .arg(&target_path)
+                .arg(target_path)
                 .status()
                 .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
             crate::enable_tui!()?;
@@ -528,7 +529,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             misc::sorted_child_files(&global::get_path()).get(cursor.current())
         {
             let name = misc::file_name(under_cursor_file);
-            global::input_use_mut(|i| i.enable(&name, Some("Rename".into())));
+            global::input_use_mut(|i| i.enable(name, Some("Rename".into())));
             crate::log!(format!("Enter new name for \"{}\"", name));
         }
     }

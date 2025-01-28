@@ -1,5 +1,5 @@
 use std::{
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         atomic::{AtomicUsize, Ordering},
         RwLock,
@@ -132,15 +132,15 @@ impl CursorCache {
         CursorCache { inner: None }
     }
 
-    pub fn wrap_node(&mut self, data_path: &PathBuf) {
+    pub fn wrap_node(&mut self, data_path: &Path) {
         if let Some(inner) = &self.inner {
             self.inner = Some(Box::new(CacheNode {
-                data_path: data_path.clone(),
+                data_path: data_path.to_path_buf(),
                 inner: Some(Box::new(*inner.clone())),
             }));
         } else {
             self.inner = Some(Box::new(CacheNode {
-                data_path: data_path.clone(),
+                data_path: data_path.to_path_buf(),
                 inner: None,
             }))
         }

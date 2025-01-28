@@ -6,7 +6,10 @@ use crossterm::{
     terminal::{Clear, ClearType},
 };
 use si_scale::helpers;
-use std::{os::unix::fs::PermissionsExt, path::PathBuf};
+use std::{
+    os::unix::fs::PermissionsExt,
+    path::{Path, PathBuf},
+};
 
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
@@ -51,20 +54,20 @@ macro_rules! di_menu_line {
 #[macro_export]
 macro_rules! log {
     ($text:expr) => {{
-        let row = crate::global::get_height();
+        let row = $crate::global::get_height();
         if let Err(_) = crossterm::execute!(
             std::io::stdout(),
             crossterm::cursor::MoveTo(0, row),
             crossterm::style::Print($text),
             crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
         ) {
-            crate::error::EpError::Log.handle();
+            $crate::error::EpError::Log.handle();
         };
     }};
 
     ($text:expr, $is_dbg:expr) => {{
         if $is_dbg {
-            let row = crate::global::get_height();
+            let row = $crate::global::get_height();
             let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
             let ts = if $text == "" { " ".to_string() } else { ts };
             if let Err(_) = crossterm::execute!(
@@ -73,10 +76,10 @@ macro_rules! log {
                 crossterm::style::Print(format!("{} {}", ts, $text)),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
             ) {
-                crate::error::EpError::Log.handle();
+                $crate::error::EpError::Log.handle();
             };
         } else {
-            crate::log!($text);
+            $crate::log!($text);
         }
     }};
 }
@@ -257,7 +260,7 @@ fn render_empty_line(rel_i: u16) -> EpResult<()> {
     di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
 }
 
-fn pagenate(full: &Vec<PathBuf>, page_size: u16, current_page: usize) -> Vec<PathBuf> {
+fn pagenate(full: &[PathBuf], page_size: u16, current_page: usize) -> Vec<PathBuf> {
     if current_page == 0 {
         return vec![];
     }
@@ -323,7 +326,7 @@ impl BodyRow {
         let mut pat_len = 0usize;
         if global::is_match_text(|m| {
             pat_len = m.len();
-            !m.is_empty() && (&text).find(m).inspect(|p| pos = *p).is_some()
+            !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
         }) {
             let end_pos = pos + pat_len;
             let surround_color = SetBackgroundColor(color::FILENAME_SURROUND);
@@ -354,7 +357,7 @@ impl BodyRow {
         )
     }
 
-    fn symlink_target(path: &PathBuf) -> Option<String> {
+    fn symlink_target(path: &Path) -> Option<String> {
         if !path.is_symlink() {
             return None;
         }
@@ -366,7 +369,7 @@ impl BodyRow {
         }
     }
 
-    fn colored_bsize(path: &PathBuf) -> String {
+    fn colored_bsize(path: &Path) -> String {
         let Ok(metadata) = path.symlink_metadata() else {
             return String::from("       x");
         };
@@ -379,7 +382,7 @@ impl BodyRow {
         }
     }
 
-    fn colored_last_modified(path: &PathBuf) -> String {
+    fn colored_last_modified(path: &Path) -> String {
         let Ok(metadata) = path.symlink_metadata() else {
             return String::from("       x");
         };
@@ -395,7 +398,7 @@ impl BodyRow {
         )
     }
 
-    fn format_permission(path: &PathBuf) -> Vec<char> {
+    fn format_permission(path: &Path) -> Vec<char> {
         let Ok(metadata) = path.symlink_metadata() else {
             return "---------".chars().collect();
         };
@@ -422,7 +425,7 @@ impl BodyRow {
             .chunks(3)
             .enumerate()
             .map(|(i, chunk)| {
-                let (read, write, exe) = (chunk.get(0), chunk.get(1), chunk.get(2));
+                let (read, write, exe) = (chunk.first(), chunk.get(1), chunk.get(2));
                 format!(
                     "{}{}{}",
                     Self::colored_permission_element(read, i * 3),
