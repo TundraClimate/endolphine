@@ -1,2 +1,2 @@
 cargo build --release
-mv target/release/endolphine .
+mv target/release/ep .
