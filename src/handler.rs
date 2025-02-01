@@ -329,6 +329,9 @@ fn move_current_dir(path: &Path) {
     global::set_path(path);
     global::cache_clear();
     global::matcher_update(|m| m.clear());
+
+    cursor.resize(misc::child_files_len(path));
+    cursor.reset();
 }
 
 async fn handle_char_key(key: char) -> EpResult<bool> {
@@ -361,7 +364,6 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         }
 
         let parent = misc::parent(&path);
-        move_current_dir(&parent);
 
         let cursor = global::cursor();
         let child_files = misc::sorted_child_files(&path);
@@ -371,10 +373,10 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                 cur.wrap_node(target_path);
             }
         }
-        cursor.reset();
+
+        move_current_dir(&parent);
 
         let child_files = misc::sorted_child_files(&parent);
-        cursor.resize(child_files.len());
         if let Some(pos) = child_files.into_iter().position(|p| p == path) {
             cursor.shift(pos as isize);
         }
@@ -386,7 +388,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         let menu = global::menu();
         if menu.is_enabled() {
             let elements = menu.elements();
-            if let Some(element) = elements.get(menu.cursor().current()) {
+            if let Some(element) = elements.get(cursor.current()) {
                 let path = element.path();
 
                 if !path.is_dir() {
@@ -397,10 +399,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                 move_current_dir(path);
                 menu.toggle_enable();
 
-                let cursor = global::cursor();
-                cursor.reset();
-                cursor.resize(misc::child_files_len(path));
-                cursor.cache.write().unwrap().reset();
+                global::cursor().cache.write().unwrap().reset();
             }
 
             return Ok(false);
@@ -424,15 +423,13 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             let child_files = misc::sorted_child_files(target_path);
 
             move_current_dir(target_path);
-            cursor.reset();
-            cursor.resize(child_files.len());
 
-            let mut cur = cursor.cache.write().unwrap();
-            if let Some(pos) = child_files.iter().position(|e| cur.inner_equal(e)) {
+            let mut cache = cursor.cache.write().unwrap();
+            if let Some(pos) = child_files.iter().position(|e| cache.inner_equal(e)) {
                 cursor.shift(pos as isize);
-                cur.unwrap_surface();
+                cache.unwrap_surface();
             } else {
-                cur.reset();
+                cache.reset();
             }
         } else if metadata.is_file() {
             let editor = option_env!("EDITOR").unwrap_or("vi");
