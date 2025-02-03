@@ -135,8 +135,9 @@ pub async fn ui(quit_flag: Arc<AtomicBool>) {
         }
 
         let elapsed = start.elapsed();
-        if elapsed < Duration::from_millis(50) {
-            time::sleep(Duration::from_millis(50) - elapsed).await;
+        let tick = 70;
+        if elapsed < Duration::from_millis(tick) {
+            time::sleep(Duration::from_millis(tick) - elapsed).await;
         }
     }
 }
