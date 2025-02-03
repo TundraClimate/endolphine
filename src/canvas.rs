@@ -15,7 +15,7 @@ macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
         if !global::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
             global::cache_insert(($row, 0), $tag.to_string());
-            crossterm::execute!(
+            crossterm::queue!(
                 std::io::stdout(),
                 MoveTo(global::get_view_shift(), $row),
                 SetBackgroundColor(color::app_bg()),
@@ -33,7 +33,7 @@ macro_rules! di_menu_line {
             global::cache_insert(($row, 1), $tag.to_string());
             let slide = global::get_view_shift();
             let bg = color::menu_bg();
-            crossterm::execute!(
+            crossterm::queue!(
                 std::io::stdout(),
                 SetBackgroundColor(bg),
                 MoveTo(0, $row),
@@ -102,6 +102,12 @@ pub fn render() -> EpResult<()> {
     if width > 0 {
         render_menu()?;
     }
+
+    use std::io::Write;
+
+    std::io::stdout()
+        .flush()
+        .map_err(|e| EpError::FlushFailed(e.kind().to_string()))?;
 
     Ok(())
 }
