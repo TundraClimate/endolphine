@@ -20,6 +20,7 @@ macro_rules! enable_tui {
             if let Err(e) = crossterm::terminal::enable_raw_mode() {
                 break 'blk Err(e);
             }
+            $crate::global::enable_render();
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::terminal::EnterAlternateScreen,
@@ -38,6 +39,7 @@ macro_rules! disable_tui {
             if let Err(e) = crossterm::terminal::disable_raw_mode() {
                 break 'blk Err(e);
             }
+            $crate::global::disable_render();
             crossterm::execute!(
                 std::io::stdout(),
                 crossterm::terminal::LeaveAlternateScreen,
@@ -126,7 +128,7 @@ pub async fn ui(quit_flag: Arc<AtomicBool>) {
     while !quit_flag.load(Ordering::Relaxed) {
         let start = Instant::now();
 
-        {
+        if global::is_render() {
             if let Err(e) = canvas::render() {
                 e.handle();
             }

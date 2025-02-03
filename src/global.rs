@@ -4,11 +4,12 @@ use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicU16, Ordering},
+        atomic::{AtomicBool, AtomicU16, Ordering},
         RwLock,
     },
 };
 
+static RENDERING: Lazy<AtomicBool> = Lazy::new(|| AtomicBool::new(false));
 static PATH: Lazy<RwLock<PathBuf>> = Lazy::new(|| RwLock::new(PathBuf::new()));
 static CANVAS_SIZE: Lazy<(AtomicU16, AtomicU16)> =
     Lazy::new(|| (AtomicU16::new(100), AtomicU16::new(100)));
@@ -32,6 +33,18 @@ pub fn init(path: &Path) -> EpResult<()> {
     CURSOR.resize(c);
 
     Ok(())
+}
+
+pub fn is_render() -> bool {
+    RENDERING.load(Ordering::Relaxed)
+}
+
+pub fn disable_render() {
+    RENDERING.swap(false, Ordering::Relaxed);
+}
+
+pub fn enable_render() {
+    RENDERING.swap(true, Ordering::Relaxed);
 }
 
 pub fn get_path() -> PathBuf {
