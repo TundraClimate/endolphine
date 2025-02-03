@@ -1,9 +1,6 @@
 use crate::{clipboard, error::*, global, input::Input, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
-use std::{
-    path::{Path, PathBuf},
-    process::Command,
-};
+use std::path::{Path, PathBuf};
 
 pub async fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
@@ -432,13 +429,24 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
                 cache.reset();
             }
         } else if metadata.is_file() {
-            let editor = option_env!("EDITOR").unwrap_or("vi");
+            let Some(mut editor) = global::config().editor_command() else {
+                crate::log!("invalid config: editor");
+                return Ok(false);
+            };
+
             crate::disable_tui!()?;
-            Command::new(editor)
-                .arg(target_path)
-                .status()
-                .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
+            let cmd_result = editor.arg(target_path).status().map_err(|e| {
+                EpError::CommandExecute(
+                    editor.get_program().to_string_lossy().to_string(),
+                    e.kind().to_string(),
+                )
+            });
             crate::enable_tui!()?;
+
+            if let Err(e) = cmd_result {
+                e.handle();
+            }
+
             global::cache_clear();
         }
     }
