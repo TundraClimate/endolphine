@@ -1,4 +1,4 @@
-use crate::{cursor::Cursor, error::*, input::Input, menu::Menu, misc};
+use crate::{config::Config, cursor::Cursor, error::*, input::Input, menu::Menu, misc};
 use once_cell::sync::Lazy;
 use std::{
     collections::HashMap,
@@ -18,11 +18,13 @@ static MENU: Lazy<Menu> = Lazy::new(Menu::default);
 static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
 static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 static MATCHER_TEXT: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::new()));
+static CONFIG: Lazy<Config> = Lazy::new(Config::load);
 
 pub fn init(path: &Path) -> EpResult<()> {
     set_path(path);
 
-    let (width, height) = crossterm::terminal::size().map_err(|_| EpError::Init)?;
+    let (width, height) =
+        crossterm::terminal::size().map_err(|e| EpError::Init(e.kind().to_string()))?;
     set_width(width);
     set_height(height);
 
@@ -120,4 +122,8 @@ pub fn is_match_text<F: FnOnce(&str) -> bool>(f: F) -> bool {
 pub fn read_matcher() -> String {
     let lock = MATCHER_TEXT.read().unwrap();
     lock.to_owned()
+}
+
+pub fn config() -> &'static Config {
+    &CONFIG
 }

@@ -8,7 +8,7 @@ pub enum EpError {
     SwitchScreen,
 
     #[error("Init error")]
-    Init,
+    Init(String),
 
     #[error("di_view_line error")]
     DisplayViewLine,
@@ -33,7 +33,7 @@ impl EpError {
                 eprintln!("Cannot switch Alternate screen");
                 std::process::exit(1);
             }
-            Self::Init => EpError::tui_exit("Application init failed"),
+            Self::Init(kind) => EpError::tui_exit(&format!("Application init failed: {}", kind)),
             Self::DisplayViewLine => EpError::tui_exit("Cannot display texts"),
             Self::DisplayMenuLine => EpError::tui_exit("Cannot display texts"),
             Self::Log => EpError::tui_exit("Cant logging texts"),

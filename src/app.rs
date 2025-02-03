@@ -1,4 +1,9 @@
-use crate::{canvas, error::*, global, handler};
+use crate::{
+    canvas,
+    config::{self, Config},
+    error::*,
+    global, handler, misc,
+};
 use std::{
     path::Path,
     sync::{
@@ -69,11 +74,36 @@ pub async fn launch(path: &Path) -> EpResult<()> {
 }
 
 fn init(path: &Path) -> EpResult<()> {
-    let Ok(path) = path.canonicalize() else {
-        return Err(EpError::Init);
-    };
+    config_init()?;
+
+    let path = path
+        .canonicalize()
+        .map_err(|e| EpError::Init(e.kind().to_string()))?;
 
     global::init(&path)?;
+
+    Ok(())
+}
+
+fn config_init() -> EpResult<()> {
+    let conf_path = config::file_path();
+    if let Some(conf_path) = conf_path {
+        if !conf_path.exists() {
+            let parent = misc::parent(&conf_path);
+
+            if !parent.exists() {
+                std::fs::create_dir_all(parent).map_err(|e| EpError::Init(e.kind().to_string()))?;
+            }
+
+            let config_default = toml::to_string_pretty(&Config::default())
+                .map_err(|e| EpError::Init(e.to_string()))?;
+
+            if !conf_path.exists() {
+                std::fs::write(&conf_path, config_default)
+                    .map_err(|e| EpError::Init(e.kind().to_string()))?;
+            }
+        }
+    }
 
     Ok(())
 }

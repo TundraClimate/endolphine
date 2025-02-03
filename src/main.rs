@@ -5,6 +5,7 @@ mod app;
 mod canvas;
 mod clipboard;
 mod color;
+mod config;
 mod cursor;
 mod error;
 mod global;
