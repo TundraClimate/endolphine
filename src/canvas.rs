@@ -22,7 +22,7 @@ macro_rules! di_view_line {
                 Clear(ClearType::UntilNewLine),
                 $($cmd),+,
                 ResetColor
-            ).map_err(|_| EpError::DisplayViewLineFailed)
+            ).map_err(|_| EpError::DisplayViewLine)
         } else { Ok(()) }
     }};
 }
@@ -44,7 +44,7 @@ macro_rules! di_menu_line {
                 SetBackgroundColor(bg),
                 Print(']'),
             )
-            .map_err(|_| EpError::DisplayMenuLineFailed)
+            .map_err(|_| EpError::DisplayMenuLine)
         } else {
             Ok(())
         }
@@ -107,7 +107,7 @@ pub fn render() -> EpResult<()> {
 
     std::io::stdout()
         .flush()
-        .map_err(|e| EpError::FlushFailed(e.kind().to_string()))?;
+        .map_err(|e| EpError::Flush(e.kind().to_string()))?;
 
     Ok(())
 }
@@ -234,7 +234,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
         Print("▏"),
         ResetColor
     )
-    .map_err(|_| EpError::DisplayViewLineFailed)?;
+    .map_err(|_| EpError::DisplayViewLine)?;
 
     Ok(())
 }

@@ -8,13 +8,13 @@ pub enum EpError {
     SwitchScreen,
 
     #[error("Init error")]
-    InitFailed,
+    Init,
 
     #[error("di_view_line error")]
-    DisplayViewLineFailed,
+    DisplayViewLine,
 
     #[error("di_menu_line error")]
-    DisplayMenuLineFailed,
+    DisplayMenuLine,
 
     #[error("Logging error")]
     Log,
@@ -23,7 +23,7 @@ pub enum EpError {
     CommandExecute(String, String),
 
     #[error("flush error")]
-    FlushFailed(String),
+    Flush(String),
 }
 
 impl EpError {
@@ -33,15 +33,15 @@ impl EpError {
                 eprintln!("Cannot switch Alternate screen");
                 std::process::exit(1);
             }
-            Self::InitFailed => EpError::tui_exit("Application init failed"),
-            Self::DisplayViewLineFailed => EpError::tui_exit("Cannot display texts"),
-            Self::DisplayMenuLineFailed => EpError::tui_exit("Cannot display texts"),
+            Self::Init => EpError::tui_exit("Application init failed"),
+            Self::DisplayViewLine => EpError::tui_exit("Cannot display texts"),
+            Self::DisplayMenuLine => EpError::tui_exit("Cannot display texts"),
             Self::Log => EpError::tui_exit("Cant logging texts"),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("Command \"{}\" failed: {}", command, kind));
                 Ok(())
             }
-            Self::FlushFailed(kind) => {
+            Self::Flush(kind) => {
                 crate::log!(format!("canvas flush failed: {}", kind));
                 Ok(())
             }

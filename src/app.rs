@@ -70,7 +70,7 @@ pub async fn launch(path: &Path) -> EpResult<()> {
 
 fn init(path: &Path) -> EpResult<()> {
     let Ok(path) = path.canonicalize() else {
-        return Err(EpError::InitFailed);
+        return Err(EpError::Init);
     };
 
     global::init(&path)?;

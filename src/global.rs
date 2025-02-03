@@ -22,7 +22,7 @@ static MATCHER_TEXT: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::new
 pub fn init(path: &Path) -> EpResult<()> {
     set_path(path);
 
-    let (width, height) = crossterm::terminal::size().map_err(|_| EpError::InitFailed)?;
+    let (width, height) = crossterm::terminal::size().map_err(|_| EpError::Init)?;
     set_width(width);
     set_height(height);
 
