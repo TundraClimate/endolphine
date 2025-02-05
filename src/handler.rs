@@ -207,15 +207,11 @@ fn handle_action(content: &str, act: String) {
             let files = match clipboard::read_clipboard("text/uri-list") {
                 Ok(text) => text
                     .lines()
-                    .filter_map(|f| {
-                        f.starts_with("file://")
-                            .then_some(f.replacen("file://", "", 1))
-                    })
+                    .filter_map(|f| f.strip_prefix("file://"))
                     .map(PathBuf::from)
                     .filter(|f| {
                         f.symlink_metadata()
-                            .ok()
-                            .is_some_and(|m| m.is_symlink() || f.exists())
+                            .is_ok_and(|m| m.is_symlink() || f.exists())
                     })
                     .collect::<Vec<PathBuf>>(),
                 Err(e) => {
@@ -259,8 +255,7 @@ fn handle_action(content: &str, act: String) {
                 if (metadata.is_file() || metadata.is_symlink())
                     && (!copied_path
                         .symlink_metadata()
-                        .ok()
-                        .is_some_and(|m| m.is_symlink() || copied_path.exists())
+                        .is_ok_and(|m| m.is_symlink() || copied_path.exists())
                         || overwrite_mode)
                 {
                     if let Err(e) = std::fs::copy(&file, &copied_path) {
@@ -269,10 +264,7 @@ fn handle_action(content: &str, act: String) {
                 }
 
                 if metadata.is_dir() {
-                    for entry in walkdir::WalkDir::new(&file)
-                        .into_iter()
-                        .filter_map(Result::ok)
-                    {
+                    for entry in walkdir::WalkDir::new(&file).into_iter().flatten() {
                         let Ok(rel_path) = entry.path().strip_prefix(&file) else {
                             continue;
                         };
@@ -280,8 +272,7 @@ fn handle_action(content: &str, act: String) {
                         let copied_path = copied_path.join(rel_path);
                         if !copied_path
                             .symlink_metadata()
-                            .ok()
-                            .is_some_and(|m| m.is_symlink() || copied_path.exists())
+                            .is_ok_and(|m| m.is_symlink() || copied_path.exists())
                             || overwrite_mode
                         {
                             let parent = misc::parent(&copied_path);

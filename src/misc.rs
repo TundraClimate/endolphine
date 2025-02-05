@@ -24,9 +24,7 @@ pub fn child_files(path: &Path) -> Vec<PathBuf> {
     }
 
     match path.read_dir() {
-        Ok(entries) => entries
-            .filter_map(|entry| entry.ok().map(|e| e.path()))
-            .collect(),
+        Ok(entries) => entries.flatten().map(|entry| entry.path()).collect(),
         Err(_) => vec![],
     }
 }
