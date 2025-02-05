@@ -259,6 +259,10 @@ fn handle_action(content: &str, act: String) {
 
                 if metadata.is_dir() {
                     for entry in walkdir::WalkDir::new(&file).into_iter().flatten() {
+                        if entry.file_type().is_dir() {
+                            continue;
+                        }
+
                         let Ok(rel_path) = entry.path().strip_prefix(&file) else {
                             continue;
                         };
