@@ -283,7 +283,17 @@ fn handle_action(content: &str, act: String) {
             }
         }
         "Search" => {
-            misc::next_match_from_search();
+            let cursor = global::cursor();
+
+            let child_files = misc::sorted_child_files(&global::get_path());
+            let first_match_pos = child_files[cursor.current() + 1..]
+                .iter()
+                .chain(child_files[..cursor.current()].iter())
+                .position(|f| global::is_match_text(|m| misc::file_name(f).contains(m)))
+                .map(|pos| pos + 1)
+                .unwrap_or(0);
+
+            cursor.shift_loop(first_match_pos as isize);
             crate::log!(format!("/{}", global::read_matcher()));
         }
         _ => {}
@@ -590,7 +600,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
         })?;
     }
 
-    if key == '/' {
+    if ['n', '/'].contains(&key) {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -601,23 +611,20 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             cursor.toggle_selection();
         }
 
-        global::matcher_update(|m| m.clear());
-        global::input_use_mut(|i| i.enable("/", Some("Search".to_string())));
-    }
-
-    if key == 'n' {
-        if global::menu().is_enabled() {
-            return Ok(false);
-        }
-
-        let cursor = global::cursor();
-
-        if cursor.is_selection_mode() {
-            cursor.toggle_selection();
-        }
-
-        if !global::is_match_text(|m| m.is_empty()) {
-            misc::next_match_from_search();
+        match key {
+            '/' => {
+                global::matcher_update(|m| m.clear());
+                global::input_use_mut(|i| i.enable("/", Some("Search".to_string())));
+            }
+            'n' => {
+                if !global::is_match_text(|m| m.is_empty()) {
+                    global::input_use_mut(|i| {
+                        i.enable("/", Some("Search".to_string()));
+                        handle_input_mode(i, KeyEvent::from(KeyCode::Enter))
+                    })?;
+                }
+            }
+            _ => unreachable!(),
         }
     }
 

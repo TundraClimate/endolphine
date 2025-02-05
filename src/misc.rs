@@ -67,17 +67,3 @@ pub fn exists_item(path: &Path) -> bool {
     path.symlink_metadata()
         .is_ok_and(|m| m.is_symlink() || path.exists())
 }
-
-pub fn next_match_from_search() {
-    let cursor = global::cursor();
-
-    let child_files = sorted_child_files(&global::get_path());
-    let first_match_pos = child_files[cursor.current() + 1..]
-        .iter()
-        .chain(child_files[..cursor.current()].iter())
-        .position(|f| global::is_match_text(|m| file_name(f).contains(m)))
-        .map(|pos| pos + 1)
-        .unwrap_or(0);
-
-    cursor.shift_loop(first_match_pos as isize);
-}
