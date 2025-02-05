@@ -63,6 +63,11 @@ pub fn body_height() -> u16 {
     global::get_height().saturating_sub(4)
 }
 
+pub fn exists_item(path: &Path) -> bool {
+    path.symlink_metadata()
+        .is_ok_and(|m| m.is_symlink() || path.exists())
+}
+
 pub fn next_match_from_search() {
     let cursor = global::cursor();
 

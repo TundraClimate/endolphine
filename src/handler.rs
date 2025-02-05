@@ -209,10 +209,7 @@ fn handle_action(content: &str, act: String) {
                     .lines()
                     .filter_map(|f| f.strip_prefix("file://"))
                     .map(PathBuf::from)
-                    .filter(|f| {
-                        f.symlink_metadata()
-                            .is_ok_and(|m| m.is_symlink() || f.exists())
-                    })
+                    .filter(|f| misc::exists_item(f))
                     .collect::<Vec<PathBuf>>(),
                 Err(e) => {
                     crate::log!(format!("Paste failed: {}", e.kind()));
@@ -253,10 +250,7 @@ fn handle_action(content: &str, act: String) {
                 };
 
                 if (metadata.is_file() || metadata.is_symlink())
-                    && (!copied_path
-                        .symlink_metadata()
-                        .is_ok_and(|m| m.is_symlink() || copied_path.exists())
-                        || overwrite_mode)
+                    && (!misc::exists_item(&copied_path) || overwrite_mode)
                 {
                     if let Err(e) = std::fs::copy(&file, &copied_path) {
                         crate::log!(format!("Paste failed: \"{}\"", e.kind()));
@@ -270,11 +264,7 @@ fn handle_action(content: &str, act: String) {
                         };
 
                         let copied_path = copied_path.join(rel_path);
-                        if !copied_path
-                            .symlink_metadata()
-                            .is_ok_and(|m| m.is_symlink() || copied_path.exists())
-                            || overwrite_mode
-                        {
+                        if !misc::exists_item(&copied_path) || overwrite_mode {
                             let parent = misc::parent(&copied_path);
                             if !parent.exists() {
                                 if let Err(e) = std::fs::create_dir_all(parent) {
