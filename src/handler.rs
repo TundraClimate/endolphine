@@ -120,7 +120,7 @@ fn handle_action(content: &str, act: String) {
                 let name = misc::file_name(under_cursor_file);
 
                 let res = if under_cursor_file.is_dir() {
-                    std::fs::remove_dir_all(under_cursor_file)
+                    misc::remove_dir_all(under_cursor_file)
                 } else {
                     std::fs::remove_file(under_cursor_file)
                 };
@@ -161,7 +161,7 @@ fn handle_action(content: &str, act: String) {
                 }
 
                 let res = if target.is_dir() {
-                    std::fs::remove_dir_all(target)
+                    misc::remove_dir_all(target)
                 } else {
                     std::fs::remove_file(target)
                 };

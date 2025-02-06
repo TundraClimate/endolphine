@@ -1,5 +1,6 @@
 use crate::global;
 use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
 pub fn file_name(path: &Path) -> &str {
     if path == Path::new("/") {
@@ -65,4 +66,29 @@ pub fn body_height() -> u16 {
 pub fn exists_item(path: &Path) -> bool {
     path.symlink_metadata()
         .is_ok_and(|m| m.is_symlink() || path.exists())
+}
+
+pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
+    if !exists_item(path) {
+        return Ok(());
+    }
+
+    for entry in WalkDir::new(path).contents_first(true) {
+        let entry = entry?;
+        let entry_path = entry.path();
+
+        let res = if entry_path.is_symlink() || entry_path.is_file() {
+            std::fs::remove_file(entry_path)
+        } else {
+            std::fs::remove_dir(entry_path)
+        };
+
+        if let Err(e) = res {
+            if e.kind() == std::io::ErrorKind::DirectoryNotEmpty {
+                std::fs::remove_dir_all(entry_path)?;
+            }
+        }
+    }
+
+    Ok(())
 }
