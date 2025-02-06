@@ -83,10 +83,8 @@ pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
             std::fs::remove_dir(entry_path)
         };
 
-        if let Err(e) = res {
-            if e.kind() == std::io::ErrorKind::DirectoryNotEmpty {
-                std::fs::remove_dir_all(entry_path)?;
-            }
+        if res.is_err_and(|e| e.kind() == std::io::ErrorKind::DirectoryNotEmpty) {
+            std::fs::remove_dir_all(entry_path)?;
         }
     }
 
