@@ -1,14 +1,13 @@
 use crate::global;
 use std::path::{Path, PathBuf};
 
-pub fn file_name(path: &PathBuf) -> &str {
-    if path == &PathBuf::from("/") {
+pub fn file_name(path: &Path) -> &str {
+    if path == Path::new("/") {
         return "";
     }
 
     path.file_name()
-        .map(|o| o.to_str())
-        .and_then(|s| s)
+        .and_then(|o| o.to_str())
         .unwrap_or("_OsIncompatible_")
 }
 
