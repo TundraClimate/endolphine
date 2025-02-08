@@ -73,19 +73,29 @@ pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
         return Ok(());
     }
 
-    for entry in WalkDir::new(path).contents_first(true) {
-        let entry = entry?;
-        let entry_path = entry.path();
+    let res = WalkDir::new(path)
+        .contents_first(true)
+        .into_iter()
+        .try_for_each(|entry| {
+            let entry = entry?;
+            let entry_path = entry.path();
 
-        let res = if entry_path.is_symlink() || entry_path.is_file() {
-            std::fs::remove_file(entry_path)
-        } else {
-            std::fs::remove_dir(entry_path)
-        };
+            if entry_path.is_symlink() || entry_path.is_file() {
+                std::fs::remove_file(entry_path)?;
+            } else {
+                std::fs::remove_dir(entry_path)?;
+            };
 
-        if res.is_err_and(|e| e.kind() == std::io::ErrorKind::DirectoryNotEmpty) {
-            std::fs::remove_dir_all(entry_path)?;
-        }
+            Ok::<(), std::io::Error>(())
+        });
+
+    if res
+        .as_ref()
+        .is_err_and(|e| e.kind() != std::io::ErrorKind::PermissionDenied)
+        || res.is_ok() && exists_item(path)
+    {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        remove_dir_all(path)?;
     }
 
     Ok(())
