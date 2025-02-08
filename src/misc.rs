@@ -89,11 +89,11 @@ pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
             Ok::<(), std::io::Error>(())
         });
 
-    if res
-        .as_ref()
-        .is_err_and(|e| e.kind() != std::io::ErrorKind::PermissionDenied)
-        || res.is_ok() && exists_item(path)
-    {
+    if matches!(res, Err(ref e) if e.kind() == std::io::ErrorKind::PermissionDenied) {
+        return res;
+    }
+
+    if res.is_err() || res.is_ok() && exists_item(path) {
         std::thread::sleep(std::time::Duration::from_millis(100));
         remove_dir_all(path)?;
     }
