@@ -81,12 +81,10 @@ pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
             let entry_path = entry.path();
 
             if entry_path.is_symlink() || entry_path.is_file() {
-                std::fs::remove_file(entry_path)?;
+                std::fs::remove_file(entry_path)
             } else {
-                std::fs::remove_dir(entry_path)?;
-            };
-
-            Ok::<(), std::io::Error>(())
+                std::fs::remove_dir(entry_path)
+            }
         });
 
     if matches!(res, Err(ref e) if e.kind() == std::io::ErrorKind::PermissionDenied) {
