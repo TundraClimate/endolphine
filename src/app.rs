@@ -76,8 +76,6 @@ pub async fn launch(path: &Path) -> EpResult<()> {
 }
 
 fn init(path: &Path) -> EpResult<()> {
-    config_init()?;
-
     let path = path
         .canonicalize()
         .map_err(|e| EpError::Init(e.kind().to_string()))?;
@@ -87,7 +85,7 @@ fn init(path: &Path) -> EpResult<()> {
     Ok(())
 }
 
-fn config_init() -> EpResult<()> {
+pub fn config_init() -> EpResult<()> {
     let conf_path = config::file_path();
     if let Some(conf_path) = conf_path {
         if !conf_path.exists() {
