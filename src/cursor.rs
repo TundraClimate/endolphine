@@ -91,6 +91,11 @@ impl Cursor {
         self.selection.read().unwrap().is_some()
     }
 
+    pub fn disable_selection_mode(&self) {
+        let mut lock = self.selection.write().unwrap();
+        *lock = None;
+    }
+
     pub fn toggle_selection(&self) {
         let mut lock = self.selection.write().unwrap();
         if lock.is_some() {

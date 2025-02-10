@@ -307,19 +307,14 @@ fn handle_action(content: &str, act: String) {
 }
 
 fn handle_esc_key() -> EpResult<()> {
-    let cursor = global::cursor();
-    if cursor.is_selection_mode() {
-        cursor.toggle_selection();
-    }
+    global::cursor().disable_selection_mode();
 
     Ok(())
 }
 
 fn move_current_dir(path: &Path) {
     let cursor = global::cursor();
-    if cursor.is_selection_mode() {
-        cursor.toggle_selection();
-    }
+    cursor.disable_selection_mode();
     global::set_path(path);
     global::cache_clear();
     global::matcher_update(|m| m.clear());
@@ -472,12 +467,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        {
-            let cursor = global::cursor();
-            if cursor.is_selection_mode() {
-                cursor.toggle_selection();
-            }
-        }
+        global::cursor().disable_selection_mode();
 
         global::input_use_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
@@ -496,7 +486,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 .enumerate()
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
-            cursor.toggle_selection();
+            cursor.disable_selection_mode();
             global::input_use_mut(|i| i.enable("", Some("RmSelected".into())));
             crate::log!(format!("Delete {} items ? (y/Y/d)", selected_files.len()));
             return Ok(false);
@@ -520,9 +510,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let cursor = global::cursor();
 
-        if cursor.is_selection_mode() {
-            cursor.toggle_selection();
-        }
+        cursor.disable_selection_mode();
 
         if let Some(under_cursor_file) =
             misc::sorted_child_files(&global::get_path()).get(cursor.current())
@@ -558,7 +546,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 return Ok(false);
             }
 
-            cursor.toggle_selection();
+            cursor.disable_selection_mode();
             crate::log!(format!("Yanked {} items", selected_files.len()));
             return Ok(false);
         }
@@ -608,11 +596,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = global::cursor();
-
-        if cursor.is_selection_mode() {
-            cursor.toggle_selection();
-        }
+        global::cursor().disable_selection_mode();
 
         match key {
             '/' => {
