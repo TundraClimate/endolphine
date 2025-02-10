@@ -409,11 +409,8 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         let Some(target_path) = child_files.get(cursor.current()) else {
             return Ok(false);
         };
-        let Ok(metadata) = target_path.metadata() else {
-            return Ok(false);
-        };
 
-        if metadata.is_dir() {
+        if target_path.is_dir() {
             let child_files = misc::sorted_child_files(target_path);
 
             move_current_dir(target_path);
@@ -425,7 +422,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             } else {
                 cache.reset();
             }
-        } else if metadata.is_file() {
+        } else if target_path.is_file() {
             let Some(mut editor) = global::config().editor_command() else {
                 crate::log!("invalid config: editor");
                 return Ok(false);
