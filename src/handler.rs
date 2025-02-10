@@ -234,7 +234,7 @@ fn handle_action(content: &str, act: String) {
                     if copied == file {
                         let stem = copied
                             .file_stem()
-                            .map(|s| String::from(s.to_string_lossy()))
+                            .map(|s| s.to_string_lossy())
                             .unwrap_or_default();
                         let suffix = global::config().similar_paste_suffix();
                         let added_suffix = if let Some(extension) =
@@ -434,7 +434,7 @@ async fn handle_char_key(key: char) -> EpResult<bool> {
             crate::disable_tui!()?;
             let cmd_result = editor.arg(target_path).status().map_err(|e| {
                 EpError::CommandExecute(
-                    editor.get_program().to_string_lossy().to_string(),
+                    editor.get_program().to_string_lossy().into_owned(),
                     e.kind().to_string(),
                 )
             });
