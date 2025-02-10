@@ -31,8 +31,7 @@ impl Config {
     }
 
     pub fn editor_command(&self) -> Option<std::process::Command> {
-        let cmd = self.editor.first()?;
-        let args = self.editor.iter().skip(1).collect::<Vec<_>>();
+        let (cmd, args) = self.editor.split_first()?;
         let mut command = std::process::Command::new(cmd);
         command.args(args);
         Some(command)
