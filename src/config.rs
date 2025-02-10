@@ -12,12 +12,14 @@ pub fn file_path() -> Option<PathBuf> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
+    copied_suffix: String,
 }
 
 impl Default for Config {
     fn default() -> Self {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
+            copied_suffix: String::from("_Copy"),
         }
     }
 }
@@ -35,5 +37,11 @@ impl Config {
         let mut command = std::process::Command::new(cmd);
         command.args(args);
         Some(command)
+    }
+
+    pub fn similar_paste_suffix(&self) -> String {
+        let mut suf = self.copied_suffix.trim().to_string();
+        suf.retain(|c| !c.is_whitespace());
+        suf
     }
 }

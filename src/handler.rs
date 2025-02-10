@@ -236,14 +236,16 @@ fn handle_action(content: &str, act: String) {
                             .file_stem()
                             .map(|s| String::from(s.to_string_lossy()))
                             .unwrap_or_default();
-                        current_path.join(PathBuf::from(
-                            if let Some(extension) = copied.extension().map(|e| e.to_string_lossy())
-                            {
-                                format!("{}_Copy.{}", stem, extension)
-                            } else {
-                                format!("{}_Copy", stem)
-                            },
-                        ))
+                        let suffix = global::config().similar_paste_suffix();
+                        let added_suffix = if let Some(extension) =
+                            copied.extension().map(|e| e.to_string_lossy())
+                        {
+                            format!("{}{}.{}", stem, suffix, extension)
+                        } else {
+                            format!("{}{}", stem, suffix)
+                        };
+
+                        current_path.join(PathBuf::from(added_suffix))
                     } else {
                         copied
                     }
