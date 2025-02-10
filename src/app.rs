@@ -59,7 +59,7 @@ pub async fn launch(path: &Path) -> EpResult<()> {
 
     let process_handle = {
         let q = quit_flag.clone();
-        tokio::spawn(async move { process(q).await })
+        tokio::spawn(async move { process(q) })
     };
 
     let ui_handle = {
@@ -108,9 +108,9 @@ pub fn config_init() -> EpResult<()> {
     Ok(())
 }
 
-pub async fn process(quit_flag: Arc<AtomicBool>) {
+pub fn process(quit_flag: Arc<AtomicBool>) {
     loop {
-        match handler::handle_event().await {
+        match handler::handle_event() {
             Ok(is_quit) => {
                 if is_quit {
                     quit_flag.swap(true, Ordering::Relaxed);

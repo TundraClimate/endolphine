@@ -2,10 +2,10 @@ use crate::{clipboard, error::*, global, input::Input, menu, misc};
 use crossterm::event::{self, Event, KeyCode, KeyEvent};
 use std::path::{Path, PathBuf};
 
-pub async fn handle_event() -> EpResult<bool> {
+pub fn handle_event() -> EpResult<bool> {
     if let Ok(event) = event::read() {
         match event {
-            Event::Key(key) => return handle_key_event(key).await,
+            Event::Key(key) => return handle_key_event(key),
             Event::Resize(width, height) => {
                 global::set_width(width);
                 global::set_height(height);
@@ -19,14 +19,14 @@ pub async fn handle_event() -> EpResult<bool> {
     Ok(false)
 }
 
-async fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
+fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     if global::input_use(|i| i.is_enable()) {
         global::input_use_mut(|i| handle_input_mode(i, key))?;
         return Ok(false);
     }
 
     match key.code {
-        KeyCode::Char(c) => return handle_char_key(c).await,
+        KeyCode::Char(c) => return handle_char_key(c),
         KeyCode::Esc => handle_esc_key()?,
         _ => {}
     }
@@ -328,7 +328,7 @@ fn move_current_dir(path: &Path) {
     cursor.reset();
 }
 
-async fn handle_char_key(key: char) -> EpResult<bool> {
+fn handle_char_key(key: char) -> EpResult<bool> {
     if key == 'Q' {
         return Ok(true);
     }
