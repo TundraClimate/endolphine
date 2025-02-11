@@ -13,6 +13,13 @@ pub fn file_path() -> Option<PathBuf> {
 pub struct Config {
     editor: Vec<String>,
     copied_suffix: String,
+    paste: PasteConfig,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct PasteConfig {
+    force_mode: bool,
+    default_overwrite: bool,
 }
 
 impl Default for Config {
@@ -20,6 +27,10 @@ impl Default for Config {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
             copied_suffix: String::from("_Copy"),
+            paste: PasteConfig {
+                force_mode: true,
+                default_overwrite: true,
+            },
         }
     }
 }
@@ -43,5 +54,13 @@ impl Config {
         let mut suf = self.copied_suffix.trim().to_string();
         suf.retain(|c| !c.is_whitespace());
         suf
+    }
+
+    pub fn paste_force_mode(&self) -> bool {
+        self.paste.force_mode
+    }
+
+    pub fn paste_default_overwrite(&self) -> bool {
+        self.paste.default_overwrite
     }
 }

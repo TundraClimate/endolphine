@@ -576,12 +576,16 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
 
         global::input_use_mut(|i| {
-            let default_paste_input = "y";
+            let config = global::config();
+            let default_paste_input = if config.paste_default_overwrite() {
+                "y"
+            } else {
+                ""
+            };
 
             i.enable(default_paste_input, Some("Paste".into()));
 
-            //FIXME should impl force_mode
-            if true {
+            if config.paste_force_mode() {
                 handle_input_mode(i, KeyEvent::from(KeyCode::Enter))?;
             } else {
                 crate::log!("Is overwrite paste? (y/Y/p)");
