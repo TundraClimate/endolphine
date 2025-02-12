@@ -43,6 +43,26 @@ async fn main() {
             .await
             .ok();
 
+        if let Some(Err(e)) = config::Config::try_load() {
+            let config = config::file_path().and_then(|p| std::fs::read_to_string(p).ok());
+            let position_lines = if let (Some(config), Some(span)) = (config, e.span()) {
+                let lines = config
+                    .char_indices()
+                    .collect::<Vec<_>>()
+                    .split(|(_, c)| *c == '\n')
+                    .filter_map(|line| {
+                        line.iter()
+                            .any(|(i, _)| span.contains(i))
+                            .then_some(line.iter().map(|(_, c)| *c).collect::<String>())
+                    })
+                    .collect::<Vec<_>>();
+                lines.join("\n")
+            } else {
+                String::new()
+            };
+            println!("{}\n---\n{}\n---", e.message(), position_lines);
+        }
+
         return;
     }
 

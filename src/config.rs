@@ -36,6 +36,12 @@ impl Default for Config {
 }
 
 impl Config {
+    pub fn try_load() -> Option<Result<Config, toml::de::Error>> {
+        file_path()
+            .and_then(|p| std::fs::read_to_string(p).ok())
+            .map(|c| toml::from_str(&c))
+    }
+
     pub fn load() -> Config {
         file_path()
             .and_then(|p| std::fs::read_to_string(p).ok())
