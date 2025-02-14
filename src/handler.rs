@@ -490,7 +490,6 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 .enumerate()
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
-            cursor.disable_selection_mode();
             global::input_use_mut(|i| i.enable("", Some("RmSelected".into())));
             crate::log!(format!("Delete {} items ? (y/Y/d)", selected_files.len()));
             return Ok(false);
