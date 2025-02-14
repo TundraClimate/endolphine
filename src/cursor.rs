@@ -25,11 +25,7 @@ impl Cursor {
 
     pub fn resize(&self, new_size: usize) {
         self.size.swap(new_size, Ordering::Relaxed);
-        self.keep_range(new_size);
-    }
-
-    fn keep_range(&self, size: usize) {
-        self.swap_id(self.current().min(size - 1))
+        self.swap_id(self.current());
     }
 
     pub fn current(&self) -> usize {
