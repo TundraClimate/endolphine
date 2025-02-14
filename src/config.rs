@@ -12,7 +12,13 @@ pub fn file_path() -> Option<PathBuf> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
+    rm: RmConfig,
     paste: PasteConfig,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+struct RmConfig {
+    no_enter: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -26,6 +32,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
+            rm: RmConfig { no_enter: false },
             paste: PasteConfig {
                 copied_suffix: String::from("_Copy"),
                 force_mode: true,
@@ -60,6 +67,10 @@ impl Config {
         let mut suf = self.paste.copied_suffix.trim().to_string();
         suf.retain(|c| !c.is_whitespace());
         suf
+    }
+
+    pub fn rm_no_enter(&self) -> bool {
+        self.rm.no_enter
     }
 
     pub fn paste_force_mode(&self) -> bool {

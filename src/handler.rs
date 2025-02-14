@@ -42,8 +42,14 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
         }
         KeyCode::Char(c) => {
             input.buffer_push(c);
-            if input.load_action() == &Some("Search".to_owned()) {
-                global::matcher_update(|m| m.push(c));
+            if let Some(act) = input.load_action() {
+                match act.as_str() {
+                    "Search" => global::matcher_update(|m| m.push(c)),
+                    "RmSelected" | "RmFileOrDirectory" if global::config().rm_no_enter() => {
+                        handle_input_mode(input, KeyEvent::from(KeyCode::Enter))?;
+                    }
+                    _ => {}
+                }
             }
         }
         KeyCode::Delete | KeyCode::Backspace => {
