@@ -21,7 +21,7 @@ pub fn handle_event() -> EpResult<bool> {
 
 fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     if global::input_use(|i| i.is_enable()) {
-        global::input_use_mut(|i| handle_input_mode(i, key))?;
+        global::input_use_mut(|i| handle_input_mode(i, key));
         return Ok(false);
     }
 
@@ -34,7 +34,7 @@ fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
     Ok(false)
 }
 
-fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
+fn handle_input_mode(input: &mut Input, key: KeyEvent) {
     match key.code {
         KeyCode::Esc => {
             input.disable();
@@ -46,7 +46,7 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
                 match act.as_str() {
                     "Search" => global::matcher_update(|m| m.push(c)),
                     "RmSelected" | "RmFileOrDirectory" if global::config().rm_no_enter() => {
-                        handle_input_mode(input, KeyEvent::from(KeyCode::Enter))?;
+                        handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
                     }
                     _ => {}
                 }
@@ -76,8 +76,6 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) -> EpResult<()> {
         }
         _ => {}
     }
-
-    Ok(())
 }
 
 fn handle_action(content: &str, act: String) {
@@ -592,7 +590,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             i.enable(default_paste_input, Some("Paste".into()));
 
             if config.paste_force_mode() {
-                handle_input_mode(i, KeyEvent::from(KeyCode::Enter))?;
+                handle_input_mode(i, KeyEvent::from(KeyCode::Enter));
             } else {
                 crate::log!("Is overwrite paste? (y/Y/p)");
             };
@@ -618,7 +616,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                     global::input_use_mut(|i| {
                         i.enable("/", Some("Search".to_string()));
                         handle_input_mode(i, KeyEvent::from(KeyCode::Enter))
-                    })?;
+                    });
                 }
             }
             _ => unreachable!(),
