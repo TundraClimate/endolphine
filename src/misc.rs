@@ -69,10 +69,6 @@ pub fn exists_item(path: &Path) -> bool {
 }
 
 pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
-    if !exists_item(path) {
-        return Ok(());
-    }
-
     let res = WalkDir::new(path)
         .contents_first(true)
         .into_iter()
