@@ -224,7 +224,7 @@ fn handle_action(content: &str, act: String) {
             let current_path = global::get_path();
             let overwrite_mode = ["y", "Y", "p"].contains(&content);
 
-            for file in files.into_iter() {
+            for file in files.iter() {
                 let Ok(metadata) = file.symlink_metadata() else {
                     continue;
                 };
@@ -234,8 +234,8 @@ fn handle_action(content: &str, act: String) {
                 }
 
                 let copied_path = {
-                    let copied = current_path.join(misc::file_name(&file));
-                    if copied == file {
+                    let copied = current_path.join(misc::file_name(file));
+                    if copied == *file {
                         let stem = copied
                             .file_stem()
                             .map(|s| s.to_string_lossy())
@@ -258,18 +258,18 @@ fn handle_action(content: &str, act: String) {
                 if (metadata.is_file() || metadata.is_symlink())
                     && (!misc::exists_item(&copied_path) || overwrite_mode)
                 {
-                    if let Err(e) = std::fs::copy(&file, &copied_path) {
+                    if let Err(e) = std::fs::copy(file, &copied_path) {
                         crate::log!(format!("Paste failed: \"{}\"", e.kind()));
                     }
                 }
 
                 if metadata.is_dir() {
-                    for entry in walkdir::WalkDir::new(&file).into_iter().flatten() {
+                    for entry in walkdir::WalkDir::new(file).into_iter().flatten() {
                         if entry.file_type().is_dir() {
                             continue;
                         }
 
-                        let Ok(rel_path) = entry.path().strip_prefix(&file) else {
+                        let Ok(rel_path) = entry.path().strip_prefix(file) else {
                             continue;
                         };
 
@@ -289,8 +289,10 @@ fn handle_action(content: &str, act: String) {
                         }
                     }
                 }
-                global::cursor().resize(misc::child_files_len(&global::get_path()));
             }
+            global::cursor().resize(misc::child_files_len(&global::get_path()));
+
+            crate::log!(format!("{} files paste successful.", files.len()));
         }
         "Search" => {
             let cursor = global::cursor();
