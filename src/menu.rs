@@ -1,6 +1,7 @@
 use crate::{cursor::Cursor, global};
 use std::{
     path::{Path, PathBuf},
+    str::FromStr,
     sync::atomic::{AtomicBool, Ordering},
 };
 
@@ -27,16 +28,8 @@ pub struct Menu {
 
 impl Default for Menu {
     fn default() -> Self {
-        let home_path = option_env!("HOME").unwrap_or("/root");
-        let dls_path = format!("{}/Downloads", home_path);
-        let desktop_path = format!("{}/Desktop", home_path);
-
         Menu {
-            elements: vec![
-                MenuElement::new("Home", home_path),
-                MenuElement::new("Downloads", dls_path),
-                MenuElement::new("Desktop", desktop_path),
-            ],
+            elements: global::config().menu.items.clone(),
             cursor: Cursor::new(),
             enable: AtomicBool::new(false),
         }
@@ -77,7 +70,7 @@ pub struct MenuElement {
 }
 
 impl MenuElement {
-    fn new(tag: &str, path: impl AsRef<Path>) -> Self {
+    pub fn new(tag: &str, path: impl AsRef<Path>) -> Self {
         MenuElement {
             tag: String::from(tag),
             path: path.as_ref().to_path_buf(),
@@ -90,5 +83,39 @@ impl MenuElement {
 
     pub fn path(&self) -> &PathBuf {
         &self.path
+    }
+}
+
+impl FromStr for MenuElement {
+    type Err = String;
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if let Some((tag, path)) = s.trim().split_once(":") {
+            Ok(MenuElement::new(tag, path))
+        } else {
+            let path = Path::new(s.trim());
+            let Some(tag) = path.file_name().map(|name| name.to_string_lossy()) else {
+                return Err(String::from("invalid string"));
+            };
+            Ok(MenuElement::new(&tag, path))
+        }
+    }
+}
+
+impl serde::ser::Serialize for MenuElement {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&format!("{}:{}", self.tag, self.path.to_string_lossy()))
+    }
+}
+
+impl<'de> serde::Deserialize<'de> for MenuElement {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        MenuElement::from_str(&s).map_err(|e| serde::de::Error::custom(&e))
     }
 }

@@ -1,3 +1,4 @@
+use crate::menu::MenuElement;
 use std::path::{Path, PathBuf};
 
 pub fn file_path() -> Option<PathBuf> {
@@ -14,6 +15,7 @@ pub struct Config {
     editor: Vec<String>,
     pub rm: RmConfig,
     pub paste: PasteConfig,
+    pub menu: MenuConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -28,6 +30,11 @@ pub struct PasteConfig {
     pub default_overwrite: bool,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct MenuConfig {
+    pub items: Vec<MenuElement>,
+}
+
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -38,6 +45,7 @@ impl Default for Config {
                 force_mode: true,
                 default_overwrite: true,
             },
+            menu: MenuConfig::default(),
         }
     }
 }
@@ -69,5 +77,20 @@ impl PasteConfig {
         let mut suf = self.copied_suffix.trim().to_string();
         suf.retain(|c| !c.is_whitespace());
         suf
+    }
+}
+
+impl Default for MenuConfig {
+    fn default() -> Self {
+        let home_path = option_env!("HOME").unwrap_or("/root");
+        let dls_path = format!("{}/Downloads", home_path);
+        let desktop_path = format!("{}/Desktop", home_path);
+        MenuConfig {
+            items: vec![
+                MenuElement::new("Home", home_path),
+                MenuElement::new("Downloads", dls_path),
+                MenuElement::new("Desktop", desktop_path),
+            ],
+        }
     }
 }
