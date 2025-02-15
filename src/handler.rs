@@ -45,7 +45,7 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
             if let Some(act) = input.load_action() {
                 match act.as_str() {
                     "Search" => global::matcher_update(|m| m.push(c)),
-                    "RmSelected" | "RmFileOrDirectory" if global::config().rm_no_enter() => {
+                    "RmSelected" | "RmFileOrDirectory" if global::config().rm.no_enter => {
                         handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
                     }
                     _ => {}
@@ -240,7 +240,7 @@ fn handle_action(content: &str, act: String) {
                             .file_stem()
                             .map(|s| s.to_string_lossy())
                             .unwrap_or_default();
-                        let suffix = global::config().similar_paste_suffix();
+                        let suffix = global::config().paste.similar_file_suffix();
                         let added_suffix = if let Some(extension) =
                             copied.extension().map(|e| e.to_string_lossy())
                         {
@@ -580,7 +580,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         global::input_use_mut(|i| {
             let config = global::config();
-            let default_paste_input = if config.paste_default_overwrite() {
+            let default_paste_input = if config.paste.default_overwrite {
                 "y"
             } else {
                 ""
@@ -588,7 +588,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
             i.enable(default_paste_input, Some("Paste".into()));
 
-            if config.paste_force_mode() {
+            if config.paste.force_mode {
                 handle_input_mode(i, KeyEvent::from(KeyCode::Enter));
             } else {
                 crate::log!("Is overwrite paste? (y/Y/p)");

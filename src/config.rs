@@ -12,20 +12,20 @@ pub fn file_path() -> Option<PathBuf> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
-    rm: RmConfig,
-    paste: PasteConfig,
+    pub rm: RmConfig,
+    pub paste: PasteConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct RmConfig {
-    no_enter: bool,
+pub struct RmConfig {
+    pub no_enter: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-struct PasteConfig {
+pub struct PasteConfig {
     copied_suffix: String,
-    force_mode: bool,
-    default_overwrite: bool,
+    pub force_mode: bool,
+    pub default_overwrite: bool,
 }
 
 impl Default for Config {
@@ -62,22 +62,12 @@ impl Config {
         command.args(args);
         Some(command)
     }
+}
 
-    pub fn similar_paste_suffix(&self) -> String {
-        let mut suf = self.paste.copied_suffix.trim().to_string();
+impl PasteConfig {
+    pub fn similar_file_suffix(&self) -> String {
+        let mut suf = self.copied_suffix.trim().to_string();
         suf.retain(|c| !c.is_whitespace());
         suf
-    }
-
-    pub fn rm_no_enter(&self) -> bool {
-        self.rm.no_enter
-    }
-
-    pub fn paste_force_mode(&self) -> bool {
-        self.paste.force_mode
-    }
-
-    pub fn paste_default_overwrite(&self) -> bool {
-        self.paste.default_overwrite
     }
 }
