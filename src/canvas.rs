@@ -57,6 +57,7 @@ macro_rules! log {
         let row = $crate::global::get_height();
         if let Err(_) = crossterm::execute!(
             std::io::stdout(),
+            crossterm::style::ResetColor,
             crossterm::cursor::MoveTo(0, row),
             crossterm::style::Print($text),
             crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
@@ -507,7 +508,7 @@ fn render_menu_line(
     is_cursor_pos: bool,
     menu_enabled: bool,
 ) -> EpResult<()> {
-    let tag = tag.chars().take(slide_len as usize - 1).collect::<String>();
+    let tag = tag.chars().take(slide_len as usize - 6).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(color::menu_item_bg(is_cursor_pos, menu_enabled));
 
