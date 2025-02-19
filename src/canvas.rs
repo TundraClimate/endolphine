@@ -264,7 +264,15 @@ fn render_file_line(
 }
 
 fn render_empty_line(rel_i: u16) -> EpResult<()> {
-    di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
+    if rel_i == 0 {
+        let row = format!(
+            "{}> | Press 'a' to create the New file | Empty",
+            SetForegroundColor(color::bar_color()),
+        );
+        di_view_line!(format!("{}", rel_i), rel_i + 2, Print(row))
+    } else {
+        di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
+    }
 }
 
 fn pagenate(full: &[PathBuf], page_size: u16, current_page: usize) -> Vec<PathBuf> {

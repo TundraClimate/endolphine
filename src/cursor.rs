@@ -80,7 +80,7 @@ impl Cursor {
     }
 
     pub fn reset(&self) {
-        self.swap_id(0);
+        self.index.swap(0, Ordering::Relaxed);
     }
 
     pub fn is_selection_mode(&self) -> bool {
