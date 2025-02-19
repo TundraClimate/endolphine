@@ -70,7 +70,9 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
                 let Some(content) = content else { return };
 
                 if let Some(action) = act {
+                    global::proc_count_up();
                     handle_action(content.trim(), action);
+                    global::proc_count_down();
                 }
             });
         }

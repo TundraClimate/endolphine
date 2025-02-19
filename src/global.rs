@@ -19,6 +19,7 @@ static MENU: Lazy<Menu> = Lazy::new(Menu::default);
 static INPUT: Lazy<RwLock<Input>> = Lazy::new(|| RwLock::new(Input::default()));
 static CACHE: Lazy<RwLock<HashMap<(u16, u8), String>>> = Lazy::new(|| RwLock::new(HashMap::new()));
 static MATCHER_TEXT: Lazy<RwLock<String>> = Lazy::new(|| RwLock::new(String::new()));
+static PROCESS_COUNT: Lazy<AtomicU16> = Lazy::new(|| AtomicU16::new(0));
 static CONFIG: Lazy<Config> = Lazy::new(Config::load);
 
 pub fn init(path: &Path) -> EpResult<()> {
@@ -135,6 +136,18 @@ pub fn is_match_text<F: FnOnce(&str) -> bool>(f: F) -> bool {
 pub fn read_matcher() -> String {
     let lock = MATCHER_TEXT.read().unwrap();
     lock.to_owned()
+}
+
+pub fn proc_count_up() {
+    PROCESS_COUNT.store(PROCESS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+}
+
+pub fn proc_count_down() {
+    PROCESS_COUNT.store(PROCESS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+}
+
+pub fn procs() -> u16 {
+    PROCESS_COUNT.load(Ordering::Relaxed)
 }
 
 pub fn config() -> &'static Config {

@@ -180,10 +180,20 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 }
 
 fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
+    let procs = global::procs();
+    let bar_text = format!(
+        "{}{} {} process running",
+        SetBackgroundColor(color::bar_color()),
+        SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
+        procs
+    );
+
     di_view_line!(
-        "footer_bar",
+        format!("{}", procs),
         row,
-        Print(colored_bar(color::bar_color(), bar_length))
+        Print(colored_bar(color::bar_color(), bar_length)),
+        MoveTo(global::get_view_shift(), row),
+        Print(bar_text)
     )?;
 
     Ok(())
