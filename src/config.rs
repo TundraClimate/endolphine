@@ -21,6 +21,8 @@ pub struct Config {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct RmConfig {
     pub no_enter: bool,
+    pub yank: bool,
+    pub for_tmp: bool,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -39,7 +41,11 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
-            rm: RmConfig { no_enter: false },
+            rm: RmConfig {
+                no_enter: true,
+                for_tmp: true,
+                yank: true,
+            },
             paste: PasteConfig {
                 copied_suffix: String::from("_Copy"),
                 force_mode: true,

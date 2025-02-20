@@ -82,6 +82,13 @@ fn init(path: &Path) -> EpResult<()> {
 
     global::init(&path)?;
 
+    if global::config().rm.for_tmp {
+        let tmp_path = Path::new("/tmp").join("endolphine");
+        if !tmp_path.exists() {
+            std::fs::create_dir_all(tmp_path).map_err(|e| EpError::Init(e.to_string()))?;
+        }
+    }
+
     Ok(())
 }
 

@@ -125,7 +125,24 @@ fn handle_action(content: &str, act: String) {
 
                 let name = misc::file_name(under_cursor_file);
 
-                let res = if under_cursor_file.is_dir() {
+                let res = if global::config().rm.for_tmp {
+                    if global::config().rm.yank {
+                        if !clipboard::is_cmd_installed() {
+                            crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+                            return;
+                        }
+
+                        let tmp_path = Path::new("/tmp")
+                            .join("endolphine")
+                            .join(misc::file_name(under_cursor_file));
+
+                        let text = format!("file://{}", tmp_path.to_string_lossy());
+                        if let Err(e) = clipboard::clip(&text, "text/uri-list") {
+                            crate::log!(format!("Yank failed: {}", e.kind()));
+                        }
+                    }
+                    misc::into_tmp(&[under_cursor_file.to_path_buf()])
+                } else if under_cursor_file.is_dir() {
                     misc::remove_dir_all(under_cursor_file)
                 } else {
                     std::fs::remove_file(under_cursor_file)
@@ -155,28 +172,58 @@ fn handle_action(content: &str, act: String) {
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
 
-            for target in &selected {
-                let Ok(metadata) = target.symlink_metadata() else {
-                    crate::log!("Delete file failed: cannot access metadata.");
-                    return;
-                };
+            if global::config().rm.for_tmp {
+                if global::config().rm.yank {
+                    if !clipboard::is_cmd_installed() {
+                        crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+                        return;
+                    }
 
-                if !target.exists() && !metadata.is_symlink() {
-                    crate::log!("Delete file failed: target not exists.");
-                    return;
+                    let tmp = Path::new("/tmp").join("endolphine");
+
+                    use std::fmt::Write;
+                    let text = selected.iter().fold(String::new(), |mut acc, p| {
+                        let _ = writeln!(
+                            acc,
+                            "file://{}",
+                            tmp.join(misc::file_name(p)).to_string_lossy()
+                        );
+                        acc
+                    });
+
+                    if let Err(e) = clipboard::clip(&text, "text/uri-list") {
+                        crate::log!(format!("Yank failed: {}", e.kind()));
+                    }
                 }
-
-                let res = if target.is_dir() {
-                    misc::remove_dir_all(target)
-                } else {
-                    std::fs::remove_file(target)
-                };
-
-                if let Err(e) = res {
+                if let Err(e) = misc::into_tmp(&selected) {
                     crate::log!(format!("Delete file failed: {}", e.kind()));
                     return;
                 }
+            } else {
+                for target in &selected {
+                    let Ok(metadata) = target.symlink_metadata() else {
+                        crate::log!("Delete file failed: cannot access metadata.");
+                        return;
+                    };
+
+                    if !target.exists() && !metadata.is_symlink() {
+                        crate::log!("Delete file failed: target not exists.");
+                        return;
+                    }
+
+                    let res = if target.is_dir() {
+                        misc::remove_dir_all(target)
+                    } else {
+                        std::fs::remove_file(target)
+                    };
+
+                    if let Err(e) = res {
+                        crate::log!(format!("Delete file failed: {}", e.kind()));
+                        return;
+                    }
+                }
             }
+
             global::cursor().resize(misc::child_files_len(&global::get_path()));
             crate::log!(format!("{} items delete successful.", selected.len()));
         }

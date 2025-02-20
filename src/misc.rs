@@ -94,3 +94,22 @@ pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
 
     Ok(())
 }
+
+pub fn into_tmp(paths: &[PathBuf]) -> std::io::Result<()> {
+    let tmp_path = Path::new("/tmp").join("endolphine");
+    for path in paths {
+        if !exists_item(path) {
+            continue;
+        }
+
+        let dest = tmp_path.join(file_name(path));
+
+        if exists_item(&dest) {
+            remove_dir_all(&dest)?;
+        }
+
+        std::fs::rename(path, dest)?;
+    }
+
+    Ok(())
+}
