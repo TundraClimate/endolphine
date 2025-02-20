@@ -225,6 +225,7 @@ fn handle_action(content: &str, act: String) {
             }
 
             global::cursor().resize(misc::child_files_len(&global::get_path()));
+            global::cursor().disable_selection_mode();
             crate::log!(format!("{} items delete successful.", selected.len()));
         }
         "Rename" => {
