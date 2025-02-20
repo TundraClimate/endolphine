@@ -3,7 +3,7 @@ name = "ep"
 authors = ["Tundra_Climate"]
 description = "TUI file explorer made by Rust"
 version = "1.0.0"
-edition = "2021"
+edition = "2024"
 
 [dependencies]
 chrono = "0.4.38"
