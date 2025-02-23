@@ -13,6 +13,7 @@ pub fn file_path() -> Option<PathBuf> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
+    pub sort_by_priority: [u8; 4],
     pub rm: RmConfig,
     pub paste: PasteConfig,
     pub menu: MenuConfig,
@@ -41,6 +42,7 @@ impl Default for Config {
     fn default() -> Self {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
+            sort_by_priority: [0, 1, 2, 3],
             rm: RmConfig {
                 no_enter: true,
                 for_tmp: true,

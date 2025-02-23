@@ -30,13 +30,14 @@ pub fn child_files(path: &Path) -> Vec<PathBuf> {
 }
 
 fn sort_files(files: &mut [PathBuf]) {
+    let priority = global::config().sort_by_priority;
     files.sort_by_key(|p| {
         let name = file_name(p);
         let priority = match name.chars().next() {
-            Some('.') => 2,
-            Some(c) if c.is_lowercase() => 0,
-            Some(c) if c.is_uppercase() => 1,
-            _ => 3,
+            Some(c) if c.is_lowercase() => priority[0],
+            Some(c) if c.is_uppercase() => priority[1],
+            Some('.') => priority[2],
+            _ => priority[3],
         };
         (priority, name.to_owned())
     });
