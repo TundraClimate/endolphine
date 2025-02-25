@@ -49,6 +49,13 @@ async fn start() -> error::EpResult<()> {
         return Ok(());
     }
 
+    if !misc::exists_item(&args.path) || args.path.is_file() {
+        return Err(error::EpError::Init(format!(
+            "invalid path (-> {})",
+            args.path.to_string_lossy()
+        )));
+    }
+
     app::launch(&args.path).await?;
 
     Ok(())
