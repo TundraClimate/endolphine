@@ -26,47 +26,20 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
-    app::config_init().unwrap_or_else(|e| e.handle());
+    start().await.unwrap_or_else(|e| e.handle());
+}
+
+async fn start() -> error::EpResult<()> {
+    app::config_init()?;
 
     let args = Args::parse();
 
     if args.edit_config {
-        let editor = option_env!("EDITOR").unwrap_or("vi");
-
-        let Some(config_path) = config::file_path() else {
-            panic!("Open error: Config not initialized");
-        };
-
-        tokio::process::Command::new(editor)
-            .arg(config_path)
-            .status()
-            .await
-            .ok();
-
-        if let Some(Err(e)) = config::Config::try_load() {
-            let config = config::file_path().and_then(|p| std::fs::read_to_string(p).ok());
-            let position_lines = if let (Some(config), Some(span)) = (config, e.span()) {
-                let lines = config
-                    .char_indices()
-                    .collect::<Vec<_>>()
-                    .split(|(_, c)| *c == '\n')
-                    .filter_map(|line| {
-                        line.iter()
-                            .any(|(i, _)| span.contains(i))
-                            .then_some(line.iter().map(|(_, c)| *c).collect::<String>())
-                    })
-                    .collect::<Vec<_>>();
-                lines.join("\n")
-            } else {
-                String::new()
-            };
-            println!("{}\n---\n{}\n---", e.message(), position_lines);
-        }
-
-        return;
+        config::edit_and_check().await?;
+        return Ok(());
     }
 
-    if let Err(e) = app::launch(&args.path).await {
-        e.handle();
-    }
+    app::launch(&args.path).await?;
+
+    Ok(())
 }
