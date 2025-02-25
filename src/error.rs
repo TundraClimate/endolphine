@@ -28,34 +28,16 @@ pub enum EpError {
 
 impl EpError {
     pub fn handle(&self) {
-        let res = match self {
-            Self::SwitchScreen => {
-                eprintln!("Cannot switch Alternate screen");
-                std::process::exit(1);
-            }
-            Self::Init(kind) => EpError::tui_exit(&format!("Application init failed: {}", kind)),
-            Self::DisplayViewLine => EpError::tui_exit("Cannot display texts"),
-            Self::DisplayMenuLine => EpError::tui_exit("Cannot display texts"),
-            Self::Log => EpError::tui_exit("Cant logging texts"),
+        match self {
+            Self::SwitchScreen => panic!("Cannot switch Alternate screen"),
+            Self::Init(kind) => panic!("Application init failed: {}", kind),
+            Self::DisplayViewLine => panic!("Cannot display texts"),
+            Self::DisplayMenuLine => panic!("Cannot display texts"),
+            Self::Log => panic!("Cant logging texts"),
             Self::CommandExecute(command, kind) => {
-                crate::log!(format!("Command \"{}\" failed: {}", command, kind));
-                Ok(())
+                crate::log!(format!("Command \"{}\" failed: {}", command, kind))
             }
-            Self::Flush(kind) => {
-                crate::log!(format!("canvas flush failed: {}", kind));
-                Ok(())
-            }
+            Self::Flush(kind) => crate::log!(format!("canvas flush failed: {}", kind)),
         };
-
-        if let Err(e) = res {
-            e.handle();
-        }
-    }
-
-    fn tui_exit(text: &str) -> EpResult<()> {
-        crate::disable_tui!()?;
-
-        eprintln!("app exit: {text}");
-        std::process::exit(1);
     }
 }

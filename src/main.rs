@@ -30,6 +30,15 @@ async fn main() {
 }
 
 async fn start() -> error::EpResult<()> {
+    std::panic::set_hook(Box::new(|e| {
+        crate::disable_tui!().ok();
+
+        if let Some(e) = e.payload().downcast_ref::<&str>() {
+            eprintln!("app exit: {}", e);
+        }
+        std::process::exit(1);
+    }));
+
     app::config_init()?;
 
     let args = Args::parse();
