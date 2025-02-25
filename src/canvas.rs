@@ -22,7 +22,7 @@ macro_rules! di_view_line {
                 Clear(ClearType::UntilNewLine),
                 $($cmd),+,
                 ResetColor
-            ).map_err(|_| EpError::DisplayViewLine)
+            ).map_err(|_| EpError::Display)
         } else { Ok(()) }
     }};
 }
@@ -44,7 +44,7 @@ macro_rules! di_menu_line {
                 SetBackgroundColor(bg),
                 Print(']'),
             )
-            .map_err(|_| EpError::DisplayMenuLine)
+            .map_err(|_| EpError::Display)
         } else {
             Ok(())
         }
@@ -62,7 +62,7 @@ macro_rules! log {
             crossterm::style::Print($text),
             crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
         ) {
-            $crate::error::EpError::Log.handle();
+            $crate::error::EpError::Display.handle()
         };
     }};
 
@@ -77,7 +77,7 @@ macro_rules! log {
                 crossterm::style::Print(format!("{} {}", ts, $text)),
                 crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
             ) {
-                $crate::error::EpError::Log.handle();
+                $crate::error::EpError::Display.handle()
             };
         } else {
             $crate::log!($text);
@@ -245,7 +245,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
         Print("▏"),
         ResetColor
     )
-    .map_err(|_| EpError::DisplayViewLine)?;
+    .map_err(|_| EpError::Display)?;
 
     Ok(())
 }

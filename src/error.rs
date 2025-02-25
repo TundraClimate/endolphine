@@ -4,40 +4,32 @@ pub type EpResult<T> = Result<T, EpError>;
 
 #[derive(Error, Debug)]
 pub enum EpError {
-    #[error("Cannot switch Alternate screen")]
+    #[error("Cannot switch screen modes")]
     SwitchScreen,
 
-    #[error("Init error")]
+    #[error("Initialization of the application failed: {0}")]
     Init(String),
 
-    #[error("di_view_line error")]
-    DisplayViewLine,
+    #[error("The display of the screen lines failed")]
+    Display,
 
-    #[error("di_menu_line error")]
-    DisplayMenuLine,
-
-    #[error("Logging error")]
-    Log,
-
-    #[error("Command failed")]
+    #[error("Command execution failed")]
     CommandExecute(String, String),
 
-    #[error("flush error")]
+    #[error("Terminal flush failed")]
     Flush(String),
 }
 
 impl EpError {
     pub fn handle(&self) {
         match self {
-            Self::SwitchScreen => panic!("Cannot switch Alternate screen"),
-            Self::Init(kind) => panic!("Application init failed: {}", kind),
-            Self::DisplayViewLine => panic!("Cannot display texts"),
-            Self::DisplayMenuLine => panic!("Cannot display texts"),
-            Self::Log => panic!("Cant logging texts"),
+            Self::SwitchScreen => panic!("{}", self),
+            Self::Init(_) => panic!("{}", self),
+            Self::Display => panic!("{}", self),
             Self::CommandExecute(command, kind) => {
-                crate::log!(format!("Command \"{}\" failed: {}", command, kind))
+                crate::log!(format!("Failed to run \"{}\": {}", command, kind))
             }
-            Self::Flush(kind) => crate::log!(format!("canvas flush failed: {}", kind)),
+            Self::Flush(kind) => crate::log!(format!("Failed canvas flush: {}", kind)),
         };
     }
 }
