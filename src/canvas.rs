@@ -245,7 +245,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
             .collect()
     };
 
-    crossterm::execute!(
+    crossterm::queue!(
         std::io::stdout(),
         MoveTo(pos.0, pos.1),
         SetBackgroundColor(color::INPUT_BG),
