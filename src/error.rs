@@ -16,7 +16,7 @@ pub enum EpError {
     #[error("Command execution failed")]
     CommandExecute(String, String),
 
-    #[error("Terminal flush failed")]
+    #[error("Terminal flush failed: {0}")]
     Flush(String),
 }
 
@@ -29,7 +29,7 @@ impl EpError {
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("Failed to run \"{}\": {}", command, kind))
             }
-            Self::Flush(kind) => crate::log!(format!("Failed canvas flush: {}", kind)),
+            Self::Flush(_) => panic!("{}", self),
         };
     }
 }

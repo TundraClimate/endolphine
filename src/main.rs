@@ -33,8 +33,9 @@ async fn start() -> error::EpResult<()> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
 
-        if let Some(e) = e.payload().downcast_ref::<&str>() {
-            eprintln!("app exit: {}", e);
+        if let Some(e) = e.payload().downcast_ref::<String>() {
+            eprintln!("Endolphine terminated:");
+            eprintln!("- {}", e);
         }
         std::process::exit(1);
     }));
