@@ -7,8 +7,8 @@ use crate::{
 use std::{
     path::Path,
     sync::{
-        atomic::{AtomicBool, Ordering},
         Arc,
+        atomic::{AtomicBool, Ordering},
     },
 };
 use tokio::time::{self, Duration, Instant};
@@ -17,15 +17,18 @@ use tokio::time::{self, Duration, Instant};
 macro_rules! enable_tui {
     () => {
         'blk: {
-            if let Err(e) = crossterm::terminal::enable_raw_mode() {
+            use crossterm::cursor;
+            use crossterm::terminal;
+            use std::io;
+            if let Err(e) = terminal::enable_raw_mode() {
                 break 'blk Err(e);
             }
             $crate::global::enable_render();
             crossterm::execute!(
-                std::io::stdout(),
-                crossterm::terminal::EnterAlternateScreen,
-                crossterm::cursor::Hide,
-                crossterm::terminal::DisableLineWrap
+                io::stdout(),
+                terminal::EnterAlternateScreen,
+                cursor::Hide,
+                terminal::DisableLineWrap
             )
         }
         .map_err(|_| $crate::error::EpError::SwitchScreen)
@@ -36,15 +39,18 @@ macro_rules! enable_tui {
 macro_rules! disable_tui {
     () => {
         'blk: {
-            if let Err(e) = crossterm::terminal::disable_raw_mode() {
+            use crossterm::cursor;
+            use crossterm::terminal;
+            use std::io;
+            if let Err(e) = terminal::disable_raw_mode() {
                 break 'blk Err(e);
             }
             $crate::global::disable_render();
             crossterm::execute!(
-                std::io::stdout(),
-                crossterm::terminal::LeaveAlternateScreen,
-                crossterm::cursor::Show,
-                crossterm::terminal::EnableLineWrap,
+                io::stdout(),
+                terminal::LeaveAlternateScreen,
+                cursor::Show,
+                terminal::EnableLineWrap,
             )
         }
         .map_err(|_| $crate::error::EpError::SwitchScreen)

@@ -54,13 +54,18 @@ macro_rules! di_menu_line {
 #[macro_export]
 macro_rules! log {
     ($text:expr) => {{
+        use crossterm::cursor;
+        use crossterm::style;
+        use crossterm::terminal;
+        use crossterm::terminal::ClearType;
+        use std::io;
         let row = $crate::global::get_height();
         if let Err(_) = crossterm::execute!(
-            std::io::stdout(),
-            crossterm::style::ResetColor,
-            crossterm::cursor::MoveTo(0, row),
-            crossterm::style::Print($text),
-            crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
+            io::stdout(),
+            style::ResetColor,
+            cursor::MoveTo(0, row),
+            style::Print($text),
+            terminal::Clear(ClearType::UntilNewLine),
         ) {
             $crate::error::EpError::Display.handle()
         };
@@ -68,14 +73,19 @@ macro_rules! log {
 
     ($text:expr, $is_dbg:expr) => {{
         if $is_dbg {
+            use crossterm::cursor;
+            use crossterm::style;
+            use crossterm::terminal;
+            use crossterm::terminal::ClearType;
+            use std::io;
             let row = $crate::global::get_height();
             let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
             let ts = if $text == "" { " ".to_string() } else { ts };
             if let Err(_) = crossterm::execute!(
-                std::io::stdout(),
-                crossterm::cursor::MoveTo(0, row),
-                crossterm::style::Print(format!("{} {}", ts, $text)),
-                crossterm::terminal::Clear(crossterm::terminal::ClearType::UntilNewLine),
+                io::stdout(),
+                cursor::MoveTo(0, row),
+                style::Print(format!("{} {}", ts, $text)),
+                terminal::Clear(ClearType::UntilNewLine),
             ) {
                 $crate::error::EpError::Display.handle()
             };
