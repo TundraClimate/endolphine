@@ -81,7 +81,7 @@ pub fn bar_color() -> Color {
     }
 }
 
-pub fn menu_bg() -> Color {
+pub fn widget_bg() -> Color {
     if crate::global::menu().is_enabled() {
         global::color().widget
     } else {
@@ -109,11 +109,11 @@ pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
     }
 }
 
-pub fn menu_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
+pub fn widget_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
     if is_cursor_pos && is_enable {
         global::color().widget_cursor
     } else {
-        menu_bg()
+        widget_bg()
     }
 }
 

@@ -32,7 +32,7 @@ macro_rules! di_menu_line {
         if !global::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
             global::cache_insert(($row, 1), $tag.to_string());
             let slide = global::get_view_shift();
-            let bg = theme::menu_bg();
+            let bg = theme::widget_bg();
             crossterm::queue!(
                 std::io::stdout(),
                 SetBackgroundColor(bg),
@@ -538,7 +538,7 @@ fn render_menu_line(
 ) -> EpResult<()> {
     let tag = tag.chars().take(slide_len as usize - 6).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
-    let under_name_color = SetBackgroundColor(theme::menu_item_bg(is_cursor_pos, menu_enabled));
+    let under_name_color = SetBackgroundColor(theme::widget_item_bg(is_cursor_pos, menu_enabled));
 
     di_menu_line!(
         row,
@@ -549,7 +549,7 @@ fn render_menu_line(
             under_name_color,
             SetForegroundColor(global::color().menu_tag),
             tag,
-            SetBackgroundColor(theme::menu_bg()),
+            SetBackgroundColor(theme::widget_bg()),
             ResetColor,
         ))
     )?;
