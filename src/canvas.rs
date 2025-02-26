@@ -44,6 +44,7 @@ macro_rules! di_menu_line {
                 $($cmd)+,
                 MoveTo(slide - 1, $row),
                 SetBackgroundColor(bg),
+                SetForegroundColor(theme::widget_fg()),
                 Print(']'),
             )
             .map_err(|_| EpError::Display)
