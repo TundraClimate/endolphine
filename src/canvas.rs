@@ -1,4 +1,4 @@
-use crate::{color, error::*, global, misc};
+use crate::{error::*, global, misc, theme};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -18,7 +18,7 @@ macro_rules! di_view_line {
             crossterm::queue!(
                 std::io::stdout(),
                 MoveTo(global::get_view_shift(), $row),
-                SetBackgroundColor(color::app_bg()),
+                SetBackgroundColor(theme::app_bg()),
                 Clear(ClearType::UntilNewLine),
                 $($cmd),+,
                 ResetColor
@@ -32,7 +32,7 @@ macro_rules! di_menu_line {
         if !global::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
             global::cache_insert(($row, 1), $tag.to_string());
             let slide = global::get_view_shift();
-            let bg = color::menu_bg();
+            let bg = theme::menu_bg();
             crossterm::queue!(
                 std::io::stdout(),
                 SetBackgroundColor(bg),
@@ -154,7 +154,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let pwd = format!(
         "{}{}{}",
         parent,
-        SetForegroundColor(color::HEADER_CURRENT_PATH_ON_DARK),
+        SetForegroundColor(theme::HEADER_CURRENT_PATH_ON_DARK),
         filename
     );
 
@@ -171,17 +171,17 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
-        SetBackgroundColor(color::bar_color()),
-        SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
+        SetBackgroundColor(theme::bar_color()),
+        SetForegroundColor(theme::HEADER_BAR_TEXT_DEFAULT),
         page,
-        SetForegroundColor(color::HEADER_BAR_TEXT_LIGHT),
+        SetForegroundColor(theme::HEADER_BAR_TEXT_LIGHT),
         len
     );
 
     di_view_line!(
         format!("{}{}", page, len),
         1,
-        Print(colored_bar(color::bar_color(), bar_length)),
+        Print(colored_bar(theme::bar_color(), bar_length)),
         MoveTo(global::get_view_shift(), 1),
         Print(page_area),
     )?;
@@ -193,15 +193,15 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
     let procs = global::procs();
     let bar_text = format!(
         "{}{} {} process running",
-        SetBackgroundColor(color::bar_color()),
-        SetForegroundColor(color::HEADER_BAR_TEXT_DEFAULT),
+        SetBackgroundColor(theme::bar_color()),
+        SetForegroundColor(theme::HEADER_BAR_TEXT_DEFAULT),
         procs
     );
 
     di_view_line!(
         format!("{}", procs),
         row,
-        Print(colored_bar(color::bar_color(), bar_length)),
+        Print(colored_bar(theme::bar_color(), bar_length)),
         MoveTo(global::get_view_shift(), row),
         Print(bar_text)
     )?;
@@ -248,7 +248,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
     crossterm::queue!(
         std::io::stdout(),
         MoveTo(pos.0, pos.1),
-        SetBackgroundColor(color::INPUT_BG),
+        SetBackgroundColor(theme::INPUT_BG),
         Print(" ".repeat((padding.0 + width + padding.1) as usize)),
         MoveTo(pos.0 + padding.0, pos.1),
         Print(buf),
@@ -274,7 +274,7 @@ fn render_file_line(
     is_selected: bool,
 ) -> EpResult<()> {
     let c = if is_cursor_pos { ">" } else { " " };
-    let under_name_color = SetBackgroundColor(color::item_bg(is_selected, is_cursor_pos));
+    let under_name_color = SetBackgroundColor(theme::item_bg(is_selected, is_cursor_pos));
     let body_row = BodyRow::new(file, c.into(), under_name_color);
     di_view_line!(
         format!("{}{}", rel_i, body_row.gen_key()),
@@ -287,7 +287,7 @@ fn render_empty_line(rel_i: u16) -> EpResult<()> {
     if rel_i == 0 {
         let row = format!(
             "{}> | Press 'a' to create the New file | Empty",
-            SetForegroundColor(color::bar_color()),
+            SetForegroundColor(theme::bar_color()),
         );
         di_view_line!(format!("{}", rel_i), rel_i + 2, Print(row))
     } else {
@@ -346,7 +346,7 @@ impl BodyRow {
     fn colored_file_type(path: &PathBuf) -> String {
         format!(
             "{}{}",
-            SetForegroundColor(color::PERMISSION_TYPE),
+            SetForegroundColor(theme::PERMISSION_TYPE),
             match path {
                 path if path.is_symlink() => 'l',
                 path if path.is_dir() => 'd',
@@ -364,8 +364,8 @@ impl BodyRow {
             !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
         }) {
             let end_pos = pos + pat_len;
-            let surround_color = SetBackgroundColor(color::FILENAME_SURROUND);
-            let reset_color = SetBackgroundColor(color::app_bg());
+            let surround_color = SetBackgroundColor(theme::FILENAME_SURROUND);
+            let reset_color = SetBackgroundColor(theme::app_bg());
             format!(
                 "{}{}{}{}{}",
                 &text[..pos],
@@ -382,7 +382,7 @@ impl BodyRow {
     fn colored_file_name(path: &PathBuf) -> String {
         format!(
             "{}{}{}",
-            SetForegroundColor(color::path_name(path)),
+            SetForegroundColor(theme::path_name(path)),
             Self::surround_from_matcher(misc::file_name(path).to_owned()),
             if let Some(target) = Self::symlink_target(path) {
                 format!(" -> {}", target)
@@ -428,7 +428,7 @@ impl BodyRow {
 
         format!(
             "{}{}",
-            SetForegroundColor(color::LAST_MODIFIED_TIME),
+            SetForegroundColor(theme::LAST_MODIFIED_TIME),
             datetime.format("%y %m/%d %H:%M")
         )
     }
@@ -475,7 +475,7 @@ impl BodyRow {
     fn colored_permission_element(permission: Option<&char>, index: usize) -> String {
         format!(
             "{}{}",
-            SetForegroundColor(color::permission(index)),
+            SetForegroundColor(theme::permission(index)),
             permission.unwrap_or(&'-')
         )
     }
@@ -493,7 +493,7 @@ impl std::fmt::Display for BodyRow {
             self.time,
             self.under_name_color,
             self.filename,
-            SetBackgroundColor(color::app_bg())
+            SetBackgroundColor(theme::app_bg())
         )
     }
 }
@@ -538,7 +538,7 @@ fn render_menu_line(
 ) -> EpResult<()> {
     let tag = tag.chars().take(slide_len as usize - 6).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
-    let under_name_color = SetBackgroundColor(color::menu_item_bg(is_cursor_pos, menu_enabled));
+    let under_name_color = SetBackgroundColor(theme::menu_item_bg(is_cursor_pos, menu_enabled));
 
     di_menu_line!(
         row,
@@ -547,9 +547,9 @@ fn render_menu_line(
             "{} |{} {}{} {}{}",
             cur,
             under_name_color,
-            SetForegroundColor(color::MENU_TAG_COLOR),
+            SetForegroundColor(theme::MENU_TAG_COLOR),
             tag,
-            SetBackgroundColor(color::menu_bg()),
+            SetBackgroundColor(theme::menu_bg()),
             ResetColor,
         ))
     )?;

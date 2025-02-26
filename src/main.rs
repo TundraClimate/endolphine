@@ -4,7 +4,6 @@ use std::path::PathBuf;
 mod app;
 mod canvas;
 mod clipboard;
-mod color;
 mod config;
 mod cursor;
 mod error;
@@ -13,6 +12,7 @@ mod handler;
 mod input;
 mod menu;
 mod misc;
+mod theme;
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]

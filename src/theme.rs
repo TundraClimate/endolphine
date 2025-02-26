@@ -1,6 +1,69 @@
 use crossterm::style::Color;
 use std::path::PathBuf;
 
+pub mod dark;
+pub mod light;
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub enum Theme {
+    Dark,
+    Light,
+}
+
+macro_rules! scheme {
+    ($($name:ident),+ $(,)?) => {
+        pub struct Scheme {
+            $($name: Color),+
+        }
+    }
+}
+
+scheme!(
+    bg,
+    bg_dark,
+    bar,
+    bar_dark,
+    current_path,
+    bar_text,
+    bar_text_light,
+    perm_ty,
+    perm_r,
+    perm_w,
+    perm_e,
+    row_file,
+    row_dir,
+    row_symlink,
+    row_broken,
+    mod_time,
+    select,
+    row_cursor,
+    input,
+    widget,
+    widget_dark,
+    widget_cursor,
+    menu_tag,
+    search_sur,
+);
+
+#[macro_export]
+macro_rules! rgb {
+    ($r:expr, $g:expr, $b:expr) => {
+        crossterm::style::Color::Rgb {
+            r: $r,
+            g: $g,
+            b: $b,
+        }
+    };
+
+    ($color:expr) => {
+        crossterm::style::Color::Rgb {
+            r: $color,
+            g: $color,
+            b: $color,
+        }
+    };
+}
+
 macro_rules! const_color {
     ($name:ident, $r:expr, $g:expr, $b:expr) => {
         pub const $name: Color = Color::Rgb {

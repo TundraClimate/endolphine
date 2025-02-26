@@ -1,4 +1,9 @@
-use crate::{config, error::*, menu::MenuElement};
+use crate::{
+    config,
+    error::*,
+    menu::MenuElement,
+    theme::{self, Scheme, Theme},
+};
 use std::path::{Path, PathBuf};
 
 pub fn file_path() -> Option<PathBuf> {
@@ -49,7 +54,7 @@ pub async fn edit_and_check() -> EpResult<()> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
-    theme: String,
+    theme: Theme,
     pub sort_by_priority: [u8; 4],
     pub rm: RmConfig,
     pub paste: PasteConfig,
@@ -91,7 +96,7 @@ impl Default for Config {
                 default_overwrite: true,
             },
             menu: MenuConfig::default(),
-            theme: String::from("dark"),
+            theme: Theme::Dark,
         }
     }
 }
@@ -117,8 +122,11 @@ impl Config {
         Some(command)
     }
 
-    pub fn theme(&self) {
-        todo!()
+    pub fn theme(&self) -> Scheme {
+        match self.theme {
+            Theme::Dark => theme::dark::SCHEME,
+            Theme::Light => theme::light::SCHEME,
+        }
     }
 }
 
