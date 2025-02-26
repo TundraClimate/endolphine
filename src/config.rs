@@ -49,6 +49,7 @@ pub async fn edit_and_check() -> EpResult<()> {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
     editor: Vec<String>,
+    theme: String,
     pub sort_by_priority: [u8; 4],
     pub rm: RmConfig,
     pub paste: PasteConfig,
@@ -90,6 +91,7 @@ impl Default for Config {
                 default_overwrite: true,
             },
             menu: MenuConfig::default(),
+            theme: String::from("dark"),
         }
     }
 }
@@ -113,6 +115,10 @@ impl Config {
         let mut command = std::process::Command::new(cmd);
         command.args(args);
         Some(command)
+    }
+
+    pub fn theme(&self) {
+        todo!()
     }
 }
 
