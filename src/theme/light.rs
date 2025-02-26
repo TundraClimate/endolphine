@@ -1,6 +1,8 @@
 use crate::rgb;
 
 pub const SCHEME: super::Scheme = super::Scheme {
+    fg: rgb!(0),
+    fg_dark: rgb!(0),
     bg: rgb!(60),
     bg_dark: rgb!(30),
     bar: rgb!(150),
@@ -20,8 +22,10 @@ pub const SCHEME: super::Scheme = super::Scheme {
     select: rgb!(235, 140, 0),
     row_cursor: rgb!(85),
     input: rgb!(40, 40, 80),
-    widget: rgb!(90),
-    widget_dark: rgb!(50),
+    widget_fg: rgb!(0),
+    widget_fg_dark: rgb!(0),
+    widget_bg: rgb!(90),
+    widget_bg_dark: rgb!(50),
     widget_cursor: rgb!(70),
     menu_tag: rgb!(85, 240, 180),
     search_sur: rgb!(85, 240, 180),

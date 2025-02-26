@@ -18,6 +18,7 @@ macro_rules! di_view_line {
             crossterm::queue!(
                 std::io::stdout(),
                 MoveTo(global::get_view_shift(), $row),
+                SetForegroundColor(theme::app_fg()),
                 SetBackgroundColor(theme::app_bg()),
                 Clear(ClearType::UntilNewLine),
                 $($cmd),+,
@@ -35,6 +36,7 @@ macro_rules! di_menu_line {
             let bg = theme::widget_bg();
             crossterm::queue!(
                 std::io::stdout(),
+                SetForegroundColor(theme::widget_fg()),
                 SetBackgroundColor(bg),
                 MoveTo(0, $row),
                 Print(" ".repeat(slide as usize)),

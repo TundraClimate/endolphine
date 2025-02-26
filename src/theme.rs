@@ -20,6 +20,8 @@ macro_rules! scheme {
 }
 
 scheme!(
+    fg,
+    fg_dark,
     bg,
     bg_dark,
     bar,
@@ -39,8 +41,10 @@ scheme!(
     select,
     row_cursor,
     input,
-    widget,
-    widget_dark,
+    widget_fg,
+    widget_fg_dark,
+    widget_bg,
+    widget_bg_dark,
     widget_cursor,
     menu_tag,
     search_sur,
@@ -65,6 +69,14 @@ macro_rules! rgb {
     };
 }
 
+pub fn app_fg() -> Color {
+    if crate::global::menu().is_enabled() {
+        global::color().fg_dark
+    } else {
+        global::color().fg
+    }
+}
+
 pub fn app_bg() -> Color {
     if crate::global::menu().is_enabled() {
         global::color().bg_dark
@@ -81,11 +93,19 @@ pub fn bar_color() -> Color {
     }
 }
 
+pub fn widget_fg() -> Color {
+    if crate::global::menu().is_enabled() {
+        global::color().widget_fg
+    } else {
+        global::color().widget_fg_dark
+    }
+}
+
 pub fn widget_bg() -> Color {
     if crate::global::menu().is_enabled() {
-        global::color().widget
+        global::color().widget_bg
     } else {
-        global::color().widget_dark
+        global::color().widget_bg_dark
     }
 }
 
