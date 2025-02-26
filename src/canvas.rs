@@ -154,7 +154,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let pwd = format!(
         "{}{}{}",
         parent,
-        SetForegroundColor(theme::HEADER_CURRENT_PATH_ON_DARK),
+        SetForegroundColor(global::color().path_picked),
         filename
     );
 
@@ -172,9 +172,9 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
         SetBackgroundColor(theme::bar_color()),
-        SetForegroundColor(theme::HEADER_BAR_TEXT_DEFAULT),
+        SetForegroundColor(global::color().bar_text),
         page,
-        SetForegroundColor(theme::HEADER_BAR_TEXT_LIGHT),
+        SetForegroundColor(global::color().bar_text_light),
         len
     );
 
@@ -194,7 +194,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
     let bar_text = format!(
         "{}{} {} process running",
         SetBackgroundColor(theme::bar_color()),
-        SetForegroundColor(theme::HEADER_BAR_TEXT_DEFAULT),
+        SetForegroundColor(global::color().bar_text),
         procs
     );
 
@@ -248,7 +248,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
     crossterm::queue!(
         std::io::stdout(),
         MoveTo(pos.0, pos.1),
-        SetBackgroundColor(theme::INPUT_BG),
+        SetBackgroundColor(global::color().input),
         Print(" ".repeat((padding.0 + width + padding.1) as usize)),
         MoveTo(pos.0 + padding.0, pos.1),
         Print(buf),
@@ -346,7 +346,7 @@ impl BodyRow {
     fn colored_file_type(path: &PathBuf) -> String {
         format!(
             "{}{}",
-            SetForegroundColor(theme::PERMISSION_TYPE),
+            SetForegroundColor(global::color().perm_ty),
             match path {
                 path if path.is_symlink() => 'l',
                 path if path.is_dir() => 'd',
@@ -364,7 +364,7 @@ impl BodyRow {
             !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
         }) {
             let end_pos = pos + pat_len;
-            let surround_color = SetBackgroundColor(theme::FILENAME_SURROUND);
+            let surround_color = SetBackgroundColor(global::color().search_sur);
             let reset_color = SetBackgroundColor(theme::app_bg());
             format!(
                 "{}{}{}{}{}",
@@ -428,7 +428,7 @@ impl BodyRow {
 
         format!(
             "{}{}",
-            SetForegroundColor(theme::LAST_MODIFIED_TIME),
+            SetForegroundColor(global::color().mod_time),
             datetime.format("%y %m/%d %H:%M")
         )
     }
@@ -547,7 +547,7 @@ fn render_menu_line(
             "{} |{} {}{} {}{}",
             cur,
             under_name_color,
-            SetForegroundColor(theme::MENU_TAG_COLOR),
+            SetForegroundColor(global::color().menu_tag),
             tag,
             SetBackgroundColor(theme::menu_bg()),
             ResetColor,

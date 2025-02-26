@@ -1,11 +1,13 @@
-use crate::{config::Config, cursor::Cursor, error::*, input::Input, menu::Menu, misc};
+use crate::{
+    config::Config, cursor::Cursor, error::*, input::Input, menu::Menu, misc, theme::Scheme,
+};
 use once_cell::sync::Lazy;
 use std::{
     collections::HashMap,
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicBool, AtomicU16, Ordering},
         RwLock,
+        atomic::{AtomicBool, AtomicU16, Ordering},
     },
 };
 
@@ -152,4 +154,8 @@ pub fn procs() -> u16 {
 
 pub fn config() -> &'static Config {
     &CONFIG
+}
+
+pub fn color() -> Scheme {
+    config().scheme()
 }

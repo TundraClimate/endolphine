@@ -122,7 +122,7 @@ impl Config {
         Some(command)
     }
 
-    pub fn theme(&self) -> Scheme {
+    pub fn scheme(&self) -> Scheme {
         match self.theme {
             Theme::Dark => theme::dark::SCHEME,
             Theme::Light => theme::light::SCHEME,
