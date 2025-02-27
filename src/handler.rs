@@ -106,7 +106,7 @@ fn handle_action(content: &str, act: String) {
             crate::log!(format!("\"{}\" create successful.", &content))
         }
         "RmFileOrDirectory" => {
-            if !["y", "Y", "d"].contains(&content) {
+            if !["y", "Y", global::config().key.delete.to_string().as_str()].contains(&content) {
                 return;
             }
 
@@ -160,7 +160,7 @@ fn handle_action(content: &str, act: String) {
             }
         }
         "RmSelected" => {
-            if !["y", "Y", "d"].contains(&content) {
+            if !["y", "Y", global::config().key.delete.to_string().as_str()].contains(&content) {
                 return;
             }
 
@@ -272,7 +272,8 @@ fn handle_action(content: &str, act: String) {
             };
 
             let current_path = global::get_path();
-            let overwrite_mode = ["y", "Y", "p"].contains(&content);
+            let overwrite_mode =
+                ["y", "Y", global::config().key.paste.to_string().as_str()].contains(&content);
 
             for file in files.iter() {
                 let Ok(metadata) = file.symlink_metadata() else {
@@ -552,7 +553,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
             global::input_use_mut(|i| i.enable("", Some("RmSelected".into())));
-            crate::log!(format!("Delete {} items ? (y/Y/d)", selected_files.len()));
+            crate::log!(format!(
+                "Delete {} items ? (y/Y/{})",
+                keyconf.delete,
+                selected_files.len()
+            ));
             return Ok(false);
         }
 
@@ -561,7 +566,8 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         {
             global::input_use_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
             crate::log!(format!(
-                "Delete \"{}\" ? (y/Y/d)",
+                "Delete \"{}\" ? (y/Y/{})",
+                keyconf.delete,
                 misc::file_name(under_cursor_file)
             ));
         }
@@ -652,7 +658,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             if config.paste.force_mode {
                 handle_input_mode(i, KeyEvent::from(KeyCode::Enter));
             } else {
-                crate::log!("Is overwrite paste? (y/Y/p)");
+                crate::log!(format!("Is overwrite paste? (y/Y/{})", keyconf.paste));
             };
 
             Ok::<(), EpError>(())
