@@ -59,6 +59,7 @@ pub struct Config {
     pub rm: RmConfig,
     pub paste: PasteConfig,
     pub menu: MenuConfig,
+    pub key: KeyConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -80,6 +81,27 @@ pub struct MenuConfig {
     pub items: Vec<MenuElement>,
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct KeyConfig {
+    pub exit_app: char,
+    pub move_up: char,
+    pub move_up_ten: char,
+    pub move_down: char,
+    pub move_down_ten: char,
+    pub move_parent: char,
+    pub enter_dir_or_edit: char,
+    pub visual_select: char,
+    pub menu_toggle: char,
+    pub menu_move: char,
+    pub create_new: char,
+    pub delete: char,
+    pub rename: char,
+    pub yank: char,
+    pub paste: char,
+    pub search: char,
+    pub search_next: char,
+}
+
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -97,6 +119,7 @@ impl Default for Config {
             },
             menu: MenuConfig::default(),
             theme: Theme::Dark,
+            key: KeyConfig::default(),
         }
     }
 }
@@ -149,6 +172,30 @@ impl Default for MenuConfig {
                 MenuElement::new("Downloads", dls_path),
                 MenuElement::new("Desktop", desktop_path),
             ],
+        }
+    }
+}
+
+impl Default for KeyConfig {
+    fn default() -> Self {
+        Self {
+            exit_app: 'Q',
+            move_up: 'k',
+            move_up_ten: 'K',
+            move_down: 'j',
+            move_down_ten: 'J',
+            move_parent: 'h',
+            enter_dir_or_edit: 'l',
+            visual_select: 'V',
+            menu_toggle: 'M',
+            menu_move: 'm',
+            create_new: 'a',
+            delete: 'd',
+            rename: 'r',
+            yank: 'y',
+            paste: 'p',
+            search: '/',
+            search_next: 'n',
         }
     }
 }

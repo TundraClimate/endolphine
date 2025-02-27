@@ -380,23 +380,32 @@ fn move_current_dir(path: &Path) {
 }
 
 fn handle_char_key(key: char) -> EpResult<bool> {
-    if key == 'Q' {
+    let keyconf = &global::config().key;
+
+    if key == keyconf.exit_app {
         return Ok(true);
     }
 
-    if ['j', 'k', 'J', 'K'].contains(&key) {
+    if [
+        keyconf.move_up,
+        keyconf.move_up_ten,
+        keyconf.move_down,
+        keyconf.move_down_ten,
+    ]
+    .contains(&key)
+    {
         let cursor = global::captured_cursor();
 
         match key {
-            'j' => cursor.next(),
-            'k' => cursor.previous(),
-            'J' => cursor.shift(10),
-            'K' => cursor.shift(-10),
-            _ => {}
+            c if c == keyconf.move_up => cursor.previous(),
+            c if c == keyconf.move_up_ten => cursor.shift(10),
+            c if c == keyconf.move_down => cursor.next(),
+            c if c == keyconf.move_down_ten => cursor.shift(-10),
+            _ => unreachable!(),
         };
     }
 
-    if key == 'h' {
+    if key == keyconf.move_parent {
         let menu = global::menu();
         if menu.is_enabled() {
             return Ok(false);
@@ -427,7 +436,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
     }
 
-    if key == 'l' {
+    if key == keyconf.enter_dir_or_edit {
         let cursor = global::captured_cursor();
 
         let menu = global::menu();
@@ -496,11 +505,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
     }
 
-    if key == 'V' {
+    if key == keyconf.visual_select {
         global::cursor().toggle_selection();
     }
 
-    if key == 'M' {
+    if key == keyconf.menu_toggle {
         if !menu::is_opened() || global::menu().is_enabled() {
             global::menu().toggle_enable();
         }
@@ -509,7 +518,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         global::cache_clear();
     }
 
-    if key == 'm' {
+    if key == keyconf.menu_move {
         if !menu::is_opened() {
             menu::toggle_open();
         }
@@ -518,7 +527,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         global::cache_clear();
     }
 
-    if key == 'a' {
+    if key == keyconf.create_new {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -529,7 +538,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
     }
 
-    if key == 'd' {
+    if key == keyconf.delete {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -558,7 +567,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
     }
 
-    if key == 'r' {
+    if key == keyconf.rename {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -576,7 +585,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
     }
 
-    if key == 'y' {
+    if key == keyconf.yank {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -620,7 +629,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         }
     }
 
-    if key == 'p' {
+    if key == keyconf.paste {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -650,7 +659,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         })?;
     }
 
-    if ['n', '/'].contains(&key) {
+    if [keyconf.search, keyconf.search_next].contains(&key) {
         if global::menu().is_enabled() {
             return Ok(false);
         }
@@ -658,11 +667,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         global::cursor().disable_selection_mode();
 
         match key {
-            '/' => {
+            c if c == keyconf.search => {
                 global::matcher_update(|m| m.clear());
                 global::input_use_mut(|i| i.enable("/", Some("Search".to_string())));
             }
-            'n' => {
+            c if c == keyconf.search_next => {
                 if !global::is_match_text(|m| m.is_empty()) {
                     global::input_use_mut(|i| {
                         i.enable("/", Some("Search".to_string()));
