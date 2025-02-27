@@ -21,7 +21,7 @@ pub const SCHEME: super::Scheme = super::Scheme {
     mod_time: rgb!(130, 70, 255),
     select: rgb!(235, 140, 0),
     row_cursor: rgb!(85),
-    input: rgb!(40, 40, 80),
+    input: crossterm::style::Color::Reset,
     widget_fg: rgb!(255),
     widget_fg_dark: rgb!(255),
     widget_bg: rgb!(90),
