@@ -126,9 +126,9 @@ pub async fn launch(path: &Path) -> EpResult<()> {
 
     let quit_flag = Arc::new(AtomicBool::new(false));
 
-    let process_handle = {
+    let backend_handle = {
         let q = quit_flag.clone();
-        tokio::spawn(async move { process(q) })
+        tokio::spawn(async move { backend(q) })
     };
 
     let ui_handle = {
@@ -136,7 +136,7 @@ pub async fn launch(path: &Path) -> EpResult<()> {
         tokio::spawn(async move { ui(q).await })
     };
 
-    process_handle.await.unwrap();
+    backend_handle.await.unwrap();
     ui_handle.await.unwrap();
 
     disable_tui!()?;
@@ -187,7 +187,7 @@ pub fn config_init() -> EpResult<()> {
     Ok(())
 }
 
-pub fn process(quit_flag: Arc<AtomicBool>) {
+pub fn backend(quit_flag: Arc<AtomicBool>) {
     loop {
         match handler::handle_event() {
             Ok(is_quit) => {
