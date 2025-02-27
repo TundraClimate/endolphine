@@ -1,10 +1,17 @@
 use crate::{
     config,
     error::*,
+    global,
     menu::MenuElement,
     theme::{self, Scheme, Theme},
 };
 use std::path::{Path, PathBuf};
+
+global!(CONFIG<Config>, Config::load, {
+    pub fn config() -> &'static Config {
+        &CONFIG
+    }
+});
 
 pub fn file_path() -> Option<PathBuf> {
     option_env!("HOME").map(|home| {

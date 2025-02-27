@@ -1,3 +1,22 @@
+use crate::global;
+use std::sync::RwLock;
+
+global!(INPUT<RwLock<Input>>, || RwLock::new(Input::default()), {
+    fn input() -> &'static RwLock<Input> {
+        &INPUT
+    }
+});
+
+pub fn input_use<F: FnOnce(&Input) -> R, R>(f: F) -> R {
+    let lock = input().read().unwrap();
+    f(&lock)
+}
+
+pub fn input_use_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
+    let mut lock = input().write().unwrap();
+    f(&mut lock)
+}
+
 #[derive(Default)]
 pub struct Input {
     buffer: Option<String>,

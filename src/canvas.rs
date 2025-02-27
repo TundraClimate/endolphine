@@ -1,4 +1,4 @@
-use crate::{error::*, global, misc, theme};
+use crate::{app, cursor, error::*, global, input, menu, misc, theme};
 use chrono::{DateTime, Local};
 use crossterm::{
     cursor::MoveTo,
@@ -7,17 +7,22 @@ use crossterm::{
 };
 use si_scale::helpers;
 use std::{
+    collections::HashMap,
     os::unix::fs::PermissionsExt,
     path::{Path, PathBuf},
+    sync::{
+        RwLock,
+        atomic::{AtomicU16, Ordering},
+    },
 };
 
 macro_rules! di_view_line {
     ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !global::cache_match(($row, 0), &$tag) && global::get_height() != 0 {
-            global::cache_insert(($row, 0), $tag.to_string());
+        if !cache_match(($row, 0), &$tag) {
+            cache_insert(($row, 0), $tag.to_string());
             crossterm::queue!(
                 std::io::stdout(),
-                MoveTo(global::get_view_shift(), $row),
+                MoveTo(get_view_shift(), $row),
                 SetForegroundColor(theme::app_fg()),
                 SetBackgroundColor(theme::app_bg()),
                 Clear(ClearType::UntilNewLine),
@@ -30,9 +35,9 @@ macro_rules! di_view_line {
 
 macro_rules! di_menu_line {
     ($row:expr, $tag:expr, $($cmd:expr),+ $(,)?) => {{
-        if !global::cache_match(($row, 1), &$tag) && global::get_height() != 0 {
-            global::cache_insert(($row, 1), $tag.to_string());
-            let slide = global::get_view_shift();
+        if !cache_match(($row, 1), &$tag)  {
+            cache_insert(($row, 1), $tag.to_string());
+            let slide = get_view_shift();
             let bg = theme::widget_bg();
             crossterm::queue!(
                 std::io::stdout(),
@@ -62,7 +67,7 @@ macro_rules! log {
         use crossterm::terminal;
         use crossterm::terminal::ClearType;
         use std::io;
-        let row = $crate::global::get_height();
+        let row = terminal::size().map(|(_, h)| h).unwrap_or(100);
         if let Err(_) = crossterm::execute!(
             io::stdout(),
             style::ResetColor,
@@ -81,7 +86,7 @@ macro_rules! log {
             use crossterm::terminal;
             use crossterm::terminal::ClearType;
             use std::io;
-            let row = $crate::global::get_height();
+            let row = terminal::size().map(|(_, h)| h).unwrap_or(100);
             let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
             let ts = if $text == "" { " ".to_string() } else { ts };
             if let Err(_) = crossterm::execute!(
@@ -98,8 +103,36 @@ macro_rules! log {
     }};
 }
 
+global!(VIEW_SHIFT<AtomicU16>, || AtomicU16::new(0), {
+    pub fn get_view_shift() -> u16 {
+        VIEW_SHIFT.load(Ordering::Relaxed)
+    }
+
+    pub fn set_view_shift(new_value: u16) {
+        VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
+    }
+});
+
+global!(
+    CACHE<RwLock<HashMap<(u16, u8), String>>>,
+    || RwLock::new(HashMap::new()),
+    {
+        pub fn cache_insert(key: (u16, u8), tag: String) {
+            CACHE.write().unwrap().insert(key, tag);
+        }
+
+        pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
+            CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
+        }
+
+        pub fn cache_clear() {
+            CACHE.write().unwrap().clear();
+        }
+    }
+);
+
 pub fn render() -> EpResult<()> {
-    let (width, height) = (global::get_width(), global::get_height());
+    let (width, height) = crossterm::terminal::size().unwrap_or((0, 0));
 
     if height <= 4 {
         return Ok(());
@@ -136,7 +169,7 @@ fn colored_bar(color: Color, len: u16) -> String {
 }
 
 fn render_header(bar_length: u16) -> EpResult<()> {
-    let current_path = global::get_path();
+    let current_path = app::get_path();
     let filename = format!("{}/", misc::file_name(&current_path));
 
     let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {
@@ -157,7 +190,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     let pwd = format!(
         "{}{}{}",
         parent,
-        SetForegroundColor(global::color().path_picked),
+        SetForegroundColor(theme::scheme().path_picked),
         filename
     );
 
@@ -167,17 +200,17 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         Print(format!(" {} in {}", filename, pwd))
     )?;
 
-    let cursor = global::cursor();
+    let cursor = cursor::cursor();
 
     let page = cursor.current() / misc::body_height() as usize + 1;
-    let len = misc::child_files_len(&global::get_path());
+    let len = misc::child_files_len(&app::get_path());
 
     let page_area = format!(
         "{}{} Page {} {}(All {} items)",
         SetBackgroundColor(theme::bar_color()),
-        SetForegroundColor(global::color().bar_text),
+        SetForegroundColor(theme::scheme().bar_text),
         page,
-        SetForegroundColor(global::color().bar_text_light),
+        SetForegroundColor(theme::scheme().bar_text_light),
         len
     );
 
@@ -185,7 +218,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         format!("{}{}", page, len),
         1,
         Print(colored_bar(theme::bar_color(), bar_length)),
-        MoveTo(global::get_view_shift(), 1),
+        MoveTo(get_view_shift(), 1),
         Print(page_area),
     )?;
 
@@ -193,11 +226,11 @@ fn render_header(bar_length: u16) -> EpResult<()> {
 }
 
 fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
-    let procs = global::procs();
+    let procs = app::procs();
     let bar_text = format!(
         "{}{} {} process running",
         SetBackgroundColor(theme::bar_color()),
-        SetForegroundColor(global::color().bar_text),
+        SetForegroundColor(theme::scheme().bar_text),
         procs
     );
 
@@ -205,7 +238,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         format!("{}", procs),
         row,
         Print(colored_bar(theme::bar_color(), bar_length)),
-        MoveTo(global::get_view_shift(), row),
+        MoveTo(get_view_shift(), row),
         Print(bar_text)
     )?;
 
@@ -214,15 +247,15 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 
 fn render_body() -> EpResult<()> {
     let height = misc::body_height();
-    let cursor = global::cursor();
+    let cursor = cursor::cursor();
     let page = cursor.current() / height as usize + 1;
-    let pagenated = pagenate(&misc::sorted_child_files(&global::get_path()), height, page);
+    let pagenated = pagenate(&misc::sorted_child_files(&app::get_path()), height, page);
 
     for rel_i in 0..height {
         let abs_i = (height as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
-        if is_cursor_pos && global::input_use(|i| i.is_enable()) {
+        if is_cursor_pos && input::input_use(|i| i.is_enable()) {
             render_input_line(rel_i)?;
             continue;
         }
@@ -237,7 +270,7 @@ fn render_body() -> EpResult<()> {
 }
 
 fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()> {
-    let Some(buf) = global::input_use(|i| i.buffer_load().clone()) else {
+    let Some(buf) = input::input_use(|i| i.buffer_load().clone()) else {
         return Ok(());
     };
 
@@ -251,7 +284,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
     crossterm::queue!(
         std::io::stdout(),
         MoveTo(pos.0, pos.1),
-        SetBackgroundColor(global::color().input),
+        SetBackgroundColor(theme::scheme().input),
         Print(" ".repeat((padding.0 + width + padding.1) as usize)),
         MoveTo(pos.0 + padding.0, pos.1),
         Print(buf),
@@ -265,7 +298,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
 
 fn render_input_line(rel_i: u16) -> EpResult<()> {
     let name_col = 39;
-    render_input((global::get_view_shift() + name_col, rel_i + 2), 20, (0, 5))?;
+    render_input((get_view_shift() + name_col, rel_i + 2), 20, (0, 5))?;
 
     Ok(())
 }
@@ -349,7 +382,7 @@ impl BodyRow {
     fn colored_file_type(path: &PathBuf) -> String {
         format!(
             "{}{}",
-            SetForegroundColor(global::color().perm_ty),
+            SetForegroundColor(theme::scheme().perm_ty),
             match path {
                 path if path.is_symlink() => 'l',
                 path if path.is_dir() => 'd',
@@ -362,12 +395,12 @@ impl BodyRow {
     fn surround_from_matcher(text: String) -> String {
         let mut pos = 0usize;
         let mut pat_len = 0usize;
-        if global::is_match_text(|m| {
+        if app::is_match_grep(|m| {
             pat_len = m.len();
             !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
         }) {
             let end_pos = pos + pat_len;
-            let surround_color = SetBackgroundColor(global::color().search_sur);
+            let surround_color = SetBackgroundColor(theme::scheme().search_sur);
             let reset_color = SetBackgroundColor(theme::app_bg());
             format!(
                 "{}{}{}{}{}",
@@ -431,7 +464,7 @@ impl BodyRow {
 
         format!(
             "{}{}",
-            SetForegroundColor(global::color().mod_time),
+            SetForegroundColor(theme::scheme().mod_time),
             datetime.format("%y %m/%d %H:%M")
         )
     }
@@ -502,7 +535,7 @@ impl std::fmt::Display for BodyRow {
 }
 
 fn render_menu() -> EpResult<()> {
-    let slide_len = global::get_view_shift();
+    let slide_len = get_view_shift();
     if slide_len == 0 {
         return Ok(());
     }
@@ -510,7 +543,7 @@ fn render_menu() -> EpResult<()> {
     di_menu_line!(0, "title", Print(" Select to Cd "))?;
     di_menu_line!(1, "sep", Print("-".repeat(slide_len as usize - 1)))?;
 
-    let menu = global::menu();
+    let menu = menu::menu();
     let cursor = menu.cursor();
 
     for i in 2..misc::body_height() + 3 {
@@ -550,7 +583,7 @@ fn render_menu_line(
             "{} |{} {}{} {}{}",
             cur,
             under_name_color,
-            SetForegroundColor(global::color().menu_tag),
+            SetForegroundColor(theme::scheme().menu_tag),
             tag,
             SetBackgroundColor(theme::widget_bg()),
             ResetColor,

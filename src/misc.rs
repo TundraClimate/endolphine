@@ -1,4 +1,3 @@
-use crate::global;
 use std::path::{Path, PathBuf};
 use walkdir::WalkDir;
 
@@ -30,7 +29,7 @@ pub fn child_files(path: &Path) -> Vec<PathBuf> {
 }
 
 fn sort_files(files: &mut [PathBuf]) {
-    let priority = global::config().sort_by_priority;
+    let priority = crate::config::config().sort_by_priority;
     files.sort_by_key(|p| {
         let name = file_name(p);
         let priority = match name.chars().next() {
@@ -61,7 +60,9 @@ pub fn child_files_len(path: &Path) -> usize {
 }
 
 pub fn body_height() -> u16 {
-    global::get_height().saturating_sub(4)
+    crossterm::terminal::size()
+        .map(|(_, height)| height.saturating_sub(4))
+        .unwrap_or(0)
 }
 
 pub fn exists_item(path: &Path) -> bool {

@@ -7,7 +7,6 @@ mod clipboard;
 mod config;
 mod cursor;
 mod error;
-mod global;
 mod handler;
 mod input;
 mod menu;

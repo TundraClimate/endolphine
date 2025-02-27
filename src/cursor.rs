@@ -1,10 +1,25 @@
+use crate::global;
 use std::{
     path::{Path, PathBuf},
     sync::{
-        atomic::{AtomicUsize, Ordering},
         RwLock,
+        atomic::{AtomicUsize, Ordering},
     },
 };
+
+global!(CURSOR<Cursor>, Cursor::new, {
+    pub fn cursor() -> &'static Cursor {
+        &CURSOR
+    }
+
+    pub fn captured_cursor() -> &'static Cursor {
+        if crate::menu::menu().is_enabled() {
+            crate::menu::menu().cursor()
+        } else {
+            cursor()
+        }
+    }
+});
 
 pub struct Cursor {
     index: AtomicUsize,

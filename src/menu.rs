@@ -5,18 +5,24 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
+global!(MENU<Menu>, Menu::default, {
+    pub fn menu() -> &'static Menu {
+        &MENU
+    }
+});
+
 const MENU_LENGTH: u16 = 20;
 
 pub fn toggle_open() {
     if is_opened() {
-        global::set_view_shift(0);
+        crate::canvas::set_view_shift(0);
     } else {
-        global::set_view_shift(MENU_LENGTH);
+        crate::canvas::set_view_shift(MENU_LENGTH);
     }
 }
 
 pub fn is_opened() -> bool {
-    let shift = global::get_view_shift();
+    let shift = crate::canvas::get_view_shift();
     shift == MENU_LENGTH
 }
 
@@ -29,7 +35,7 @@ pub struct Menu {
 impl Default for Menu {
     fn default() -> Self {
         Menu {
-            elements: global::config().menu.items.clone(),
+            elements: crate::config::config().menu.items.clone(),
             cursor: Cursor::new(),
             enable: AtomicBool::new(false),
         }

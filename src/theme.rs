@@ -1,4 +1,3 @@
-use crate::global;
 use crossterm::style::Color;
 use std::path::PathBuf;
 
@@ -69,61 +68,65 @@ macro_rules! rgb {
     };
 }
 
+pub fn scheme() -> Scheme {
+    crate::config::config().scheme()
+}
+
 pub fn app_fg() -> Color {
-    if crate::global::menu().is_enabled() {
-        global::color().fg_dark
+    if crate::menu::menu().is_enabled() {
+        scheme().fg_dark
     } else {
-        global::color().fg
+        scheme().fg
     }
 }
 
 pub fn app_bg() -> Color {
-    if crate::global::menu().is_enabled() {
-        global::color().bg_dark
+    if crate::menu::menu().is_enabled() {
+        scheme().bg_dark
     } else {
-        global::color().bg
+        scheme().bg
     }
 }
 
 pub fn bar_color() -> Color {
-    if crate::global::menu().is_enabled() {
-        global::color().bar_dark
+    if crate::menu::menu().is_enabled() {
+        scheme().bar_dark
     } else {
-        global::color().bar
+        scheme().bar
     }
 }
 
 pub fn widget_fg() -> Color {
-    if crate::global::menu().is_enabled() {
-        global::color().widget_fg
+    if crate::menu::menu().is_enabled() {
+        scheme().widget_fg
     } else {
-        global::color().widget_fg_dark
+        scheme().widget_fg_dark
     }
 }
 
 pub fn widget_bg() -> Color {
-    if crate::global::menu().is_enabled() {
-        global::color().widget_bg
+    if crate::menu::menu().is_enabled() {
+        scheme().widget_bg
     } else {
-        global::color().widget_bg_dark
+        scheme().widget_bg_dark
     }
 }
 
 pub fn path_name(path: &PathBuf) -> Color {
     match path {
-        path if !path.exists() => global::color().row_broken,
-        path if path.is_symlink() => global::color().row_symlink,
-        path if path.is_dir() => global::color().row_dir,
-        path if path.is_file() => global::color().row_file,
-        _ => global::color().row_broken,
+        path if !path.exists() => scheme().row_broken,
+        path if path.is_symlink() => scheme().row_symlink,
+        path if path.is_dir() => scheme().row_dir,
+        path if path.is_file() => scheme().row_file,
+        _ => scheme().row_broken,
     }
 }
 
 pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
     if is_selected {
-        global::color().select
+        scheme().select
     } else if is_cursor_pos {
-        global::color().row_cursor
+        scheme().row_cursor
     } else {
         app_bg()
     }
@@ -131,7 +134,7 @@ pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
 
 pub fn widget_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
     if is_cursor_pos && is_enable {
-        global::color().widget_cursor
+        scheme().widget_cursor
     } else {
         widget_bg()
     }
@@ -139,8 +142,8 @@ pub fn widget_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
 
 pub fn permission(index: usize) -> Color {
     match index % 3 {
-        0 => global::color().perm_r,
-        1 => global::color().perm_w,
-        _ => global::color().perm_e,
+        0 => scheme().perm_r,
+        1 => scheme().perm_w,
+        _ => scheme().perm_e,
     }
 }
