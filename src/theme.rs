@@ -11,15 +11,15 @@ pub enum Theme {
     Light,
 }
 
-macro_rules! scheme {
-    ($($name:ident),+ $(,)?) => {
-        pub struct Scheme {
-            $(pub $name: Color),+
+macro_rules! colors {
+    ($v:vis struct $name:ident { $($field:ident),+ $(,)? }) => {
+        $v struct $name {
+            $(pub $field: Color),+
         }
     }
 }
 
-scheme!(
+colors!(pub struct Scheme {
     fg,
     fg_dark,
     bg,
@@ -48,7 +48,7 @@ scheme!(
     widget_cursor,
     menu_tag,
     search_sur,
-);
+});
 
 #[macro_export]
 macro_rules! rgb {
