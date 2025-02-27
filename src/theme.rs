@@ -69,11 +69,11 @@ macro_rules! rgb {
 }
 
 pub fn scheme() -> Scheme {
-    crate::config::config().scheme()
+    crate::config::load().scheme()
 }
 
 pub fn app_fg() -> Color {
-    if crate::menu::menu().is_enabled() {
+    if crate::menu::refs().is_enabled() {
         scheme().fg_dark
     } else {
         scheme().fg
@@ -81,7 +81,7 @@ pub fn app_fg() -> Color {
 }
 
 pub fn app_bg() -> Color {
-    if crate::menu::menu().is_enabled() {
+    if crate::menu::refs().is_enabled() {
         scheme().bg_dark
     } else {
         scheme().bg
@@ -89,7 +89,7 @@ pub fn app_bg() -> Color {
 }
 
 pub fn bar_color() -> Color {
-    if crate::menu::menu().is_enabled() {
+    if crate::menu::refs().is_enabled() {
         scheme().bar_dark
     } else {
         scheme().bar
@@ -97,7 +97,7 @@ pub fn bar_color() -> Color {
 }
 
 pub fn widget_fg() -> Color {
-    if crate::menu::menu().is_enabled() {
+    if crate::menu::refs().is_enabled() {
         scheme().widget_fg
     } else {
         scheme().widget_fg_dark
@@ -105,7 +105,7 @@ pub fn widget_fg() -> Color {
 }
 
 pub fn widget_bg() -> Color {
-    if crate::menu::menu().is_enabled() {
+    if crate::menu::refs().is_enabled() {
         scheme().widget_bg
     } else {
         scheme().widget_bg_dark

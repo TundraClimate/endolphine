@@ -29,7 +29,7 @@ pub fn child_files(path: &Path) -> Vec<PathBuf> {
 }
 
 fn sort_files(files: &mut [PathBuf]) {
-    let priority = crate::config::config().sort_by_priority;
+    let priority = crate::config::load().sort_by_priority;
     files.sort_by_key(|p| {
         let name = file_name(p);
         let priority = match name.chars().next() {

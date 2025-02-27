@@ -7,11 +7,25 @@ use crate::{
 };
 use std::path::{Path, PathBuf};
 
-global!(CONFIG<Config>, Config::load, {
-    pub fn config() -> &'static Config {
-        &CONFIG
+global!(
+    CONFIG<Config>,
+    || {
+        file_path()
+            .and_then(|p| std::fs::read_to_string(p).ok())
+            .and_then(|c| toml::from_str(&c).ok())
+            .unwrap_or_default()
+    },
+    {
+        fn try_load() -> Option<Result<Config, toml::de::Error>> {
+            file_path()
+                .and_then(|p| std::fs::read_to_string(p).ok())
+                .map(|c| toml::from_str(&c))
+        }
+        pub fn load() -> &'static Config {
+            &CONFIG
+        }
     }
-});
+);
 
 pub fn file_path() -> Option<PathBuf> {
     option_env!("HOME").map(|home| {
@@ -35,7 +49,7 @@ pub async fn edit_and_check() -> EpResult<()> {
         .await
         .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
 
-    if let Some(Err(e)) = config::Config::try_load() {
+    if let Some(Err(e)) = try_load() {
         let config = config::file_path().and_then(|p| std::fs::read_to_string(p).ok());
         let position_lines = if let (Some(config), Some(span)) = (config, e.span()) {
             let lines = config
@@ -132,19 +146,6 @@ impl Default for Config {
 }
 
 impl Config {
-    pub fn try_load() -> Option<Result<Config, toml::de::Error>> {
-        file_path()
-            .and_then(|p| std::fs::read_to_string(p).ok())
-            .map(|c| toml::from_str(&c))
-    }
-
-    pub fn load() -> Config {
-        file_path()
-            .and_then(|p| std::fs::read_to_string(p).ok())
-            .and_then(|c| toml::from_str(&c).ok())
-            .unwrap_or_default()
-    }
-
     pub fn editor_command(&self) -> Option<std::process::Command> {
         let (cmd, args) = self.editor.split_first()?;
         let mut command = std::process::Command::new(cmd);

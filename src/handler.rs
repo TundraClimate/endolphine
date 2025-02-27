@@ -12,7 +12,7 @@ pub fn handle_event() -> EpResult<bool> {
         match event {
             Event::Key(key) => return handle_key_event(key),
             Event::Resize(_, _) => {
-                cursor::cursor().resize(misc::child_files_len(&app::get_path()));
+                cursor::master().resize(misc::child_files_len(&app::get_path()));
                 canvas::cache_clear();
             }
             _ => {}
@@ -23,8 +23,8 @@ pub fn handle_event() -> EpResult<bool> {
 }
 
 fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
-    if input::input_use(|i| i.is_enable()) {
-        input::input_use_mut(|i| handle_input_mode(i, key));
+    if input::use_f(|i| i.is_enable()) {
+        input::use_f_mut(|i| handle_input_mode(i, key));
         return Ok(false);
     }
 
@@ -48,7 +48,7 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
             if let Some(act) = input.load_action() {
                 match act.as_str() {
                     "Search" => app::grep_update(|m| m.push(c)),
-                    "RmSelected" | "RmFileOrDirectory" if config::config().rm.no_enter => {
+                    "RmSelected" | "RmFileOrDirectory" if config::load().rm.no_enter => {
                         handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
                     }
                     _ => {}
@@ -105,16 +105,16 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
 
-            cursor::cursor().resize(misc::child_files_len(&app::get_path()));
+            cursor::master().resize(misc::child_files_len(&app::get_path()));
             crate::log!(format!("\"{}\" create successful.", &content))
         }
         "RmFileOrDirectory" => {
-            if !["y", "Y", config::config().key.delete.to_string().as_str()].contains(&content) {
+            if !["y", "Y", config::load().key.delete.to_string().as_str()].contains(&content) {
                 return;
             }
 
             if let Some(under_cursor_file) =
-                misc::sorted_child_files(&app::get_path()).get(cursor::cursor().current())
+                misc::sorted_child_files(&app::get_path()).get(cursor::master().current())
             {
                 let Ok(metadata) = under_cursor_file.symlink_metadata() else {
                     crate::log!("Delete file failed: cannot access metadata.");
@@ -128,8 +128,8 @@ fn handle_action(content: &str, act: String) {
 
                 let name = misc::file_name(under_cursor_file);
 
-                let res = if config::config().rm.for_tmp {
-                    if config::config().rm.yank {
+                let res = if config::load().rm.for_tmp {
+                    if config::load().rm.yank {
                         if !clipboard::is_cmd_installed() {
                             crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
                             return;
@@ -156,18 +156,18 @@ fn handle_action(content: &str, act: String) {
                     return;
                 }
 
-                cursor::cursor().resize(misc::child_files_len(&app::get_path()));
+                cursor::master().resize(misc::child_files_len(&app::get_path()));
                 crate::log!(format!("\"{}\" delete successful.", name));
             } else {
                 crate::log!("Delete file failed: target cannot find.");
             }
         }
         "RmSelected" => {
-            if !["y", "Y", config::config().key.delete.to_string().as_str()].contains(&content) {
+            if !["y", "Y", config::load().key.delete.to_string().as_str()].contains(&content) {
                 return;
             }
 
-            let cursor = cursor::cursor();
+            let cursor = cursor::master();
 
             let selected = misc::sorted_child_files(&app::get_path())
                 .into_iter()
@@ -175,8 +175,8 @@ fn handle_action(content: &str, act: String) {
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
 
-            if config::config().rm.for_tmp {
-                if config::config().rm.yank {
+            if config::load().rm.for_tmp {
+                if config::load().rm.yank {
                     if !clipboard::is_cmd_installed() {
                         crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
                         return;
@@ -227,14 +227,14 @@ fn handle_action(content: &str, act: String) {
                 }
             }
 
-            cursor::cursor().resize(misc::child_files_len(&app::get_path()));
-            cursor::cursor().disable_selection_mode();
+            cursor::master().resize(misc::child_files_len(&app::get_path()));
+            cursor::master().disable_selection_mode();
             crate::log!(format!("{} items delete successful.", selected.len()));
         }
         "Rename" => {
             let path = app::get_path();
             if let Some(under_cursor_file) =
-                misc::sorted_child_files(&path).get(cursor::cursor().current())
+                misc::sorted_child_files(&path).get(cursor::master().current())
             {
                 let renamed = path.join(content);
 
@@ -276,7 +276,7 @@ fn handle_action(content: &str, act: String) {
 
             let current_path = app::get_path();
             let overwrite_mode =
-                ["y", "Y", config::config().key.paste.to_string().as_str()].contains(&content);
+                ["y", "Y", config::load().key.paste.to_string().as_str()].contains(&content);
 
             for file in files.iter() {
                 let Ok(metadata) = file.symlink_metadata() else {
@@ -294,7 +294,7 @@ fn handle_action(content: &str, act: String) {
                             .file_stem()
                             .map(|s| s.to_string_lossy())
                             .unwrap_or_default();
-                        let suffix = config::config().paste.similar_file_suffix();
+                        let suffix = config::load().paste.similar_file_suffix();
                         let added_suffix = if let Some(extension) =
                             copied.extension().map(|e| e.to_string_lossy())
                         {
@@ -344,12 +344,12 @@ fn handle_action(content: &str, act: String) {
                     }
                 }
             }
-            cursor::cursor().resize(misc::child_files_len(&app::get_path()));
+            cursor::master().resize(misc::child_files_len(&app::get_path()));
 
             crate::log!(format!("{} files paste successful.", files.len()));
         }
         "Search" => {
-            let cursor = cursor::cursor();
+            let cursor = cursor::master();
 
             let child_files = misc::sorted_child_files(&app::get_path());
             let first_match_pos = child_files[cursor.current() + 1..]
@@ -367,13 +367,13 @@ fn handle_action(content: &str, act: String) {
 }
 
 fn handle_esc_key() -> EpResult<()> {
-    cursor::cursor().disable_selection_mode();
+    cursor::master().disable_selection_mode();
 
     Ok(())
 }
 
 fn move_current_dir(path: &Path) {
-    let cursor = cursor::cursor();
+    let cursor = cursor::master();
     cursor.disable_selection_mode();
     app::set_path(path);
     canvas::cache_clear();
@@ -384,7 +384,7 @@ fn move_current_dir(path: &Path) {
 }
 
 fn handle_char_key(key: char) -> EpResult<bool> {
-    let keyconf = &config::config().key;
+    let keyconf = &config::load().key;
 
     if key == keyconf.exit_app {
         return Ok(true);
@@ -398,7 +398,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     ]
     .contains(&key)
     {
-        let cursor = cursor::captured_cursor();
+        let cursor = cursor::captured();
 
         match key {
             c if c == keyconf.move_up => cursor.previous(),
@@ -410,7 +410,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.move_parent {
-        let menu = menu::menu();
+        let menu = menu::refs();
         if menu.is_enabled() {
             return Ok(false);
         }
@@ -423,7 +423,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let parent = misc::parent(&path);
 
-        let cursor = cursor::cursor();
+        let cursor = cursor::master();
         let child_files = misc::sorted_child_files(&path);
         {
             if let Some(target_path) = child_files.get(cursor.current()) {
@@ -441,9 +441,9 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.enter_dir_or_edit {
-        let cursor = cursor::captured_cursor();
+        let cursor = cursor::captured();
 
-        let menu = menu::menu();
+        let menu = menu::refs();
         if menu.is_enabled() {
             let elements = menu.elements();
             if let Some(element) = elements.get(cursor.current()) {
@@ -457,7 +457,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 move_current_dir(path);
                 menu.toggle_enable();
 
-                cursor::cursor().cache.write().unwrap().reset();
+                cursor::master().cache.write().unwrap().reset();
             }
 
             return Ok(false);
@@ -487,7 +487,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 cache.reset();
             }
         } else if target_path.is_file() {
-            let Some(mut editor) = config::config().editor_command() else {
+            let Some(mut editor) = config::load().editor_command() else {
                 crate::log!("invalid config: editor");
                 return Ok(false);
             };
@@ -510,12 +510,12 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.visual_select {
-        cursor::cursor().toggle_selection();
+        cursor::master().toggle_selection();
     }
 
     if key == keyconf.menu_toggle {
-        if !menu::is_opened() || menu::menu().is_enabled() {
-            menu::menu().toggle_enable();
+        if !menu::is_opened() || menu::refs().is_enabled() {
+            menu::refs().toggle_enable();
         }
 
         menu::toggle_open();
@@ -527,27 +527,27 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             menu::toggle_open();
         }
 
-        menu::menu().toggle_enable();
+        menu::refs().toggle_enable();
         canvas::cache_clear();
     }
 
     if key == keyconf.create_new {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
-        cursor::cursor().disable_selection_mode();
+        cursor::master().disable_selection_mode();
 
-        input::input_use_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
+        input::use_f_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
     }
 
     if key == keyconf.delete {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
-        let cursor = cursor::cursor();
+        let cursor = cursor::master();
 
         if cursor.is_selection_mode() {
             let selected_files = misc::sorted_child_files(&app::get_path())
@@ -555,7 +555,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 .enumerate()
                 .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
-            input::input_use_mut(|i| i.enable("", Some("RmSelected".into())));
+            input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
             crate::log!(format!(
                 "Delete {} items ? (y/Y/{})",
                 keyconf.delete,
@@ -567,7 +567,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
         if let Some(under_cursor_file) =
             misc::sorted_child_files(&app::get_path()).get(cursor.current())
         {
-            input::input_use_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
+            input::use_f_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
             crate::log!(format!(
                 "Delete \"{}\" ? (y/Y/{})",
                 keyconf.delete,
@@ -577,11 +577,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.rename {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
-        let cursor = cursor::cursor();
+        let cursor = cursor::master();
 
         cursor.disable_selection_mode();
 
@@ -589,13 +589,13 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             misc::sorted_child_files(&app::get_path()).get(cursor.current())
         {
             let name = misc::file_name(under_cursor_file);
-            input::input_use_mut(|i| i.enable(name, Some("Rename".into())));
+            input::use_f_mut(|i| i.enable(name, Some("Rename".into())));
             crate::log!(format!("Enter new name for \"{}\"", name));
         }
     }
 
     if key == keyconf.yank {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
@@ -604,7 +604,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = cursor::cursor();
+        let cursor = cursor::master();
 
         if cursor.is_selection_mode() {
             let selected_files = misc::sorted_child_files(&app::get_path())
@@ -639,7 +639,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.paste {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
@@ -648,8 +648,8 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        input::input_use_mut(|i| {
-            let config = config::config();
+        input::use_f_mut(|i| {
+            let config = config::load();
             let default_paste_input = if config.paste.default_overwrite {
                 "y"
             } else {
@@ -669,20 +669,20 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if [keyconf.search, keyconf.search_next].contains(&key) {
-        if menu::menu().is_enabled() {
+        if menu::refs().is_enabled() {
             return Ok(false);
         }
 
-        cursor::cursor().disable_selection_mode();
+        cursor::master().disable_selection_mode();
 
         match key {
             c if c == keyconf.search => {
                 app::grep_update(|m| m.clear());
-                input::input_use_mut(|i| i.enable("/", Some("Search".to_string())));
+                input::use_f_mut(|i| i.enable("/", Some("Search".to_string())));
             }
             c if c == keyconf.search_next => {
                 if !app::is_match_grep(|m| m.is_empty()) {
-                    input::input_use_mut(|i| {
+                    input::use_f_mut(|i| {
                         i.enable("/", Some("Search".to_string()));
                         handle_input_mode(i, KeyEvent::from(KeyCode::Enter))
                     });

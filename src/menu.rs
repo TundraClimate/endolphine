@@ -6,7 +6,7 @@ use std::{
 };
 
 global!(MENU<Menu>, Menu::default, {
-    pub fn menu() -> &'static Menu {
+    pub fn refs() -> &'static Menu {
         &MENU
     }
 });
@@ -35,7 +35,7 @@ pub struct Menu {
 impl Default for Menu {
     fn default() -> Self {
         Menu {
-            elements: crate::config::config().menu.items.clone(),
+            elements: crate::config::load().menu.items.clone(),
             cursor: Cursor::new(),
             enable: AtomicBool::new(false),
         }

@@ -8,15 +8,15 @@ use std::{
 };
 
 global!(CURSOR<Cursor>, Cursor::new, {
-    pub fn cursor() -> &'static Cursor {
+    pub fn master() -> &'static Cursor {
         &CURSOR
     }
 
-    pub fn captured_cursor() -> &'static Cursor {
-        if crate::menu::menu().is_enabled() {
-            crate::menu::menu().cursor()
+    pub fn captured() -> &'static Cursor {
+        if crate::menu::refs().is_enabled() {
+            crate::menu::refs().cursor()
         } else {
-            cursor()
+            master()
         }
     }
 });

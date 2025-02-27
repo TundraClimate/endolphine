@@ -200,7 +200,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         Print(format!(" {} in {}", filename, pwd))
     )?;
 
-    let cursor = cursor::cursor();
+    let cursor = cursor::master();
 
     let page = cursor.current() / misc::body_height() as usize + 1;
     let len = misc::child_files_len(&app::get_path());
@@ -247,7 +247,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
 
 fn render_body() -> EpResult<()> {
     let height = misc::body_height();
-    let cursor = cursor::cursor();
+    let cursor = cursor::master();
     let page = cursor.current() / height as usize + 1;
     let pagenated = pagenate(&misc::sorted_child_files(&app::get_path()), height, page);
 
@@ -255,7 +255,7 @@ fn render_body() -> EpResult<()> {
         let abs_i = (height as usize * (page - 1)) + rel_i as usize;
         let is_cursor_pos = cursor.current() == abs_i;
 
-        if is_cursor_pos && input::input_use(|i| i.is_enable()) {
+        if is_cursor_pos && input::use_f(|i| i.is_enable()) {
             render_input_line(rel_i)?;
             continue;
         }
@@ -270,7 +270,7 @@ fn render_body() -> EpResult<()> {
 }
 
 fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()> {
-    let Some(buf) = input::input_use(|i| i.buffer_load().clone()) else {
+    let Some(buf) = input::use_f(|i| i.buffer_load().clone()) else {
         return Ok(());
     };
 
@@ -543,7 +543,7 @@ fn render_menu() -> EpResult<()> {
     di_menu_line!(0, "title", Print(" Select to Cd "))?;
     di_menu_line!(1, "sep", Print("-".repeat(slide_len as usize - 1)))?;
 
-    let menu = menu::menu();
+    let menu = menu::refs();
     let cursor = menu.cursor();
 
     for i in 2..misc::body_height() + 3 {

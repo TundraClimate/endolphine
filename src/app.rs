@@ -152,9 +152,9 @@ fn init(path: &Path) -> EpResult<()> {
     set_path(&path);
 
     let c = misc::child_files_len(&path);
-    crate::cursor::cursor().resize(c);
+    crate::cursor::master().resize(c);
 
-    if config::config().rm.for_tmp {
+    if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
             std::fs::create_dir_all(tmp_path).map_err(|e| EpError::Init(e.to_string()))?;
