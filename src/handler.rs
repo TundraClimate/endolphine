@@ -402,9 +402,9 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         match key {
             c if c == keyconf.move_up => cursor.previous(),
-            c if c == keyconf.move_up_ten => cursor.shift(10),
+            c if c == keyconf.move_up_ten => cursor.shift(-10),
             c if c == keyconf.move_down => cursor.next(),
-            c if c == keyconf.move_down_ten => cursor.shift(-10),
+            c if c == keyconf.move_down_ten => cursor.shift(10),
             _ => unreachable!(),
         };
     }
