@@ -1,118 +1,117 @@
-use crate::{command, ui};
-use image::io::Reader as ImageReader;
-use std::{
-    fs::File,
-    io::{self, Read},
-    path::PathBuf,
-};
-use tokio::task;
+use std::path::{Path, PathBuf};
+use walkdir::WalkDir;
 
-pub fn is_image(path: &PathBuf) -> io::Result<bool> {
-    Ok(ImageReader::open(path)?
-        .with_guessed_format()?
-        .format()
-        .is_some())
+pub fn file_name(path: &Path) -> &str {
+    if path == Path::new("/") {
+        return "";
+    }
+
+    path.file_name()
+        .and_then(|o| o.to_str())
+        .unwrap_or("_OsIncompatible_")
 }
 
-pub fn is_compressed(path: &PathBuf) -> io::Result<bool> {
-    let mut file = File::open(path)?;
-    let mut buffer = [0; 4];
-    file.read_exact(&mut buffer)?;
-
-    let is_compressed = match &buffer {
-        // gzip
-        [0x1F, 0x8B, ..] => true,
-        // zip
-        [0x50, 0x4B, 0x03, 0x04] => true,
-        // tar.gz
-        [0x1F, 0x9D, ..] => true,
-        // bzip2
-        [0x42, 0x5A, 0x68, ..] => true,
-        // xz
-        [0xFD, 0x37, 0x7A, 0x58] => true,
-        // 7z
-        [0x37, 0x7A, 0xBC, 0xAF] => true,
-        // rar
-        [0x52, 0x61, 0x72, 0x21] => true,
-        // lz4
-        [0x04, 0x22, 0x4D, 0x18] => true,
-        _ => false,
-    };
-
-    Ok(is_compressed)
+pub fn parent(path: &Path) -> PathBuf {
+    path.parent()
+        .map(|p| p.to_path_buf())
+        .unwrap_or(PathBuf::from("/"))
 }
 
-pub fn extract_from_archive(path: PathBuf) {
-    task::spawn_blocking(move || {
-        let mut file = File::open(&path)?;
-        let mut buffer = [0; 4];
-        file.read_exact(&mut buffer)?;
+pub fn child_files(path: &Path) -> Vec<PathBuf> {
+    if !path.is_dir() || !path.exists() {
+        return vec![];
+    }
 
-        match &buffer {
-            [0x50, 0x4B, 0x03, 0x04] => extract_zip(&path)?,
-            [0x1F, 0x8B, ..] => extract_tgz(&path)?,
-            _ => {}
-        }
-        Ok::<(), io::Error>(())
+    match path.read_dir() {
+        Ok(entries) => entries.flatten().map(|entry| entry.path()).collect(),
+        Err(_) => vec![],
+    }
+}
+
+fn sort_files(files: &mut [PathBuf]) {
+    let priority = crate::config::load().sort_by_priority;
+    files.sort_by_key(|p| {
+        let name = file_name(p);
+        let priority = match name.chars().next() {
+            Some(c) if c.is_lowercase() => priority[0],
+            Some(c) if c.is_uppercase() => priority[1],
+            Some('.') => priority[2],
+            _ => priority[3],
+        };
+        (priority, name.to_owned())
     });
 }
 
-fn extract_zip(path: &PathBuf) -> io::Result<()> {
-    let outpath = path
-        .file_stem()
-        .map(|s| s.to_os_string())
-        .unwrap_or("out".into());
-    if let Some(parent) = path.parent() {
-        if !parent.join(&outpath).exists() {
-            command::extract_zip(&path, parent.join(&outpath))?;
-            ui::log(format!(
-                "Archive \"{}\" has been extracted",
-                crate::filename(path)
-            ))?;
-        } else {
-            ui::log(format!("Could not extract {}", crate::filename(&path)))?;
-        }
+pub fn sorted_child_files(path: &Path) -> Vec<PathBuf> {
+    let mut c = child_files(path);
+    sort_files(&mut c);
+    c
+}
+
+pub fn child_files_len(path: &Path) -> usize {
+    if !path.is_dir() || !path.exists() {
+        return 0;
     }
+
+    match path.read_dir() {
+        Ok(d) => d.count(),
+        Err(_) => 0,
+    }
+}
+
+pub fn body_height() -> u16 {
+    crossterm::terminal::size()
+        .map(|(_, height)| height.saturating_sub(4))
+        .unwrap_or(0)
+}
+
+pub fn exists_item(path: &Path) -> bool {
+    path.symlink_metadata()
+        .is_ok_and(|m| m.is_symlink() || path.exists())
+}
+
+pub fn remove_dir_all(path: &Path) -> std::io::Result<()> {
+    let res = WalkDir::new(path)
+        .contents_first(true)
+        .into_iter()
+        .try_for_each(|entry| {
+            let entry = entry?;
+            let entry_path = entry.path();
+
+            if entry_path.is_symlink() || entry_path.is_file() {
+                std::fs::remove_file(entry_path)
+            } else {
+                std::fs::remove_dir(entry_path)
+            }
+        });
+
+    if matches!(res, Err(ref e) if e.kind() == std::io::ErrorKind::PermissionDenied) {
+        return res;
+    }
+
+    if res.is_err() || res.is_ok() && exists_item(path) {
+        std::thread::sleep(std::time::Duration::from_millis(100));
+        remove_dir_all(path)?;
+    }
+
     Ok(())
 }
 
-fn extract_tgz(path: &PathBuf) -> io::Result<()> {
-    if let Some(parent) = path.parent() {
-        let outpath = path
-            .file_stem()
-            .map(|s| PathBuf::from(s).file_stem().unwrap().to_os_string())
-            .unwrap_or("out".into());
-        if !parent.join(&outpath).exists() {
-            command::extract_tgz(&path)?;
-            ui::log(format!(
-                "Archive \"{}\" has been extracted",
-                crate::filename(path)
-            ))?;
-        } else {
-            ui::log(format!("Could not extract {}", crate::filename(&path)))?;
+pub fn into_tmp(paths: &[PathBuf]) -> std::io::Result<()> {
+    let tmp_path = Path::new("/tmp").join("endolphine");
+    for path in paths {
+        if !exists_item(path) {
+            continue;
         }
+
+        let dest = tmp_path.join(file_name(path));
+
+        if exists_item(&dest) {
+            remove_dir_all(&dest)?;
+        }
+
+        std::fs::rename(path, dest)?;
     }
+
     Ok(())
-}
-
-pub fn zip(path: PathBuf) {
-    tokio::spawn(async move {
-        command::zip(&path).await?;
-        ui::log(format!(
-            "Created an archive for \"{}\"",
-            crate::filename(&path)
-        ))?;
-        Ok::<(), io::Error>(())
-    });
-}
-
-pub fn tgz(path: PathBuf) {
-    tokio::spawn(async move {
-        command::tgz(&path).await?;
-        ui::log(format!(
-            "Created an archive for \"{}\"",
-            crate::filename(&path)
-        ))?;
-        Ok::<(), io::Error>(())
-    });
 }

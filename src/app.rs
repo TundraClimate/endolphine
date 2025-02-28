@@ -1,130 +1,220 @@
-use crate::{action::Action, command, finder::Finder, menu, ui::Dialog, Args};
-use crossterm::{
-    cursor::Hide,
-    event::{Event, KeyEventKind},
-    execute,
-    terminal::EnterAlternateScreen,
+use crate::{
+    canvas,
+    config::{self, Config},
+    error::*,
+    global, handler, misc,
 };
-use std::{error::Error, io, path::PathBuf};
-use termkit::EventThread;
+use std::{
+    path::{Path, PathBuf},
+    sync::{
+        Arc, RwLock,
+        atomic::{AtomicBool, AtomicU16, Ordering},
+    },
+};
 use tokio::time::{self, Duration, Instant};
 
-pub struct App {
-    pub path: PathBuf,
-    pub cursor: usize,
-    pub action: Action,
-    pub dialog: Option<Dialog>,
-    pub selected: Vec<usize>,
-    pub menu: Option<PathBuf>,
-    pub finder: Finder,
-    pub is_cut: bool,
-    pub editor: bool,
-    pub quit: bool,
+#[macro_export]
+macro_rules! global {
+    ($name:ident<$type:ty>, $init:expr, {
+        $( $v:vis fn $fname:ident ( $($an:ident : $aty:ty),* ) $( -> $ret:ty )? $body:block )*
+    }) => {
+        static $name: std::sync::LazyLock<$type> = std::sync::LazyLock::new($init);
+
+        $( $v fn $fname ($($an: $aty),*) $( -> $ret )? $body )*
+    };
 }
 
-impl App {
-    pub fn new(args: Args) -> App {
-        App {
-            path: args.path.canonicalize().unwrap().clone(),
-            cursor: 0,
-            action: Action::None,
-            dialog: None,
-            selected: vec![],
-            menu: None,
-            finder: Finder::new(&args.path),
-            is_cut: false,
-            editor: false,
-            quit: false,
+#[macro_export]
+macro_rules! enable_tui {
+    () => {
+        'blk: {
+            use crossterm::cursor;
+            use crossterm::terminal;
+            use std::io;
+            if let Err(e) = terminal::enable_raw_mode() {
+                break 'blk Err(e);
+            }
+            $crate::app::enable_render();
+            crossterm::execute!(
+                io::stdout(),
+                terminal::EnterAlternateScreen,
+                cursor::Hide,
+                terminal::DisableLineWrap
+            )
+        }
+        .map_err(|_| $crate::error::EpError::SwitchScreen)
+    };
+}
+
+#[macro_export]
+macro_rules! disable_tui {
+    () => {
+        'blk: {
+            use crossterm::cursor;
+            use crossterm::terminal;
+            use std::io;
+            if let Err(e) = terminal::disable_raw_mode() {
+                break 'blk Err(e);
+            }
+            $crate::app::disable_render();
+            crossterm::execute!(
+                io::stdout(),
+                terminal::LeaveAlternateScreen,
+                cursor::Show,
+                terminal::EnableLineWrap,
+            )
+        }
+        .map_err(|_| $crate::error::EpError::SwitchScreen)
+    };
+}
+
+global!(PATH<RwLock<PathBuf>>, || RwLock::new(PathBuf::new()), {
+    pub fn get_path() -> PathBuf {
+        (*PATH.read().unwrap()).clone()
+    }
+
+    pub fn set_path(new_path: &Path) {
+        let mut lock = PATH.write().unwrap();
+        *lock = new_path.to_path_buf();
+    }
+});
+
+global!(RENDER<AtomicBool>, || AtomicBool::new(false), {
+    pub fn disable_render() {
+        RENDER.swap(false, Ordering::Relaxed);
+    }
+
+    pub fn enable_render() {
+        RENDER.swap(true, Ordering::Relaxed);
+    }
+});
+
+global!(GREP<RwLock<String>>, || RwLock::new(String::new()), {
+    pub fn read_grep() -> String {
+        let lock = GREP.read().unwrap();
+        lock.to_owned()
+    }
+});
+
+pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
+    let mut lock = GREP.write().unwrap();
+    f(&mut lock);
+}
+
+pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
+    let lock = GREP.read().unwrap();
+    f(&lock)
+}
+
+global!(PROCS_COUNT<AtomicU16>, || AtomicU16::new(0), {
+    pub fn proc_count_up() {
+        PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+    }
+
+    pub fn proc_count_down() {
+        PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+    }
+
+    pub fn procs() -> u16 {
+        PROCS_COUNT.load(Ordering::Relaxed)
+    }
+});
+
+pub async fn launch(path: &Path) -> EpResult<()> {
+    init(path)?;
+    enable_tui!()?;
+
+    let quit_flag = Arc::new(AtomicBool::new(false));
+
+    let backend_handle = {
+        let q = quit_flag.clone();
+        tokio::spawn(async move { backend(q) })
+    };
+
+    let ui_handle = {
+        let q = quit_flag.clone();
+        tokio::spawn(async move { ui(q).await })
+    };
+
+    backend_handle.await.unwrap();
+    ui_handle.await.unwrap();
+
+    disable_tui!()?;
+
+    Ok(())
+}
+
+fn init(path: &Path) -> EpResult<()> {
+    let path = path
+        .canonicalize()
+        .map_err(|e| EpError::Init(e.kind().to_string()))?;
+
+    set_path(&path);
+
+    let c = misc::child_files_len(&path);
+    crate::cursor::master().resize(c);
+
+    if config::load().rm.for_tmp {
+        let tmp_path = Path::new("/tmp").join("endolphine");
+        if !tmp_path.exists() {
+            std::fs::create_dir_all(tmp_path).map_err(|e| EpError::Init(e.to_string()))?;
         }
     }
 
-    pub fn init(self) -> Result<App, Box<dyn Error>> {
-        Ok(self)
+    Ok(())
+}
+
+pub fn config_init() -> EpResult<()> {
+    let conf_path = config::file_path();
+    if let Some(conf_path) = conf_path {
+        if !conf_path.exists() {
+            let parent = misc::parent(&conf_path);
+
+            if !parent.exists() {
+                std::fs::create_dir_all(parent).map_err(|e| EpError::Init(e.kind().to_string()))?;
+            }
+
+            let config_default = toml::to_string_pretty(&Config::default())
+                .map_err(|e| EpError::Init(e.to_string()))?;
+
+            if !conf_path.exists() {
+                std::fs::write(&conf_path, config_default)
+                    .map_err(|e| EpError::Init(e.kind().to_string()))?;
+            }
+        }
     }
 
-    pub async fn launch(self) -> Result<(), Box<dyn Error>> {
-        let mut app = self;
-        let mut ev = EventThread::spawn();
-        app.run_app(&mut ev).await?;
-        Ok(())
+    Ok(())
+}
+
+pub fn backend(quit_flag: Arc<AtomicBool>) {
+    loop {
+        match handler::handle_event() {
+            Ok(is_quit) => {
+                if is_quit {
+                    quit_flag.swap(true, Ordering::Relaxed);
+                    break;
+                }
+            }
+            Err(e) => e.handle(),
+        }
     }
+}
 
-    pub async fn run_app(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
-        termkit::enable_tui()?;
+pub async fn ui(quit_flag: Arc<AtomicBool>) {
+    while !quit_flag.load(Ordering::Relaxed) {
+        let start = Instant::now();
 
-        while !self.quit {
-            let start = Instant::now();
-            self.ui()?;
-            self.looper(ev).await?;
-            let elapsed = start.elapsed();
-            if elapsed < Duration::from_millis(10) {
-                time::sleep(Duration::from_millis(10) - elapsed).await;
+        if RENDER.load(Ordering::Relaxed) {
+            if let Err(e) = canvas::render() {
+                e.handle();
             }
         }
 
-        termkit::disable_tui()?;
-        Ok(())
-    }
-
-    pub async fn looper(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
-        if self.editor {
-            self.open_editor().await?;
+        let elapsed = start.elapsed();
+        let tick = 70;
+        if elapsed < Duration::from_millis(tick) {
+            time::sleep(Duration::from_millis(tick) - elapsed).await;
         }
-        self.receive_event(ev).await?;
-        self.handle_action()?;
-        self.auto_selector();
-        let rows = self.rows(&self.path);
-        self.finder.update(rows);
-        Ok(())
-    }
-
-    fn rows(&self, path: &PathBuf) -> Vec<PathBuf> {
-        if let Some(ref path) = self.menu {
-            return menu::choices(&path).unwrap_or(vec![]);
-        }
-        crate::dir_pathes(path)
-            .into_iter()
-            .filter(|p| {
-                let regex = self.finder.regex();
-                match regex {
-                    Some(regex) => regex.map_or(true, |r| r.is_match(crate::filename(p))),
-                    None => true,
-                }
-            })
-            .collect()
-    }
-
-    async fn receive_event(&mut self, ev: &mut EventThread) -> Result<(), Box<dyn Error>> {
-        if let Ok(event) = ev.read() {
-            self.handle_dialog(&event)?;
-            if let Event::Key(event) = event {
-                if event.kind == KeyEventKind::Press {
-                    self.handle_keys(event);
-                }
-                if self.quit {
-                    ev.shatdown().await?;
-                } else {
-                    ev.respond().await?;
-                }
-            }
-        }
-        Ok(())
-    }
-
-    async fn open_editor(&mut self) -> io::Result<()> {
-        if let Some(file) = self.cur_file() {
-            command::editor(file).await?;
-        }
-        execute!(io::stdout(), EnterAlternateScreen, Hide)?;
-        self.editor = false;
-        Ok(())
-    }
-
-    pub fn cur_file(&self) -> Option<&PathBuf> {
-        self.finder.require(self.cursor)
-    }
-
-    pub fn menu_opened(&self) -> bool {
-        self.menu.is_some()
     }
 }
