@@ -228,13 +228,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ep"
+name = "endolphine"
 version = "1.0.0"
 dependencies = [
  "chrono",
  "clap",
  "crossterm",
- "once_cell",
  "serde",
  "si-scale",
  "thiserror",
