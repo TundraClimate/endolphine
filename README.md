@@ -5,11 +5,13 @@ TUI file explorer made by Rust
 # Installation
 
 required [Cargo](https://www.rust-lang.org/tools/install):
+
 ```sh
 cargo install endolphine
 ```
 
 exec:
+
 ```
 $ ep [PATH]
 
@@ -19,6 +21,7 @@ $ ep [PATH]
 # Usage
 
 ### Launch explorer
+
 ```
 $ ep [PATH]
 ```
@@ -78,11 +81,13 @@ search_next = "n"
 ### Configuration
 
 Open config file:
+
 ```sh
 ep -e
 ```
 
 Config:
+
 ```toml
 # Editor by using
 editor = ["vim"]
@@ -140,9 +145,11 @@ items = [
 # Uninstall
 
 required [Cargo](https://www.rust-lang.org/tools/install):
+
 ```sh
 cargo uninstall endolphine
 ```
 
 ## LICENSE
+
 MIT
