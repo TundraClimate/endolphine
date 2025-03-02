@@ -27,6 +27,7 @@ colors!(pub struct Scheme {
     fg_dark,
     bg,
     bg_dark,
+    label,
     bar,
     bar_dark,
     path_picked,
@@ -97,6 +98,14 @@ pub fn bar_color() -> Color {
         scheme().bar_dark
     } else {
         scheme().bar
+    }
+}
+
+pub fn wid_bar_color() -> Color {
+    if crate::menu::refs().is_enabled() {
+        scheme().bar
+    } else {
+        scheme().bar_dark
     }
 }
 

@@ -3,6 +3,7 @@ use crate::rgb;
 pub const SCHEME: super::Scheme = super::Scheme {
     fg: rgb!(255),
     fg_dark: rgb!(255),
+    label: rgb!(100),
     bg: rgb!(60),
     bg_dark: rgb!(30),
     bar: rgb!(150),

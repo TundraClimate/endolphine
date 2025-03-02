@@ -48,9 +48,11 @@ macro_rules! di_menu_line {
                 MoveTo(0, $row),
                 $($cmd)+,
                 MoveTo(slide - 1, $row),
+                SetBackgroundColor(theme::wid_bar_color()),
+                SetForegroundColor(theme::scheme().label),
+                Print("|"),
                 SetBackgroundColor(bg),
                 SetForegroundColor(theme::widget_fg()),
-                Print(']'),
             )
             .map_err(|_| EpError::Display)
         } else {
@@ -540,8 +542,20 @@ fn render_menu() -> EpResult<()> {
         return Ok(());
     }
 
-    di_menu_line!(0, "title", Print(" Select to Cd "))?;
-    di_menu_line!(1, "sep", Print("-".repeat(slide_len as usize - 1)))?;
+    di_menu_line!(
+        0,
+        format!("{:?}", theme::scheme().label),
+        Print(format!(
+            "{} Select to Cd {}",
+            SetBackgroundColor(theme::scheme().label),
+            ResetColor
+        ))
+    )?;
+    di_menu_line!(
+        1,
+        format!("{:?}", theme::wid_bar_color()),
+        Print(colored_bar(theme::wid_bar_color(), slide_len - 1))
+    )?;
 
     let menu = menu::refs();
     let cursor = menu.cursor();

@@ -5,6 +5,7 @@ pub const SCHEME: super::Scheme = super::Scheme {
     fg_dark: rgb!(0),
     bg: crossterm::style::Color::Reset,
     bg_dark: crossterm::style::Color::Reset,
+    label: rgb!(200),
     bar: rgb!(105),
     bar_dark: rgb!(135),
     path_picked: rgb!(105),
