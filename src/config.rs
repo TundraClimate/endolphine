@@ -163,6 +163,7 @@ impl Config {
             Theme::LightNoBg => theme::light_no_bg::SCHEME,
             Theme::Mars => theme::mars::SCHEME,
             Theme::Neon => theme::neon::SCHEME,
+            Theme::Ice => theme::ice::SCHEME,
         }
     }
 }
