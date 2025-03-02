@@ -451,7 +451,11 @@ impl BodyRow {
         } else {
             let size = metadata.len();
 
-            format!("{:>8}", helpers::bytes1(size as f64))
+            format!(
+                "{}{:>8}",
+                SetForegroundColor(theme::scheme().bsize),
+                helpers::bytes1(size as f64)
+            )
         }
     }
 

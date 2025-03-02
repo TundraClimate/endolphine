@@ -19,6 +19,7 @@ pub const SCHEME: super::Scheme = super::Scheme {
     row_dir: rgb!(215, 55, 55),
     row_symlink: rgb!(55, 175, 55),
     row_broken: rgb!(0),
+    bsize: rgb!(5, 5, 195),
     mod_time: rgb!(125, 185, 0),
     select: rgb!(20, 115, 255),
     row_cursor: rgb!(170),

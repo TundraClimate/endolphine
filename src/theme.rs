@@ -43,6 +43,7 @@ colors!(pub struct Scheme {
     row_dir,
     row_symlink,
     row_broken,
+    bsize,
     mod_time,
     select,
     row_cursor,
