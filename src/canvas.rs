@@ -446,17 +446,16 @@ impl BodyRow {
         let Ok(metadata) = path.symlink_metadata() else {
             return String::from("       x");
         };
-        if metadata.is_dir() {
+
+        let bod = if metadata.is_dir() {
             "       -".into()
         } else {
             let size = metadata.len();
 
-            format!(
-                "{}{:>8}",
-                SetForegroundColor(theme::scheme().bsize),
-                helpers::bytes1(size as f64)
-            )
-        }
+            helpers::bytes1(size as f64)
+        };
+
+        format!("{}{:>8}", SetForegroundColor(theme::scheme().bsize), bod)
     }
 
     fn colored_last_modified(path: &Path) -> String {
