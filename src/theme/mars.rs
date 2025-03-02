@@ -1,11 +1,11 @@
 use crate::rgb;
 
 pub const SCHEME: super::Scheme = super::Scheme {
-    fg: rgb!(255),
-    fg_dark: rgb!(255),
+    fg: rgb!(180),
+    fg_dark: rgb!(180),
     label: rgb!(100),
-    bg: rgb!(5, 0, 60),
-    bg_dark: rgb!(5, 0, 30),
+    bg: rgb!(15, 15, 30),
+    bg_dark: rgb!(15, 15, 15),
     bar: rgb!(85),
     bar_dark: rgb!(55),
     path_picked: rgb!(150),
@@ -22,13 +22,13 @@ pub const SCHEME: super::Scheme = super::Scheme {
     bsize: rgb!(200, 200, 0),
     mod_time: rgb!(210, 90, 0),
     select: rgb!(235, 140, 0),
-    row_cursor: rgb!(85),
+    row_cursor: rgb!(55),
     input: crossterm::style::Color::Reset,
     widget_fg: rgb!(255),
     widget_fg_dark: rgb!(255),
-    widget_bg: rgb!(5, 0, 60),
-    widget_bg_dark: rgb!(5, 0, 30),
+    widget_bg: rgb!(15, 15, 30),
+    widget_bg_dark: rgb!(15, 15, 15),
     widget_cursor: rgb!(70),
-    menu_tag: rgb!(210, 0, 210),
+    menu_tag: rgb!(50, 150, 50),
     search_sur: rgb!(85, 240, 180),
 };
