@@ -36,7 +36,7 @@ pub fn file_path() -> Option<PathBuf> {
     })
 }
 
-pub async fn edit_and_check() -> EpResult<()> {
+pub async fn edit() -> EpResult<()> {
     let editor = option_env!("EDITOR").unwrap_or("vi");
 
     let Some(config_path) = config::file_path() else {
@@ -49,9 +49,13 @@ pub async fn edit_and_check() -> EpResult<()> {
         .await
         .map_err(|e| EpError::CommandExecute(editor.to_string(), e.kind().to_string()))?;
 
+    Ok(())
+}
+
+pub fn check() -> Result<(), (toml::de::Error, String)> {
     if let Some(Err(e)) = try_load() {
         let config = config::file_path().and_then(|p| std::fs::read_to_string(p).ok());
-        let position_lines = if let (Some(config), Some(span)) = (config, e.span()) {
+        if let (Some(config), Some(span)) = (config, e.span()) {
             let lines = config
                 .char_indices()
                 .collect::<Vec<_>>()
@@ -62,11 +66,9 @@ pub async fn edit_and_check() -> EpResult<()> {
                         .then_some(line.iter().map(|(_, c)| *c).collect::<String>())
                 })
                 .collect::<Vec<_>>();
-            lines.join("\n")
-        } else {
-            String::new()
-        };
-        println!("{}\n---\n{}\n---", e.message(), position_lines);
+
+            return Err((e, lines.join("\n")));
+        }
     }
 
     Ok(())

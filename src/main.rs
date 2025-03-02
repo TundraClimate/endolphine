@@ -44,7 +44,10 @@ async fn start() -> error::EpResult<()> {
     let args = Args::parse();
 
     if args.edit_config {
-        config::edit_and_check().await?;
+        config::edit().await?;
+        if let Err((e, lines)) = config::check() {
+            println!("{}\n---\n{}\n---", e.message(), lines);
+        }
         return Ok(());
     }
 
