@@ -161,6 +161,7 @@ impl Config {
             Theme::DarkNoBg => theme::dark_no_bg::SCHEME,
             Theme::Light => theme::light::SCHEME,
             Theme::LightNoBg => theme::light_no_bg::SCHEME,
+            Theme::Mars => theme::mars::SCHEME,
         }
     }
 }
