@@ -92,7 +92,8 @@ Config:
 # Editor by using
 editor = ["vim"]
 
-# Using theme (Available  "Dark" and "Light")
+# Using theme (Available  "Dark", "Light" and "*NoBg")
+# *NoBg is "None Background"
 theme = "Dark"
 
 # Item sort priority

@@ -2,12 +2,16 @@ use crossterm::style::Color;
 use std::path::PathBuf;
 
 pub mod dark;
+pub mod dark_no_bg;
 pub mod light;
+pub mod light_no_bg;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub enum Theme {
     Dark,
+    DarkNoBg,
     Light,
+    LightNoBg,
 }
 
 macro_rules! colors {

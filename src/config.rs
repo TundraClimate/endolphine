@@ -158,7 +158,9 @@ impl Config {
     pub fn scheme(&self) -> Scheme {
         match self.theme {
             Theme::Dark => theme::dark::SCHEME,
+            Theme::DarkNoBg => theme::dark_no_bg::SCHEME,
             Theme::Light => theme::light::SCHEME,
+            Theme::LightNoBg => theme::light_no_bg::SCHEME,
         }
     }
 }
