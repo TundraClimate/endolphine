@@ -157,15 +157,15 @@ impl Config {
 
     pub fn scheme(&self) -> Scheme {
         match self.theme {
-            Theme::Dark => theme::dark::SCHEME,
-            Theme::DarkNoBg => theme::dark_no_bg::SCHEME,
-            Theme::Light => theme::light::SCHEME,
-            Theme::LightNoBg => theme::light_no_bg::SCHEME,
-            Theme::Mars => theme::mars::SCHEME,
-            Theme::Neon => theme::neon::SCHEME,
-            Theme::Ice => theme::ice::SCHEME,
-            Theme::Nept => theme::nept::SCHEME,
-            Theme::Volcano => theme::volcano::SCHEME,
+            Theme::Dark => theme::dark::SCHEME.into(),
+            Theme::DarkNoBg => theme::dark_no_bg::SCHEME.into(),
+            Theme::Light => theme::light::SCHEME.into(),
+            Theme::LightNoBg => theme::light_no_bg::SCHEME.into(),
+            Theme::Mars => theme::mars::SCHEME.into(),
+            Theme::Neon => theme::neon::SCHEME.into(),
+            Theme::Ice => theme::ice::SCHEME.into(),
+            Theme::Nept => theme::nept::SCHEME.into(),
+            Theme::Volcano => theme::volcano::SCHEME.into(),
         }
     }
 }

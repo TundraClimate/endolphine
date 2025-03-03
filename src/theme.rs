@@ -65,23 +65,33 @@ colors!(pub struct Scheme {
     search_sur,
 });
 
-#[macro_export]
-macro_rules! rgb {
-    ($r:expr, $g:expr, $b:expr) => {
-        crossterm::style::Color::Rgb {
-            r: $r,
-            g: $g,
-            b: $b,
-        }
-    };
+impl From<std::sync::LazyLock<Scheme>> for Scheme {
+    fn from(value: std::sync::LazyLock<Scheme>) -> Self {
+        let val = &*value;
+        Scheme { ..*val }
+    }
+}
 
-    ($color:expr) => {
-        crossterm::style::Color::Rgb {
-            r: $color,
-            g: $color,
-            b: $color,
-        }
-    };
+#[macro_export]
+macro_rules! scheme {
+    ($($name:ident : $value:expr),* $(,)?) => {
+        #[allow(clippy::declare_interior_mutable_const)]
+        pub const SCHEME: std::sync::LazyLock<super::Scheme> = std::sync::LazyLock::new(|| super::Scheme {
+            $($name: $value),*
+        });
+    }
+}
+
+pub fn rgb(t: &str) -> Color {
+    if t.len() != 7 || !t.starts_with("#") {
+        panic!("Invalid scheme: {}", t);
+    }
+
+    let r = u8::from_str_radix(&t[1..=2], 16).unwrap();
+    let g = u8::from_str_radix(&t[3..=4], 16).unwrap();
+    let b = u8::from_str_radix(&t[5..], 16).unwrap();
+
+    Color::Rgb { r, g, b }
 }
 
 pub fn scheme() -> Scheme {
