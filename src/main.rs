@@ -35,6 +35,9 @@ async fn start() -> error::EpResult<()> {
         if let Some(e) = e.payload().downcast_ref::<String>() {
             eprintln!("Endolphine terminated:");
             eprintln!("- {}", e);
+        } else if let Some(e) = e.payload().downcast_ref::<&str>() {
+            eprintln!("Endolphine terminated:");
+            eprintln!("- {}", e);
         }
         std::process::exit(1);
     }));
