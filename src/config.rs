@@ -165,6 +165,7 @@ impl Config {
             Theme::Neon => theme::neon::SCHEME,
             Theme::Ice => theme::ice::SCHEME,
             Theme::Nept => theme::nept::SCHEME,
+            Theme::Volcano => theme::volcano::SCHEME,
         }
     }
 }
