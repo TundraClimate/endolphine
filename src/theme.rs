@@ -8,6 +8,7 @@ pub mod light;
 pub mod light_no_bg;
 pub mod mars;
 pub mod neon;
+pub mod nept;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub enum Theme {
@@ -18,6 +19,7 @@ pub enum Theme {
     Mars,
     Neon,
     Ice,
+    Nept,
 }
 
 macro_rules! colors {

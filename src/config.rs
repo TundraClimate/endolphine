@@ -164,6 +164,7 @@ impl Config {
             Theme::Mars => theme::mars::SCHEME,
             Theme::Neon => theme::neon::SCHEME,
             Theme::Ice => theme::ice::SCHEME,
+            Theme::Nept => theme::nept::SCHEME,
         }
     }
 }
