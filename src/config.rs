@@ -166,6 +166,7 @@ impl Config {
             Theme::Ice => theme::ice::SCHEME.into(),
             Theme::Nept => theme::nept::SCHEME.into(),
             Theme::Volcano => theme::volcano::SCHEME.into(),
+            Theme::Mossy => theme::mossy::SCHEME.into(),
         }
     }
 }
