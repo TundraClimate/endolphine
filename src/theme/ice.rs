@@ -1,7 +1,7 @@
 use super::rgb;
 use crate::scheme;
 
-scheme!(
+scheme! {
     fg: rgb("#BEBEFF"),
     fg_dark: rgb("#BEBEFF"),
     label: rgb("#646478"),
@@ -32,4 +32,4 @@ scheme!(
     widget_cursor: rgb("#5A5A6E"),
     menu_tag: rgb("#55F0B4"),
     search_sur: rgb("#55F0B4"),
-);
+}
