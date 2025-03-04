@@ -92,8 +92,7 @@ Config:
 # Editor by using
 editor = ["vim"]
 
-# Using theme (Available  "Dark", "Light" and "*NoBg")
-# *NoBg is "None Background"
+# Using theme (look "#Themes")
 theme = "Dark"
 
 # Item sort priority
@@ -142,6 +141,60 @@ items = [
     "Desktop:/home/${USER}/Desktop",
 ]
 ```
+
+### Themes
+
+<details><summary>Open theme list</summary>
+
+#### Dark
+
+![Dark](screen/dark.png)
+
+#### Light
+
+![Light](screen/light.png)
+
+#### Mars
+
+![Mars](screen/mars.png)
+
+#### Neon
+
+![Neon](screen/neon.png)
+
+#### Ice
+
+![Ice](screen/ice.png)
+
+#### Nept
+
+![Nept](screen/nept.png)
+
+#### Volcano
+
+![Volcano](screen/volcano.png)
+
+#### Mossy
+
+![Mossy](screen/mossy.png)
+
+#### Monochrome
+
+![Monochrome](screen/monochrome.png)
+
+#### Holiday
+
+![Holiday](screen/holiday.png)
+
+#### Bloom
+
+![Bloom](screen/bloom.png)
+
+#### Collapse
+
+![Collapse](screen/collapse.png)
+
+</details>
 
 # Uninstall
 
