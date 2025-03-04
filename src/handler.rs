@@ -510,6 +510,10 @@ fn handle_char_key(key: char) -> EpResult<bool> {
     }
 
     if key == keyconf.visual_select {
+        if menu::refs().is_enabled() {
+            return Ok(false);
+        }
+
         cursor::master().toggle_selection();
     }
 
