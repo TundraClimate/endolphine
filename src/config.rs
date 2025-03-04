@@ -169,6 +169,7 @@ impl Config {
             Theme::Mossy => theme::mossy::SCHEME.into(),
             Theme::Monochrome => theme::monochrome::SCHEME.into(),
             Theme::Holiday => theme::holiday::SCHEME.into(),
+            Theme::Bloom => theme::bloom::SCHEME.into(),
         }
     }
 }
