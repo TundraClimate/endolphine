@@ -2,6 +2,7 @@ use crossterm::style::Color;
 use std::path::PathBuf;
 
 pub mod bloom;
+pub mod collapse;
 pub mod dark;
 pub mod dark_no_bg;
 pub mod holiday;
@@ -30,6 +31,7 @@ pub enum Theme {
     Monochrome,
     Holiday,
     Bloom,
+    Collapse,
 }
 
 macro_rules! colors {

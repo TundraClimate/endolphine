@@ -170,6 +170,7 @@ impl Config {
             Theme::Monochrome => theme::monochrome::SCHEME.into(),
             Theme::Holiday => theme::holiday::SCHEME.into(),
             Theme::Bloom => theme::bloom::SCHEME.into(),
+            Theme::Collapse => theme::collapse::SCHEME.into(),
         }
     }
 }
