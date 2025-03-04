@@ -167,6 +167,7 @@ impl Config {
             Theme::Nept => theme::nept::SCHEME.into(),
             Theme::Volcano => theme::volcano::SCHEME.into(),
             Theme::Mossy => theme::mossy::SCHEME.into(),
+            Theme::Monochrome => theme::monochrome::SCHEME.into(),
         }
     }
 }

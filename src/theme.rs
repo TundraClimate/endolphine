@@ -7,6 +7,7 @@ pub mod ice;
 pub mod light;
 pub mod light_no_bg;
 pub mod mars;
+pub mod monochrome;
 pub mod mossy;
 pub mod neon;
 pub mod nept;
@@ -24,6 +25,7 @@ pub enum Theme {
     Nept,
     Volcano,
     Mossy,
+    Monochrome,
 }
 
 macro_rules! colors {
