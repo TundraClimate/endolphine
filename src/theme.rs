@@ -3,6 +3,7 @@ use std::path::PathBuf;
 
 pub mod dark;
 pub mod dark_no_bg;
+pub mod holiday;
 pub mod ice;
 pub mod light;
 pub mod light_no_bg;
@@ -26,6 +27,7 @@ pub enum Theme {
     Volcano,
     Mossy,
     Monochrome,
+    Holiday,
 }
 
 macro_rules! colors {
