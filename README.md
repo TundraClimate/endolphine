@@ -204,6 +204,25 @@ required [Cargo](https://www.rust-lang.org/tools/install):
 cargo uninstall endolphine
 ```
 
+# TODO
+
+- Impl for the multi-key command system
+- Add a cursor in input
+- Improve display and cache logic
+- Add a config for command override that open it by extension
+- Add a loader for the user-defined theme
+- Create the `Widget` trait
+- Support MacOS (NEVER SUPPORT for **WINDOWS**)
+- Add a logger to file
+- Impl for the realtime displaying system
+- Improve the termination message
+- Improve error displays when invalid config syntax is detected
+- Improve the search logic (Now: contains TEXT)
+- Improve the error handling
+- Refactor backend logics
+- Impl for the application-level yank and paste
+- Add a command mode
+
 ## LICENSE
 
 MIT
