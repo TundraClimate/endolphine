@@ -16,47 +16,50 @@ use std::{
     },
 };
 
-macro_rules! di_view_line {
-    ($tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
-        if !cache_match(($row, 0), &$tag) {
-            cache_insert(($row, 0), $tag.to_string());
-            crossterm::queue!(
-                std::io::stdout(),
-                MoveTo(get_view_shift(), $row),
-                SetForegroundColor(theme::app_fg()),
-                SetBackgroundColor(theme::app_bg()),
-                Clear(ClearType::UntilNewLine),
-                $($cmd),+,
-                ResetColor
-            ).map_err(|_| EpError::Display)
-        } else { Ok(()) }
-    }};
+enum RenderingTarget {
+    Body,
+    Menu,
 }
 
-macro_rules! di_menu_line {
-    ($row:expr, $tag:expr, $($cmd:expr),+ $(,)?) => {{
-        if !cache_match(($row, 1), &$tag)  {
-            cache_insert(($row, 1), $tag.to_string());
-            let slide = get_view_shift();
-            let bg = theme::widget_bg();
-            crossterm::queue!(
-                std::io::stdout(),
-                SetForegroundColor(theme::widget_fg()),
-                SetBackgroundColor(bg),
-                MoveTo(0, $row),
-                Print(" ".repeat(slide as usize)),
-                MoveTo(0, $row),
-                $($cmd)+,
-                MoveTo(slide - 1, $row),
-                SetBackgroundColor(theme::wid_bar_color()),
-                SetForegroundColor(theme::scheme().label),
-                Print("|"),
-                SetBackgroundColor(bg),
-                SetForegroundColor(theme::widget_fg()),
-            )
-            .map_err(|_| EpError::Display)
-        } else {
-            Ok(())
+macro_rules! display {
+    ($target:tt, $tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
+        match RenderingTarget::$target {
+            RenderingTarget::Body if !cache_match(($row, 0), &$tag) => {
+                cache_insert(($row, 0), $tag.to_string());
+                crossterm::queue!(
+                    std::io::stdout(),
+                    MoveTo(get_view_shift(), $row),
+                    SetForegroundColor(theme::app_fg()),
+                    SetBackgroundColor(theme::app_bg()),
+                    Clear(ClearType::UntilNewLine),
+                    $($cmd),+,
+                    ResetColor
+                )
+                .map_err(|_| EpError::Display)
+            }
+            RenderingTarget::Menu if !cache_match(($row, 1), &$tag) => {
+                cache_insert(($row, 1), $tag.to_string());
+                let slide = get_view_shift();
+                let fg = theme::widget_fg();
+                let bg = theme::widget_bg();
+                crossterm::queue!(
+                    std::io::stdout(),
+                    SetForegroundColor(fg),
+                    SetBackgroundColor(bg),
+                    MoveTo(0, $row),
+                    Print(" ".repeat(slide as usize)),
+                    MoveTo(0, $row),
+                    $($cmd),+,
+                    MoveTo(slide - 1, $row),
+                    SetBackgroundColor(theme::wid_bar_color()),
+                    SetForegroundColor(theme::scheme().label),
+                    Print("|"),
+                    SetForegroundColor(fg),
+                    SetBackgroundColor(bg),
+                )
+                .map_err(|_| EpError::Display)
+            }
+            _ => Ok(()),
         }
     }};
 }
@@ -196,7 +199,8 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         filename
     );
 
-    di_view_line!(
+    display!(
+        Body,
         format!("{}", &filename),
         0,
         Print(format!(" {} in {}", filename, pwd))
@@ -216,7 +220,8 @@ fn render_header(bar_length: u16) -> EpResult<()> {
         len
     );
 
-    di_view_line!(
+    display!(
+        Body,
         format!("{}{}", page, len),
         1,
         Print(colored_bar(theme::bar_color(), bar_length)),
@@ -236,7 +241,8 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
         procs
     );
 
-    di_view_line!(
+    display!(
+        Body,
         format!("{}", procs),
         row,
         Print(colored_bar(theme::bar_color(), bar_length)),
@@ -314,7 +320,8 @@ fn render_file_line(
     let c = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(theme::item_bg(is_selected, is_cursor_pos));
     let body_row = BodyRow::new(file, c.into(), under_name_color);
-    di_view_line!(
+    display!(
+        Body,
         format!("{}{}", rel_i, body_row.gen_key()),
         rel_i + 2,
         Print(body_row),
@@ -327,9 +334,9 @@ fn render_empty_line(rel_i: u16) -> EpResult<()> {
             "{}> | Press 'a' to create the New file | Empty",
             SetForegroundColor(theme::bar_color()),
         );
-        di_view_line!(format!("{}", rel_i), rel_i + 2, Print(row))
+        display!(Body, format!("{}", rel_i), rel_i + 2, Print(row))
     } else {
-        di_view_line!(format!("{}", rel_i), rel_i + 2, Print(""))
+        display!(Body, format!("{}", rel_i), rel_i + 2, Print(""))
     }
 }
 
@@ -545,18 +552,20 @@ fn render_menu() -> EpResult<()> {
         return Ok(());
     }
 
-    di_menu_line!(
-        0,
+    display!(
+        Menu,
         format!("{:?}", theme::scheme().label),
+        0,
         Print(format!(
             "{} Select to Cd {}",
             SetBackgroundColor(theme::scheme().label),
             ResetColor
         ))
     )?;
-    di_menu_line!(
-        1,
+    display!(
+        Menu,
         format!("{:?}", theme::wid_bar_color()),
+        1,
         Print(colored_bar(theme::wid_bar_color(), slide_len - 1))
     )?;
 
@@ -575,7 +584,7 @@ fn render_menu() -> EpResult<()> {
                 menu.is_enabled(),
             )?;
         } else {
-            di_menu_line!(i, "empty", Print(""))?;
+            display!(Menu, "empty", i, Print(""))?;
         }
     }
 
@@ -593,9 +602,10 @@ fn render_menu_line(
     let cur = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(theme::widget_item_bg(is_cursor_pos, menu_enabled));
 
-    di_menu_line!(
-        row,
+    display!(
+        Menu,
         format!("{}{}", cur, tag),
+        row,
         Print(format!(
             "{} |{} {}{} {}{}",
             cur,
