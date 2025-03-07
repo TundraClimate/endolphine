@@ -17,14 +17,16 @@ use std::{
 };
 
 enum RenderingTarget {
+    Header,
     Body,
+    Footer,
     Menu,
 }
 
 macro_rules! display {
     ($target:tt, $tag:expr, $row:expr, $($cmd:expr),+ $(,)?) => {{
         match RenderingTarget::$target {
-            RenderingTarget::Body if !cache_match(($row, 0), &$tag) => {
+            RenderingTarget::Header if !cache_match(($row, 0), &$tag) => {
                 cache_insert(($row, 0), $tag.to_string());
                 crossterm::queue!(
                     std::io::stdout(),
@@ -37,8 +39,34 @@ macro_rules! display {
                 )
                 .map_err(|_| EpError::Display)
             }
-            RenderingTarget::Menu if !cache_match(($row, 1), &$tag) => {
+            RenderingTarget::Body if !cache_match(($row, 1), &$tag) => {
                 cache_insert(($row, 1), $tag.to_string());
+                crossterm::queue!(
+                    std::io::stdout(),
+                    MoveTo(get_view_shift(), $row + 2),
+                    SetForegroundColor(theme::app_fg()),
+                    SetBackgroundColor(theme::app_bg()),
+                    Clear(ClearType::UntilNewLine),
+                    $($cmd),+,
+                    ResetColor
+                )
+                .map_err(|_| EpError::Display)
+            }
+            RenderingTarget::Footer if !cache_match(($row, 2), &$tag) => {
+                cache_insert(($row, 2), $tag.to_string());
+                crossterm::queue!(
+                    std::io::stdout(),
+                    MoveTo(get_view_shift(), $row),
+                    SetForegroundColor(theme::app_fg()),
+                    SetBackgroundColor(theme::app_bg()),
+                    Clear(ClearType::UntilNewLine),
+                    $($cmd),+,
+                    ResetColor
+                )
+                .map_err(|_| EpError::Display)
+            }
+            RenderingTarget::Menu if !cache_match(($row, 3), &$tag) => {
+                cache_insert(($row, 3), $tag.to_string());
                 let slide = get_view_shift();
                 let fg = theme::widget_fg();
                 let bg = theme::widget_bg();
@@ -200,7 +228,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     );
 
     display!(
-        Body,
+        Header,
         format!("{}", &filename),
         0,
         Print(format!(" {} in {}", filename, pwd))
@@ -221,7 +249,7 @@ fn render_header(bar_length: u16) -> EpResult<()> {
     );
 
     display!(
-        Body,
+        Header,
         format!("{}{}", page, len),
         1,
         Print(colored_bar(theme::bar_color(), bar_length)),
@@ -242,7 +270,7 @@ fn render_footer(row: u16, bar_length: u16) -> EpResult<()> {
     );
 
     display!(
-        Body,
+        Footer,
         format!("{}", procs),
         row,
         Print(colored_bar(theme::bar_color(), bar_length)),
@@ -323,7 +351,7 @@ fn render_file_line(
     display!(
         Body,
         format!("{}{}", rel_i, body_row.gen_key()),
-        rel_i + 2,
+        rel_i,
         Print(body_row),
     )
 }
@@ -334,9 +362,9 @@ fn render_empty_line(rel_i: u16) -> EpResult<()> {
             "{}> | Press 'a' to create the New file | Empty",
             SetForegroundColor(theme::bar_color()),
         );
-        display!(Body, format!("{}", rel_i), rel_i + 2, Print(row))
+        display!(Body, format!("{}", rel_i), rel_i, Print(row))
     } else {
-        display!(Body, format!("{}", rel_i), rel_i + 2, Print(""))
+        display!(Body, format!("{}", rel_i), rel_i, Print(""))
     }
 }
 
