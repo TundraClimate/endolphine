@@ -62,7 +62,18 @@ async fn start() -> error::EpResult<()> {
     if args.edit_config {
         config::edit().await?;
         if let Err((e, lines)) = config::check() {
-            println!("{}\n---\n{}\n---", e.message(), lines);
+            eprintln!(
+                "{}{}",
+                crossterm::style::SetForegroundColor(crossterm::style::Color::DarkCyan),
+                crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
+            );
+            eprintln!("-------Invalid syntax detected-------");
+            eprintln!("Kind: {}", e.message());
+            eprintln!("Lines: ");
+            eprintln!();
+            eprintln!("{}", lines);
+            eprintln!();
+            eprintln!("-------------------------------------");
         }
         return Ok(());
     }
