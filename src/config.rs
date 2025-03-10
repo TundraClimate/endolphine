@@ -60,10 +60,15 @@ pub fn check() -> Result<(), (toml::de::Error, String)> {
                 .char_indices()
                 .collect::<Vec<_>>()
                 .split(|(_, c)| *c == '\n')
-                .filter_map(|line| {
+                .enumerate()
+                .filter_map(|(row, line)| {
                     line.iter()
                         .any(|(i, _)| span.contains(i))
-                        .then_some(line.iter().map(|(_, c)| *c).collect::<String>())
+                        .then_some(format!(
+                            "{}: {}",
+                            row + 1,
+                            line.iter().map(|(_, c)| *c).collect::<String>()
+                        ))
                 })
                 .collect::<Vec<_>>();
 
