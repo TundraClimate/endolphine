@@ -213,8 +213,6 @@ cargo uninstall endolphine
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
 - Add a logger to file
 - Impl for the realtime displaying system
-- Improve the termination message
-- Improve error displays when invalid config syntax is detected
 - Improve the search logic (Now: contains TEXT)
 - Improve the error handling
 - Refactor backend logics
