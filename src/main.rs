@@ -25,6 +25,10 @@ struct Args {
 
 #[tokio::main]
 async fn main() {
+    if cfg!(windows) {
+        panic!("Endolphine is not supported in Windows")
+    }
+
     start().await.unwrap_or_else(|e| e.handle());
 }
 
