@@ -37,9 +37,13 @@ Open config file:
 
 ```sh
 ep -e
+
+# or
+
+vim ~/.config/endolphine/config.toml
 ```
 
-Config:
+Default config:
 
 ```toml
 # Editor by using
