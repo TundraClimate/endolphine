@@ -1,5 +1,7 @@
 # Endolphine
 
+![Endolphine](./screen/endolphine.png)
+
 TUI file explorer made by Rust
 
 # Installation
