@@ -287,7 +287,7 @@ impl Widget for Body {
 
     fn render(_size: (u16, u16)) -> EpResult<()> {
         let height = misc::body_height();
-        let cursor = cursor::master();
+        let cursor = cursor::load();
         let page = cursor.current() / height as usize + 1;
         let pagenated = pagenate(&misc::sorted_child_files(&app::get_path()), height, page);
 

@@ -8,7 +8,7 @@ use std::{
 };
 
 global!(CURSOR<Cursor>, Cursor::new, {
-    pub fn master() -> &'static Cursor {
+    pub fn load() -> &'static Cursor {
         &CURSOR
     }
 
@@ -16,7 +16,7 @@ global!(CURSOR<Cursor>, Cursor::new, {
         if crate::menu::refs().is_enabled() {
             crate::menu::refs().cursor()
         } else {
-            master()
+            load()
         }
     }
 });

@@ -12,7 +12,7 @@ pub fn handle_event() -> EpResult<bool> {
         match event {
             Event::Key(key) => return handle_key_event(key),
             Event::Resize(_, _) => {
-                cursor::master().resize(misc::child_files_len(&app::get_path()));
+                cursor::load().resize(misc::child_files_len(&app::get_path()));
                 canvas::cache_clear();
             }
             _ => {}
@@ -105,7 +105,7 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
 
-            cursor::master().resize(misc::child_files_len(&app::get_path()));
+            cursor::load().resize(misc::child_files_len(&app::get_path()));
             crate::log!(format!("\"{}\" create successful.", &content))
         }
         "RmFileOrDirectory" => {
@@ -114,7 +114,7 @@ fn handle_action(content: &str, act: String) {
             }
 
             if let Some(under_cursor_file) =
-                misc::sorted_child_files(&app::get_path()).get(cursor::master().current())
+                misc::sorted_child_files(&app::get_path()).get(cursor::load().current())
             {
                 let Ok(metadata) = under_cursor_file.symlink_metadata() else {
                     crate::log!("Delete file failed: cannot access metadata.");
@@ -156,7 +156,7 @@ fn handle_action(content: &str, act: String) {
                     return;
                 }
 
-                cursor::master().resize(misc::child_files_len(&app::get_path()));
+                cursor::load().resize(misc::child_files_len(&app::get_path()));
                 crate::log!(format!("\"{}\" delete successful.", name));
             } else {
                 crate::log!("Delete file failed: target cannot find.");
@@ -167,7 +167,7 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
 
-            let cursor = cursor::master();
+            let cursor = cursor::load();
 
             let selected = misc::sorted_child_files(&app::get_path())
                 .into_iter()
@@ -227,14 +227,14 @@ fn handle_action(content: &str, act: String) {
                 }
             }
 
-            cursor::master().resize(misc::child_files_len(&app::get_path()));
-            cursor::master().disable_selection_mode();
+            cursor::load().resize(misc::child_files_len(&app::get_path()));
+            cursor::load().disable_selection_mode();
             crate::log!(format!("{} items delete successful.", selected.len()));
         }
         "Rename" => {
             let path = app::get_path();
             if let Some(under_cursor_file) =
-                misc::sorted_child_files(&path).get(cursor::master().current())
+                misc::sorted_child_files(&path).get(cursor::load().current())
             {
                 let renamed = path.join(content);
 
@@ -344,12 +344,12 @@ fn handle_action(content: &str, act: String) {
                     }
                 }
             }
-            cursor::master().resize(misc::child_files_len(&app::get_path()));
+            cursor::load().resize(misc::child_files_len(&app::get_path()));
 
             crate::log!(format!("{} files paste successful.", files.len()));
         }
         "Search" => {
-            let cursor = cursor::master();
+            let cursor = cursor::load();
 
             let child_files = misc::sorted_child_files(&app::get_path());
             let first_match_pos = child_files[cursor.current() + 1..]
@@ -367,13 +367,13 @@ fn handle_action(content: &str, act: String) {
 }
 
 fn handle_esc_key() -> EpResult<()> {
-    cursor::master().disable_selection_mode();
+    cursor::load().disable_selection_mode();
 
     Ok(())
 }
 
 fn move_current_dir(path: &Path) {
-    let cursor = cursor::master();
+    let cursor = cursor::load();
     cursor.disable_selection_mode();
     app::set_path(path);
     canvas::cache_clear();
@@ -423,7 +423,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let parent = misc::parent(&path);
 
-        let cursor = cursor::master();
+        let cursor = cursor::load();
         let child_files = misc::sorted_child_files(&path);
         {
             if let Some(target_path) = child_files.get(cursor.current()) {
@@ -457,7 +457,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 move_current_dir(path);
                 menu.toggle_enable();
 
-                cursor::master().cache.write().unwrap().reset();
+                cursor::load().cache.write().unwrap().reset();
             }
 
             return Ok(false);
@@ -514,7 +514,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::master().toggle_selection();
+        cursor::load().toggle_selection();
     }
 
     if key == keyconf.menu_toggle {
@@ -540,7 +540,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::master().disable_selection_mode();
+        cursor::load().disable_selection_mode();
 
         input::use_f_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
@@ -551,7 +551,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = cursor::master();
+        let cursor = cursor::load();
 
         if cursor.is_selection_mode() {
             let selected_files = misc::sorted_child_files(&app::get_path())
@@ -585,7 +585,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = cursor::master();
+        let cursor = cursor::load();
 
         cursor.disable_selection_mode();
 
@@ -608,7 +608,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        let cursor = cursor::master();
+        let cursor = cursor::load();
 
         if cursor.is_selection_mode() {
             let selected_files = misc::sorted_child_files(&app::get_path())
@@ -677,7 +677,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::master().disable_selection_mode();
+        cursor::load().disable_selection_mode();
 
         match key {
             c if c == keyconf.search => {

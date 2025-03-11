@@ -152,7 +152,7 @@ fn init(path: &Path) -> EpResult<()> {
     set_path(&path);
 
     let c = misc::child_files_len(&path);
-    crate::cursor::master().resize(c);
+    crate::cursor::load().resize(c);
 
     if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");

@@ -43,7 +43,7 @@ impl Widget for Header {
             format!(" {} in {}", filename, pwd),
         )?;
 
-        let cursor = cursor::master();
+        let cursor = cursor::load();
 
         let page = cursor.current() / misc::body_height() as usize + 1;
         let len = misc::child_files_len(&app::get_path());
