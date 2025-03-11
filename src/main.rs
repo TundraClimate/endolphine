@@ -68,8 +68,7 @@ async fn start() -> error::EpResult<()> {
                 crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
             );
             eprintln!("-------Invalid syntax detected-------");
-            eprintln!("Kind: {}", e.message());
-            eprintln!("Lines: ");
+            eprintln!("{}", e.message());
             eprintln!();
             eprintln!("{}", lines);
             eprintln!();
