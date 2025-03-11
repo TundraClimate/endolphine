@@ -49,7 +49,7 @@ Default config:
 # Editor by using
 editor = ["vim"]
 
-# Using theme (look "#Themes")
+# Using theme (look "#Available themes")
 theme = "Dark"
 
 # Item sort priority
@@ -148,7 +148,7 @@ search = "/"
 search_next = "n"
 ```
 
-### Themes
+### Available themes
 
 | Name       | Description                        |
 | ---------- | ---------------------------------- |
