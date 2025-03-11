@@ -187,7 +187,7 @@ pub fn config_init() -> EpResult<()> {
     Ok(())
 }
 
-pub fn backend(quit_flag: Arc<AtomicBool>) {
+fn backend(quit_flag: Arc<AtomicBool>) {
     loop {
         match handler::handle_event() {
             Ok(is_quit) => {
@@ -201,7 +201,7 @@ pub fn backend(quit_flag: Arc<AtomicBool>) {
     }
 }
 
-pub async fn ui(quit_flag: Arc<AtomicBool>) {
+async fn ui(quit_flag: Arc<AtomicBool>) {
     while !quit_flag.load(Ordering::Relaxed) {
         let start = Instant::now();
 

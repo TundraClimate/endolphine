@@ -27,8 +27,8 @@ pub fn is_opened() -> bool {
 }
 
 pub struct Menu {
-    elements: Vec<MenuElement>,
-    cursor: Cursor,
+    pub elements: Vec<MenuElement>,
+    pub cursor: Cursor,
     enable: AtomicBool,
 }
 
@@ -43,24 +43,12 @@ impl Default for Menu {
 }
 
 impl Menu {
-    pub fn cursor(&self) -> &Cursor {
-        &self.cursor
-    }
-
     pub fn is_enabled(&self) -> bool {
         self.enable.load(Ordering::Relaxed)
     }
 
-    pub fn resize_cursor(&self) {
-        self.cursor().resize(self.elements.len());
-    }
-
-    pub fn elements(&self) -> &Vec<MenuElement> {
-        &self.elements
-    }
-
     pub fn toggle_enable(&self) {
-        self.resize_cursor();
+        self.cursor.resize(self.elements.len());
         if self.is_enabled() {
             self.enable.swap(false, Ordering::Relaxed);
         } else {
@@ -71,8 +59,8 @@ impl Menu {
 
 #[derive(Clone)]
 pub struct MenuElement {
-    tag: String,
-    path: PathBuf,
+    pub tag: String,
+    pub path: PathBuf,
 }
 
 impl MenuElement {
@@ -81,14 +69,6 @@ impl MenuElement {
             tag: String::from(tag),
             path: path.as_ref().to_path_buf(),
         }
-    }
-
-    pub fn tag(&self) -> &str {
-        &self.tag
-    }
-
-    pub fn path(&self) -> &PathBuf {
-        &self.path
     }
 }
 

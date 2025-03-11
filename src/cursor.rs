@@ -14,7 +14,7 @@ global!(CURSOR<Cursor>, Cursor::new, {
 
     pub fn captured() -> &'static Cursor {
         if crate::menu::refs().is_enabled() {
-            crate::menu::refs().cursor()
+            &crate::menu::refs().cursor
         } else {
             load()
         }

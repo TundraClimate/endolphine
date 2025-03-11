@@ -59,19 +59,13 @@ impl Widget for Menu {
         )?;
 
         let menu = menu::refs();
-        let cursor = menu.cursor();
+        let cursor = &menu.cursor;
 
         for i in 2..misc::body_height() + 3 {
-            if let Some(element) = menu.elements().get(i as usize - 2) {
+            if let Some(element) = menu.elements.get(i as usize - 2) {
                 let is_cursor_pos = i as usize - 2 == cursor.current();
 
-                render_menu_line(
-                    i,
-                    element.tag(),
-                    slide_len,
-                    is_cursor_pos,
-                    menu.is_enabled(),
-                )?;
+                render_menu_line(i, &element.tag, slide_len, is_cursor_pos, menu.is_enabled())?;
             } else {
                 Menu::cached_render_row("empty", i, "".to_string())?;
             }

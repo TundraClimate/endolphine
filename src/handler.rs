@@ -445,12 +445,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let menu = menu::refs();
         if menu.is_enabled() {
-            let elements = menu.elements();
-            if let Some(element) = elements.get(cursor.current()) {
-                let path = element.path();
+            if let Some(element) = menu.elements.get(cursor.current()) {
+                let path = &element.path;
 
                 if !path.is_dir() {
-                    crate::log!(format!("\"{}\" is not Directory", element.tag()));
+                    crate::log!(format!("\"{}\" is not Directory", element.tag));
                     return Ok(false);
                 }
 
