@@ -32,25 +32,25 @@ async fn main() {
     start().await.unwrap_or_else(|e| e.handle());
 }
 
+fn terminate<D: std::fmt::Display>(e: D) {
+    eprintln!(
+        "{}{}",
+        crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
+        crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
+    );
+    eprintln!("{:-^41}", "Endolphine terminated");
+    eprintln!(" {}", e);
+    eprintln!("{}", "-".repeat(41));
+}
+
 async fn start() -> error::EpResult<()> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
 
-        let terminate_output = |e: &dyn AsRef<str>| {
-            eprintln!(
-                "{}{}",
-                crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
-                crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-            );
-            eprintln!("----------Endolphine terminated----------");
-            eprintln!(" {}", e.as_ref());
-            eprintln!("{}", "-".repeat(41));
-        };
-
         if let Some(e) = e.payload().downcast_ref::<String>() {
-            terminate_output(e);
+            terminate(e);
         } else if let Some(e) = e.payload().downcast_ref::<&str>() {
-            terminate_output(e);
+            terminate(e);
         }
         std::process::exit(1);
     }));
