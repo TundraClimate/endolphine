@@ -31,55 +31,6 @@ $ ep [PATH]
 Open in explorer with `PATH` directory.  
 Cannot open a **NOT** directory items.
 
-### Keymapping
-
-```toml
-# Exit application
-exit_app = "Q"
-
-# Cursor moving
-# *_ten is skip of 10 items, so FAST
-move_up = "k"
-move_up_ten = "K"
-move_down = "j"
-move_down_ten = "J"
-
-# Back to a parent directory
-move_parent = "h"
-
-# If the target item is a file, open it with $EDITOR
-# if it is directory, enter it
-enter_dir_or_edit = "l"
-
-# Toggle visual-selection mode
-visual_select = "V"
-
-# Toggle MENU widget
-menu_toggle = "M"
-
-# Switch MENU and BODY
-menu_move = "m"
-
-# Create a new file or directory
-create_new = "a"
-
-# Delete item
-delete = "d"
-
-# Rename item
-rename = "r"
-
-# Yank with native-command (ex: xclip, wl-*)
-yank = "y"
-
-# Paste with native-command (ex: xclip, wl-*)
-paste = "p"
-
-# Search item in current directory
-search = "/"
-search_next = "n"
-```
-
 ### Configuration
 
 Open config file:
@@ -144,9 +95,73 @@ items = [
 ]
 ```
 
+### Keymapping
+
+```toml
+# Exit application
+exit_app = "Q"
+
+# Cursor moving
+# *_ten is skip of 10 items, so FAST
+move_up = "k"
+move_up_ten = "K"
+move_down = "j"
+move_down_ten = "J"
+
+# Back to a parent directory
+move_parent = "h"
+
+# If the target item is a file, open it with $EDITOR
+# if it is directory, enter it
+enter_dir_or_edit = "l"
+
+# Toggle visual-selection mode
+visual_select = "V"
+
+# Toggle MENU widget
+menu_toggle = "M"
+
+# Switch MENU and BODY
+menu_move = "m"
+
+# Create a new file or directory
+create_new = "a"
+
+# Delete item
+delete = "d"
+
+# Rename item
+rename = "r"
+
+# Yank with native-command (ex: xclip, wl-*)
+yank = "y"
+
+# Paste with native-command (ex: xclip, wl-*)
+paste = "p"
+
+# Search item in current directory
+search = "/"
+search_next = "n"
+```
+
 ### Themes
 
-<details><summary>Open theme list</summary>
+| Name       | Description                        |
+| ---------- | ---------------------------------- |
+| Dark       | Standard Dark theme                |
+| Light      | Standard Light theme               |
+| Mars       | Theme by imagined Mars             |
+| Neon       | **WARNING**: It's bad for you eyes |
+| Ice        | Looks Cold...                      |
+| Nept       | Theme by imagined Neptune          |
+| Volcano    | Looks VERY VERY **HOT**...         |
+| Mossy      | Stone in Coniferous forest         |
+| Monochrome | Probably the 1900s                 |
+| Holiday    | **_HAPPY HOLIDAY_**                |
+| Bloom      | Are the flowers... blooming?       |
+| Collapse   | Liquid of Collapse                 |
+
+<details><summary>Open theme preview</summary>
 
 #### Dark
 
