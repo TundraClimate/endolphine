@@ -239,6 +239,8 @@ cargo uninstall endolphine
 - Refactor backend logics
 - Impl for the application-level yank and paste
 - Add a command mode
+- Improve the rendering system to nvim like
+- Impl the layout system and logic (ratatui?)
 
 ## LICENSE
 
