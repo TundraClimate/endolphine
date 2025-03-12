@@ -2,7 +2,7 @@ use crate::global;
 use std::sync::RwLock;
 
 global! {
-    const INPUT: RwLock<Input> = RwLock::new(Input::default());
+    static INPUT: RwLock<Input> = RwLock::new(Input::default());
 }
 
 fn input() -> &'static RwLock<Input> {

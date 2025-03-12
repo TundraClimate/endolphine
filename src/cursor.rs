@@ -8,7 +8,7 @@ use std::{
 };
 
 global! {
-    const CURSOR: Cursor = Cursor::new();
+    static CURSOR: Cursor = Cursor::new();
 }
 
 pub fn load() -> &'static Cursor {
@@ -24,7 +24,7 @@ pub fn captured() -> &'static Cursor {
 }
 
 global! {
-    const SELECTION: RwLock<Option<(usize, usize)>> = RwLock::new(None);
+    static SELECTION: RwLock<Option<(usize, usize)>> = RwLock::new(None);
 }
 
 pub fn is_selection() -> bool {

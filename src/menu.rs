@@ -6,7 +6,7 @@ use std::{
 };
 
 global! {
-    const MENU: Menu = Menu::default();
+    static MENU: Menu = Menu::default();
 }
 
 pub fn refs() -> &'static Menu {

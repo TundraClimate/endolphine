@@ -62,7 +62,7 @@ macro_rules! log {
 }
 
 global! {
-    const VIEW_SHIFT: AtomicU16 = AtomicU16::new(0);
+    static VIEW_SHIFT: AtomicU16 = AtomicU16::new(0);
 }
 
 pub fn get_view_shift() -> u16 {
@@ -74,7 +74,7 @@ pub fn set_view_shift(new_value: u16) {
 }
 
 global! {
-    const CACHE: RwLock<HashMap<(u16, u8), String>> = RwLock::new(HashMap::new());
+    static CACHE: RwLock<HashMap<(u16, u8), String>> = RwLock::new(HashMap::new());
 }
 
 pub fn cache_insert(key: (u16, u8), tag: String) {

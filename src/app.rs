@@ -15,7 +15,7 @@ use tokio::time::{self, Duration, Instant};
 
 #[macro_export]
 macro_rules! global {
-    (const $name:ident : $type:ty = $init:expr;) => {
+    (static $name:ident : $type:ty = $init:expr;) => {
         static $name: std::sync::LazyLock<$type> = std::sync::LazyLock::new(|| $init);
     };
 }
@@ -65,7 +65,7 @@ macro_rules! disable_tui {
 }
 
 global! {
-    const PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
+    static PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
 }
 
 pub fn get_path() -> PathBuf {
@@ -78,7 +78,7 @@ pub fn set_path(new_path: &Path) {
 }
 
 global! {
-    const RENDER: AtomicBool = AtomicBool::new(false);
+    static RENDER: AtomicBool = AtomicBool::new(false);
 }
 
 pub fn disable_render() {
@@ -90,7 +90,7 @@ pub fn enable_render() {
 }
 
 global! {
-    const GREP: RwLock<String> =  RwLock::new(String::new());
+    static GREP: RwLock<String> =  RwLock::new(String::new());
 }
 
 pub fn read_grep() -> String {
@@ -109,7 +109,7 @@ pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
 }
 
 global! {
-    const PROCS_COUNT:AtomicU16 = AtomicU16::new(0);
+    static PROCS_COUNT:AtomicU16 = AtomicU16::new(0);
 }
 
 pub fn proc_count_up() {

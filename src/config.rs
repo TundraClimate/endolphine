@@ -8,7 +8,7 @@ use crate::{
 use std::path::{Path, PathBuf};
 
 global! {
-    const CONFIG: Config = file_path()
+    static CONFIG: Config = file_path()
         .and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|c| toml::from_str(&c).ok())
         .unwrap_or_default();
