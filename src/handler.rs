@@ -4,7 +4,7 @@ use crate::{
     input::{self, Input},
     menu, misc,
 };
-use crossterm::event::{self, Event, KeyCode, KeyEvent};
+use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::path::{Path, PathBuf};
 
 pub fn handle_event() -> EpResult<bool> {
@@ -44,10 +44,19 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
             canvas::cache_clear();
         }
         KeyCode::Char(c) => {
-            input.buffer_push(c);
+            if key.modifiers.contains(KeyModifiers::CONTROL) {
+                match c {
+                    c if c == config::load().key.move_parent => input.cursor_left(),
+                    c if c == config::load().key.enter_dir_or_edit => input.cursor_right(),
+                    _ => {}
+                }
+
+                return;
+            }
+            input.buffer_insert(c);
             if let Some(act) = input.load_action() {
                 match act.as_str() {
-                    "Search" => app::grep_update(|m| m.push(c)),
+                    "Search" => app::sync_grep(input),
                     "RmSelected" | "RmFileOrDirectory" if config::load().rm.no_enter => {
                         handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
                     }
@@ -55,12 +64,16 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
                 }
             }
         }
-        KeyCode::Delete | KeyCode::Backspace => {
-            input.buffer_pop();
+        KeyCode::Delete => {
+            input.buffer_pick_next();
             if input.load_action() == &Some("Search".to_owned()) {
-                app::grep_update(|m| {
-                    m.pop();
-                });
+                app::sync_grep(input);
+            }
+        }
+        KeyCode::Backspace => {
+            input.buffer_pick();
+            if input.load_action() == &Some("Search".to_owned()) {
+                app::sync_grep(input);
             }
         }
         KeyCode::Enter => {

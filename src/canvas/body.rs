@@ -33,9 +33,12 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
 
     let buf: String = {
         let size = buf.chars().count();
-        buf.chars()
+        let mut buf = buf
+            .chars()
             .skip(size.saturating_sub(width as usize))
-            .collect()
+            .collect::<String>();
+        buf.insert(input::use_f(|i| i.cursor_current()), '▏');
+        buf
     };
 
     crossterm::queue!(
@@ -45,7 +48,6 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> EpResult<()
         Print(" ".repeat((padding.0 + width + padding.1) as usize)),
         MoveTo(pos.0 + padding.0, pos.1),
         Print(buf),
-        Print("▏"),
         ResetColor
     )
     .map_err(|_| EpError::Display)?;

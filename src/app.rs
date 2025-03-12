@@ -108,6 +108,16 @@ pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
     f(&lock)
 }
 
+pub fn sync_grep(input: &mut crate::input::Input) {
+    crate::app::grep_update(|f| {
+        *f = input
+            .buffer_load()
+            .clone()
+            .and_then(|b| b.strip_prefix("/").map(|b| b.to_string()))
+            .unwrap_or(" ".to_string())
+    });
+}
+
 global! {
     static PROCS_COUNT:AtomicU16 = AtomicU16::new(0);
 }

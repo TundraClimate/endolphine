@@ -8,7 +8,7 @@ use std::{
 };
 
 global! {
-    static CURSOR: Cursor = Cursor::new();
+    static CURSOR: Cursor = Cursor::default();
 }
 
 pub fn load() -> &'static Cursor {
@@ -72,15 +72,17 @@ pub struct Cursor {
     pub cache: RwLock<CursorCache>,
 }
 
-impl Cursor {
-    pub fn new() -> Self {
+impl Default for Cursor {
+    fn default() -> Self {
         Cursor {
             index: AtomicUsize::new(0),
             size: AtomicUsize::new(0),
             cache: RwLock::new(CursorCache::new()),
         }
     }
+}
 
+impl Cursor {
     pub fn resize(&self, new_size: usize) {
         self.size.swap(new_size, Ordering::Relaxed);
         self.swap_id(self.current());

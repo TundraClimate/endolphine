@@ -38,7 +38,7 @@ impl Default for Menu {
     fn default() -> Self {
         Menu {
             elements: crate::config::load().menu.items.clone(),
-            cursor: Cursor::new(),
+            cursor: Cursor::default(),
             enable: AtomicBool::new(false),
         }
     }

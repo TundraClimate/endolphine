@@ -228,7 +228,6 @@ cargo uninstall endolphine
 # TODO
 
 - Impl for the multi-key command system
-- Add a cursor in input
 - Add a config for command override that open it by extension
 - Add a loader for the user-defined theme
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
