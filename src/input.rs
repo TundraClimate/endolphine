@@ -1,11 +1,13 @@
 use crate::global;
 use std::sync::RwLock;
 
-global!(INPUT<RwLock<Input>>, || RwLock::new(Input::default()), {
-    fn input() -> &'static RwLock<Input> {
-        &INPUT
-    }
-});
+global! {
+    const INPUT: RwLock<Input> = RwLock::new(Input::default());
+}
+
+fn input() -> &'static RwLock<Input> {
+    &INPUT
+}
 
 pub fn use_f<F: FnOnce(&Input) -> R, R>(f: F) -> R {
     let lock = input().read().unwrap();

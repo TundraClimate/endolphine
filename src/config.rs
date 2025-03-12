@@ -7,25 +7,22 @@ use crate::{
 };
 use std::path::{Path, PathBuf};
 
-global!(
-    CONFIG<Config>,
-    || {
-        file_path()
-            .and_then(|p| std::fs::read_to_string(p).ok())
-            .and_then(|c| toml::from_str(&c).ok())
-            .unwrap_or_default()
-    },
-    {
-        fn try_load() -> Option<Result<Config, toml::de::Error>> {
-            file_path()
-                .and_then(|p| std::fs::read_to_string(p).ok())
-                .map(|c| toml::from_str(&c))
-        }
-        pub fn load() -> &'static Config {
-            &CONFIG
-        }
-    }
-);
+global! {
+    const CONFIG: Config = file_path()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .and_then(|c| toml::from_str(&c).ok())
+        .unwrap_or_default();
+}
+
+fn try_load() -> Option<Result<Config, toml::de::Error>> {
+    file_path()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .map(|c| toml::from_str(&c))
+}
+
+pub fn load() -> &'static Config {
+    &CONFIG
+}
 
 pub fn file_path() -> Option<PathBuf> {
     option_env!("HOME").map(|home| {

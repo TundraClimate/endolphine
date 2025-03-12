@@ -7,64 +7,64 @@ use std::{
     },
 };
 
-global!(CURSOR<Cursor>, Cursor::new, {
-    pub fn load() -> &'static Cursor {
-        &CURSOR
+global! {
+    const CURSOR: Cursor = Cursor::new();
+}
+
+pub fn load() -> &'static Cursor {
+    &CURSOR
+}
+
+pub fn captured() -> &'static Cursor {
+    if crate::menu::refs().is_enabled() {
+        &crate::menu::refs().cursor
+    } else {
+        load()
+    }
+}
+
+global! {
+    const SELECTION: RwLock<Option<(usize, usize)>> = RwLock::new(None);
+}
+
+pub fn is_selection() -> bool {
+    SELECTION.read().is_ok_and(|i| i.is_some())
+}
+
+pub fn disable_selection() {
+    *SELECTION.write().unwrap() = None;
+}
+
+pub fn toggle_selection(init: usize) {
+    let mut lock = SELECTION.write().unwrap();
+    if lock.is_some() {
+        *lock = None;
+    } else {
+        *lock = Some((init, init));
+    }
+}
+
+pub fn is_selected(i: usize) -> bool {
+    if !is_selection() {
+        return false;
     }
 
-    pub fn captured() -> &'static Cursor {
-        if crate::menu::refs().is_enabled() {
-            &crate::menu::refs().cursor
-        } else {
-            load()
-        }
+    let lock = SELECTION.read().unwrap();
+    if let Some((base, pin)) = *lock {
+        let min = base.min(pin);
+        let max = base.max(pin);
+        (min..=max).contains(&i)
+    } else {
+        false
     }
-});
+}
 
-global!(
-    SELECTION<RwLock<Option<(usize, usize)>>>,
-    || RwLock::new(None),
-    {
-        pub fn is_selection() -> bool {
-            SELECTION.read().is_ok_and(|i| i.is_some())
-        }
-
-        pub fn disable_selection() {
-            *SELECTION.write().unwrap() = None;
-        }
-
-        pub fn toggle_selection(init: usize) {
-            let mut lock = SELECTION.write().unwrap();
-            if lock.is_some() {
-                *lock = None;
-            } else {
-                *lock = Some((init, init));
-            }
-        }
-
-        pub fn is_selected(i: usize) -> bool {
-            if !is_selection() {
-                return false;
-            }
-
-            let lock = SELECTION.read().unwrap();
-            if let Some((base, pin)) = *lock {
-                let min = base.min(pin);
-                let max = base.max(pin);
-                (min..=max).contains(&i)
-            } else {
-                false
-            }
-        }
-
-        pub fn select_area(other: usize) {
-            let mut lock = SELECTION.write().unwrap();
-            if let Some((base, _)) = *lock {
-                *lock = Some((base, other));
-            }
-        }
+pub fn select_area(other: usize) {
+    let mut lock = SELECTION.write().unwrap();
+    if let Some((base, _)) = *lock {
+        *lock = Some((base, other));
     }
-);
+}
 
 pub struct Cursor {
     index: AtomicUsize,

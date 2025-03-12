@@ -15,12 +15,8 @@ use tokio::time::{self, Duration, Instant};
 
 #[macro_export]
 macro_rules! global {
-    ($name:ident<$type:ty>, $init:expr, {
-        $( $v:vis fn $fname:ident ( $($an:ident : $aty:ty),* ) $( -> $ret:ty )? $body:block )*
-    }) => {
-        static $name: std::sync::LazyLock<$type> = std::sync::LazyLock::new($init);
-
-        $( $v fn $fname ($($an: $aty),*) $( -> $ret )? $body )*
+    (const $name:ident : $type:ty = $init:expr;) => {
+        static $name: std::sync::LazyLock<$type> = std::sync::LazyLock::new(|| $init);
     };
 }
 
@@ -68,33 +64,39 @@ macro_rules! disable_tui {
     };
 }
 
-global!(PATH<RwLock<PathBuf>>, || RwLock::new(PathBuf::new()), {
-    pub fn get_path() -> PathBuf {
-        (*PATH.read().unwrap()).clone()
-    }
+global! {
+    const PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
+}
 
-    pub fn set_path(new_path: &Path) {
-        let mut lock = PATH.write().unwrap();
-        *lock = new_path.to_path_buf();
-    }
-});
+pub fn get_path() -> PathBuf {
+    (*PATH.read().unwrap()).clone()
+}
 
-global!(RENDER<AtomicBool>, || AtomicBool::new(false), {
-    pub fn disable_render() {
-        RENDER.swap(false, Ordering::Relaxed);
-    }
+pub fn set_path(new_path: &Path) {
+    let mut lock = PATH.write().unwrap();
+    *lock = new_path.to_path_buf();
+}
 
-    pub fn enable_render() {
-        RENDER.swap(true, Ordering::Relaxed);
-    }
-});
+global! {
+    const RENDER: AtomicBool = AtomicBool::new(false);
+}
 
-global!(GREP<RwLock<String>>, || RwLock::new(String::new()), {
-    pub fn read_grep() -> String {
-        let lock = GREP.read().unwrap();
-        lock.to_owned()
-    }
-});
+pub fn disable_render() {
+    RENDER.swap(false, Ordering::Relaxed);
+}
+
+pub fn enable_render() {
+    RENDER.swap(true, Ordering::Relaxed);
+}
+
+global! {
+    const GREP: RwLock<String> =  RwLock::new(String::new());
+}
+
+pub fn read_grep() -> String {
+    let lock = GREP.read().unwrap();
+    lock.to_owned()
+}
 
 pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
     let mut lock = GREP.write().unwrap();
@@ -106,19 +108,21 @@ pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
     f(&lock)
 }
 
-global!(PROCS_COUNT<AtomicU16>, || AtomicU16::new(0), {
-    pub fn proc_count_up() {
-        PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
-    }
+global! {
+    const PROCS_COUNT:AtomicU16 = AtomicU16::new(0);
+}
 
-    pub fn proc_count_down() {
-        PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
-    }
+pub fn proc_count_up() {
+    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+}
 
-    pub fn procs() -> u16 {
-        PROCS_COUNT.load(Ordering::Relaxed)
-    }
-});
+pub fn proc_count_down() {
+    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+}
+
+pub fn procs() -> u16 {
+    PROCS_COUNT.load(Ordering::Relaxed)
+}
 
 pub async fn launch(path: &Path) -> EpResult<()> {
     init(path)?;

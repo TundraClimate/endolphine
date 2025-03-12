@@ -5,11 +5,13 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-global!(MENU<Menu>, Menu::default, {
-    pub fn refs() -> &'static Menu {
-        &MENU
-    }
-});
+global! {
+    const MENU: Menu = Menu::default();
+}
+
+pub fn refs() -> &'static Menu {
+    &MENU
+}
 
 const MENU_LENGTH: u16 = 20;
 
