@@ -167,12 +167,10 @@ fn handle_action(content: &str, act: String) {
                 return;
             }
 
-            let cursor = cursor::load();
-
             let selected = misc::sorted_child_files(&app::get_path())
                 .into_iter()
                 .enumerate()
-                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
 
             if config::load().rm.for_tmp {
@@ -228,7 +226,7 @@ fn handle_action(content: &str, act: String) {
             }
 
             cursor::load().resize(misc::child_files_len(&app::get_path()));
-            cursor::load().disable_selection_mode();
+            cursor::disable_selection();
             crate::log!(format!("{} items delete successful.", selected.len()));
         }
         "Rename" => {
@@ -367,14 +365,14 @@ fn handle_action(content: &str, act: String) {
 }
 
 fn handle_esc_key() -> EpResult<()> {
-    cursor::load().disable_selection_mode();
+    cursor::disable_selection();
 
     Ok(())
 }
 
 fn move_current_dir(path: &Path) {
     let cursor = cursor::load();
-    cursor.disable_selection_mode();
+    cursor::disable_selection();
     app::set_path(path);
     canvas::cache_clear();
     app::grep_update(|m| m.clear());
@@ -407,6 +405,10 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             c if c == keyconf.move_down_ten => cursor.shift(10),
             _ => unreachable!(),
         };
+
+        if cursor::is_selection() && !menu::refs().is_enabled() {
+            cursor::select_area(cursor.current());
+        }
     }
 
     if key == keyconf.move_parent {
@@ -513,7 +515,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::load().toggle_selection();
+        cursor::toggle_selection(cursor::load().current());
     }
 
     if key == keyconf.menu_toggle {
@@ -539,7 +541,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::load().disable_selection_mode();
+        cursor::disable_selection();
 
         input::use_f_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
@@ -552,11 +554,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let cursor = cursor::load();
 
-        if cursor.is_selection_mode() {
+        if cursor::is_selection() {
             let selected_files = misc::sorted_child_files(&app::get_path())
                 .into_iter()
                 .enumerate()
-                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
             input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
             crate::log!(format!(
@@ -586,7 +588,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let cursor = cursor::load();
 
-        cursor.disable_selection_mode();
+        cursor::disable_selection();
 
         if let Some(under_cursor_file) =
             misc::sorted_child_files(&app::get_path()).get(cursor.current())
@@ -609,11 +611,11 @@ fn handle_char_key(key: char) -> EpResult<bool> {
 
         let cursor = cursor::load();
 
-        if cursor.is_selection_mode() {
+        if cursor::is_selection() {
             let selected_files = misc::sorted_child_files(&app::get_path())
                 .into_iter()
                 .enumerate()
-                .filter_map(|(i, f)| cursor.is_selected(i).then_some(f))
+                .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
                 .map(|f| format!("file://{}", f.to_string_lossy()))
                 .collect::<Vec<_>>();
 
@@ -622,7 +624,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 return Ok(false);
             }
 
-            cursor.disable_selection_mode();
+            cursor::disable_selection();
             crate::log!(format!("Yanked {} items", selected_files.len()));
             return Ok(false);
         }
@@ -676,7 +678,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             return Ok(false);
         }
 
-        cursor::load().disable_selection_mode();
+        cursor::disable_selection();
 
         match key {
             c if c == keyconf.search => {

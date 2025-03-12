@@ -21,11 +21,55 @@ global!(CURSOR<Cursor>, Cursor::new, {
     }
 });
 
+global!(
+    SELECTION<RwLock<Option<(usize, usize)>>>,
+    || RwLock::new(None),
+    {
+        pub fn is_selection() -> bool {
+            SELECTION.read().is_ok_and(|i| i.is_some())
+        }
+
+        pub fn disable_selection() {
+            *SELECTION.write().unwrap() = None;
+        }
+
+        pub fn toggle_selection(init: usize) {
+            let mut lock = SELECTION.write().unwrap();
+            if lock.is_some() {
+                *lock = None;
+            } else {
+                *lock = Some((init, init));
+            }
+        }
+
+        pub fn is_selected(i: usize) -> bool {
+            if !is_selection() {
+                return false;
+            }
+
+            let lock = SELECTION.read().unwrap();
+            if let Some((base, pin)) = *lock {
+                let min = base.min(pin);
+                let max = base.max(pin);
+                (min..=max).contains(&i)
+            } else {
+                false
+            }
+        }
+
+        pub fn select_area(other: usize) {
+            let mut lock = SELECTION.write().unwrap();
+            if let Some((base, _)) = *lock {
+                *lock = Some((base, other));
+            }
+        }
+    }
+);
+
 pub struct Cursor {
     index: AtomicUsize,
     size: AtomicUsize,
     pub cache: RwLock<CursorCache>,
-    selection: RwLock<Option<(usize, usize)>>,
 }
 
 impl Cursor {
@@ -34,7 +78,6 @@ impl Cursor {
             index: AtomicUsize::new(0),
             size: AtomicUsize::new(0),
             cache: RwLock::new(CursorCache::new()),
-            selection: RwLock::new(None),
         }
     }
 
@@ -57,13 +100,6 @@ impl Cursor {
         let val = val.min(size - 1);
 
         self.index.swap(val, Ordering::Relaxed);
-
-        if self.is_selection_mode() {
-            let mut lock = self.selection.write().unwrap();
-            if let Some((base, _)) = *lock {
-                *lock = Some((base, val));
-            }
-        }
     }
 
     pub fn next(&self) {
@@ -96,39 +132,6 @@ impl Cursor {
 
     pub fn reset(&self) {
         self.index.swap(0, Ordering::Relaxed);
-    }
-
-    pub fn is_selection_mode(&self) -> bool {
-        self.selection.read().unwrap().is_some()
-    }
-
-    pub fn disable_selection_mode(&self) {
-        let mut lock = self.selection.write().unwrap();
-        *lock = None;
-    }
-
-    pub fn toggle_selection(&self) {
-        let mut lock = self.selection.write().unwrap();
-        if lock.is_some() {
-            *lock = None;
-        } else {
-            *lock = Some((self.current(), self.current()))
-        }
-    }
-
-    pub fn is_selected(&self, i: usize) -> bool {
-        if !self.is_selection_mode() {
-            return false;
-        }
-
-        let lock = self.selection.read().unwrap();
-        if let Some((base, pin)) = *lock {
-            let min = base.min(pin);
-            let max = base.max(pin);
-            (min..=max).contains(&i)
-        } else {
-            false
-        }
     }
 }
 

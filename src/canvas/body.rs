@@ -301,7 +301,7 @@ impl Widget for Body {
             }
 
             if let Some(f) = pagenated.get(rel_i as usize) {
-                render_file_line(rel_i, is_cursor_pos, f, cursor.is_selected(abs_i))?;
+                render_file_line(rel_i, is_cursor_pos, f, cursor::is_selected(abs_i))?;
             } else {
                 render_empty_line(rel_i)?;
             }
