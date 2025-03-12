@@ -5,17 +5,13 @@ global! {
     static INPUT: RwLock<Input> = RwLock::new(Input::default());
 }
 
-fn input() -> &'static RwLock<Input> {
-    &INPUT
-}
-
 pub fn use_f<F: FnOnce(&Input) -> R, R>(f: F) -> R {
-    let lock = input().read().unwrap();
+    let lock = INPUT.read().unwrap();
     f(&lock)
 }
 
 pub fn use_f_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
-    let mut lock = input().write().unwrap();
+    let mut lock = INPUT.write().unwrap();
     f(&mut lock)
 }
 
