@@ -47,9 +47,27 @@ macro_rules! schemes {
     }
 }
 
-#[derive(serde::Serialize, serde::Deserialize)]
 pub struct ColorWrap {
     inner: String,
+}
+
+impl<'de> serde::Deserialize<'de> for ColorWrap {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        Ok(ColorWrap { inner: s })
+    }
+}
+
+impl serde::Serialize for ColorWrap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.inner)
+    }
 }
 
 schemes! {
