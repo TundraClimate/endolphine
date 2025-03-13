@@ -34,15 +34,25 @@ pub enum Theme {
     Collapse,
 }
 
-macro_rules! colors {
-    ($v:vis struct $name:ident { $($field:ident),+ $(,)? }) => {
-        $v struct $name {
+macro_rules! schemes {
+    ($($field:ident),+ $(,)?) => {
+        pub struct Scheme {
             $(pub $field: Color),+
+        }
+
+        #[derive(serde::Deserialize, serde::Serialize)]
+        pub struct SchemeWrap {
+            $(pub $field: ColorWrap),+
         }
     }
 }
 
-colors!(pub struct Scheme {
+#[derive(serde::Serialize, serde::Deserialize)]
+pub struct ColorWrap {
+    inner: String,
+}
+
+schemes! {
     fg_focused,
     fg_unfocused,
     bg_focused,
@@ -68,7 +78,25 @@ colors!(pub struct Scheme {
     input,
     menu_tag,
     search_surround,
-});
+}
+
+impl From<ColorWrap> for Color {
+    fn from(value: ColorWrap) -> Self {
+        let s = &value.inner;
+
+        if s.eq_ignore_ascii_case("RESET") {
+            return Color::Reset;
+        }
+
+        rgb(s)
+    }
+}
+
+impl From<SchemeWrap> for Scheme {
+    fn from(value: SchemeWrap) -> Self {
+        Self { ..value.into() }
+    }
+}
 
 impl From<std::sync::LazyLock<Scheme>> for Scheme {
     fn from(value: std::sync::LazyLock<Scheme>) -> Self {
