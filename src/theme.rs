@@ -43,14 +43,14 @@ macro_rules! colors {
 }
 
 colors!(pub struct Scheme {
-    fg,
-    fg_dark,
-    bg,
-    bg_dark,
+    fg_focused,
+    fg_unfocused,
+    bg_focused,
+    bg_unfocused,
     label,
     bar,
     bar_dark,
-    path_picked,
+    unnecessary_text,
     bar_text,
     bar_text_light,
     perm_ty,
@@ -61,18 +61,13 @@ colors!(pub struct Scheme {
     row_dir,
     row_symlink,
     row_broken,
-    bsize,
-    mod_time,
-    select,
     row_cursor,
+    row_bsize,
+    row_mod_time,
+    select,
     input,
-    widget_fg,
-    widget_fg_dark,
-    widget_bg,
-    widget_bg_dark,
-    widget_cursor,
     menu_tag,
-    search_sur,
+    search_surround,
 });
 
 impl From<std::sync::LazyLock<Scheme>> for Scheme {
@@ -110,17 +105,17 @@ pub fn scheme() -> Scheme {
 
 pub fn app_fg() -> Color {
     if crate::menu::refs().is_enabled() {
-        scheme().fg_dark
+        scheme().fg_unfocused
     } else {
-        scheme().fg
+        scheme().fg_focused
     }
 }
 
 pub fn app_bg() -> Color {
     if crate::menu::refs().is_enabled() {
-        scheme().bg_dark
+        scheme().bg_unfocused
     } else {
-        scheme().bg
+        scheme().bg_focused
     }
 }
 
@@ -142,17 +137,17 @@ pub fn wid_bar_color() -> Color {
 
 pub fn widget_fg() -> Color {
     if crate::menu::refs().is_enabled() {
-        scheme().widget_fg
+        scheme().fg_focused
     } else {
-        scheme().widget_fg_dark
+        scheme().fg_unfocused
     }
 }
 
 pub fn widget_bg() -> Color {
     if crate::menu::refs().is_enabled() {
-        scheme().widget_bg
+        scheme().bg_focused
     } else {
-        scheme().widget_bg_dark
+        scheme().bg_unfocused
     }
 }
 
@@ -178,7 +173,7 @@ pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
 
 pub fn widget_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
     if is_cursor_pos && is_enable {
-        scheme().widget_cursor
+        scheme().row_cursor
     } else {
         widget_bg()
     }

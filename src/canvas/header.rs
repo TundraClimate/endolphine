@@ -33,7 +33,7 @@ impl Widget for Header {
         let pwd = format!(
             "{}{}{}",
             parent,
-            SetForegroundColor(theme::scheme().path_picked),
+            SetForegroundColor(theme::scheme().unnecessary_text),
             filename
         );
 

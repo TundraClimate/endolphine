@@ -147,7 +147,7 @@ impl BodyRow {
             !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
         }) {
             let end_pos = pos + pat_len;
-            let surround_color = SetBackgroundColor(theme::scheme().search_sur);
+            let surround_color = SetBackgroundColor(theme::scheme().search_surround);
             let reset_color = SetBackgroundColor(theme::app_bg());
             format!(
                 "{}{}{}{}{}",
@@ -200,7 +200,11 @@ impl BodyRow {
             helpers::bytes1(size as f64)
         };
 
-        format!("{}{:>8}", SetForegroundColor(theme::scheme().bsize), bod)
+        format!(
+            "{}{:>8}",
+            SetForegroundColor(theme::scheme().row_bsize),
+            bod
+        )
     }
 
     fn colored_last_modified(path: &Path) -> String {
@@ -214,7 +218,7 @@ impl BodyRow {
 
         format!(
             "{}{}",
-            SetForegroundColor(theme::scheme().mod_time),
+            SetForegroundColor(theme::scheme().row_mod_time),
             datetime.format("%y %m/%d %H:%M")
         )
     }
