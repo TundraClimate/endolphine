@@ -52,6 +52,12 @@ editor = ["vim"]
 # Using theme (look "#Available themes")
 theme = "Dark"
 
+# OPTIONAL
+# file path of user-defined theme
+# Can't use variables
+# theme syntax to look the `customtheme.toml`
+user_theme_path = "foo/bar/anyname.toml"
+
 # Item sort priority
 # 0: Prefix lowercase (ex: "dotfiles/", "main.rs")
 # 1: Prefix uppercase (ex: "Desktop/", "Cargo.toml")
@@ -229,7 +235,6 @@ cargo uninstall endolphine
 
 - Impl for the multi-key command system
 - Add a config for command override that open it by extension
-- Add a loader for the user-defined theme
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
 - Add a logger to file
 - Impl for the realtime displaying system
