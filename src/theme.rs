@@ -112,7 +112,33 @@ impl From<ColorWrap> for Color {
 
 impl From<SchemeWrap> for Scheme {
     fn from(value: SchemeWrap) -> Self {
-        Self { ..value.into() }
+        Self {
+            fg_focused: value.fg_focused.into(),
+            fg_unfocused: value.fg_unfocused.into(),
+            bg_focused: value.bg_focused.into(),
+            bg_unfocused: value.bg_unfocused.into(),
+            label: value.label.into(),
+            bar: value.bar.into(),
+            bar_dark: value.bar_dark.into(),
+            unnecessary_text: value.unnecessary_text.into(),
+            bar_text: value.bar_text.into(),
+            bar_text_light: value.bar_text_light.into(),
+            perm_ty: value.perm_ty.into(),
+            perm_r: value.perm_r.into(),
+            perm_w: value.perm_w.into(),
+            perm_e: value.perm_e.into(),
+            row_file: value.row_file.into(),
+            row_dir: value.row_dir.into(),
+            row_symlink: value.row_symlink.into(),
+            row_broken: value.row_broken.into(),
+            row_cursor: value.row_cursor.into(),
+            row_bsize: value.row_bsize.into(),
+            row_mod_time: value.row_mod_time.into(),
+            select: value.select.into(),
+            input: value.input.into(),
+            menu_tag: value.menu_tag.into(),
+            search_surround: value.search_surround.into(),
+        }
     }
 }
 
@@ -145,8 +171,8 @@ pub fn rgb(t: &str) -> Color {
     Color::Rgb { r, g, b }
 }
 
-pub fn scheme() -> Scheme {
-    crate::config::load().scheme()
+pub fn scheme() -> &'static Scheme {
+    crate::config::theme()
 }
 
 pub fn app_fg() -> Color {

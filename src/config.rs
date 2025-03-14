@@ -24,6 +24,14 @@ pub fn load() -> &'static Config {
     &CONFIG
 }
 
+global! {
+    static THEME: Scheme = CONFIG.scheme();
+}
+
+pub fn theme() -> &'static Scheme {
+    &THEME
+}
+
 pub fn file_path() -> Option<PathBuf> {
     option_env!("HOME").map(|home| {
         Path::new(home)
@@ -80,6 +88,7 @@ pub fn check() -> Result<(), (toml::de::Error, String)> {
 pub struct Config {
     editor: Vec<String>,
     theme: Theme,
+    user_theme_path: Option<PathBuf>,
     pub sort_by_priority: [u8; 4],
     pub rm: RmConfig,
     pub paste: PasteConfig,
@@ -132,6 +141,7 @@ impl Default for Config {
         Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
             sort_by_priority: [0, 1, 2, 3],
+            user_theme_path: None,
             rm: RmConfig {
                 no_enter: true,
                 for_tmp: true,
@@ -157,7 +167,44 @@ impl Config {
         Some(command)
     }
 
+    fn load_user_theme(&self) -> Option<Scheme> {
+        if let Some(ref path) = self.user_theme_path {
+            if !path.exists() {
+                crate::log!(format!(
+                    "Couldn't load the user-defined theme: \"{}\" is not exists",
+                    path.to_string_lossy()
+                ));
+                return None;
+            }
+
+            let Ok(read_content) = std::fs::read_to_string(path) else {
+                crate::log!(format!(
+                    "Couldn't load the user-defined theme: unable to read the \"{}\"",
+                    path.to_string_lossy()
+                ));
+                return None;
+            };
+
+            let Ok(parsed): Result<theme::SchemeWrap, toml::de::Error> =
+                toml::from_str(&read_content)
+            else {
+                crate::log!(format!(
+                    "Couldn't load the user-defined theme: invalid syntax in the content of \"{}\"",
+                    path.to_string_lossy()
+                ));
+                return None;
+            };
+
+            return Some(parsed.into());
+        }
+        None
+    }
+
     pub fn scheme(&self) -> Scheme {
+        if let Some(usr_theme) = self.load_user_theme() {
+            return usr_theme;
+        }
+
         match self.theme {
             Theme::Dark => theme::dark::SCHEME.into(),
             Theme::DarkNoBg => theme::dark_no_bg::SCHEME.into(),
