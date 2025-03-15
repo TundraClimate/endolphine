@@ -46,21 +46,21 @@ vim ~/.config/endolphine/config.toml
 Default config:
 
 ```toml
-# Editor by using
+# Editor to use
 editor = ["vim"]
 
-# Using theme (look "#Available themes")
+# theme to use (look "#Available themes")
 theme = "Dark"
 
 # OPTIONAL
 # file path of user-defined theme
 # Can't use variables
-# theme syntax to look the `example_theme.toml`
+# if need the theme syntax, look the `example_theme.toml`
 user_theme_path = "foo/bar/anyname.toml"
 
 # Item sort priority
-# 0: Prefix lowercase (ex: "dotfiles/", "main.rs")
-# 1: Prefix uppercase (ex: "Desktop/", "Cargo.toml")
+# 0: Prefix is lowercase (ex: "dotfiles/", "main.rs")
+# 1: Prefix is uppercase (ex: "Desktop/", "Cargo.toml")
 # 2: The "dotfiles" (ex: ".local/", ".git/")
 # 3: Other files
 sort_by_priority = [
@@ -71,23 +71,24 @@ sort_by_priority = [
 ]
 
 [rm]
-# FAST processing
+# Is ENTER required by question about the rm command
 no_enter = true
 
-# Auto yanking
+# Will yank the file if the rm command runs
+# This config disabled when "for_tmp" is disabled
 yank = true
 
-# Not deleting item, action replace to move for tmp
+# Instead of deleting the item, the action is changed to moving it to the tmp_dir
 for_tmp = true
 
 [paste]
-# Collision avoidance suffix when pasting into the same file
+# A suffix that is added for collision avoidance when pasting into the same dir
 copied_suffix = "_Copy"
 
-# Dont ask "Is overwrite?"
+# Won't ask "overwrite the same files?" when the paste command runs
 force_mode = true
 
-# Answer of "Is overwrite?"
+# Default answer to the "overwrite the same files?" question
 default_overwrite = true
 
 # Menu shortcuts
@@ -96,7 +97,7 @@ default_overwrite = true
 # Tag: Name of be displaying on menu
 # Path: Shortcut path (directory only)
 #
-# Important: **Can't** usable the VARIABLE ($USER is example)
+# Important: **Can't** use the VARIABLE ($USER is example)
 [menu]
 items = [
     "Home:/home/${USER}",
@@ -112,7 +113,7 @@ items = [
 exit_app = "Q"
 
 # Cursor moving
-# *_ten is skip of 10 items, so FAST
+# *_ten is skip to 10 items, so FAST
 move_up = "k"
 move_up_ten = "K"
 move_down = "j"
@@ -121,35 +122,35 @@ move_down_ten = "J"
 # Back to a parent directory
 move_parent = "h"
 
-# If the target item is a file, open it with $EDITOR
-# if it is directory, enter it
+# If the target item is a file, it open with $EDITOR
+# Enter it if that's a directory
 enter_dir_or_edit = "l"
 
-# Toggle visual-selection mode
+# Toggle the visual-selection mode
 visual_select = "V"
 
-# Toggle MENU widget
+# Toggle the MENU widget
 menu_toggle = "M"
 
-# Switch MENU and BODY
+# Switch the MENU and BODY
 menu_move = "m"
 
 # Create a new file or directory
 create_new = "a"
 
-# Delete item
+# Delete an item
 delete = "d"
 
-# Rename item
+# Rename an item
 rename = "r"
 
-# Yank with native-command (ex: xclip, wl-*)
+# Yank with the native-command (ex: xclip, wl-*)
 yank = "y"
 
-# Paste with native-command (ex: xclip, wl-*)
+# Paste with the native-command (ex: xclip, wl-*)
 paste = "p"
 
-# Search item in current directory
+# Search an item in current directory
 search = "/"
 search_next = "n"
 ```

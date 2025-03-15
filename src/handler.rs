@@ -679,7 +679,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             if config.paste.force_mode {
                 handle_input_mode(i, KeyEvent::from(KeyCode::Enter));
             } else {
-                crate::log!(format!("Is overwrite paste? (y/Y/{})", keyconf.paste));
+                crate::log!(format!("overwrite the same files? (y/Y/{})", keyconf.paste));
             };
 
             Ok::<(), EpError>(())
