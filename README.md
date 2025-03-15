@@ -55,7 +55,7 @@ theme = "Dark"
 # OPTIONAL
 # file path of user-defined theme
 # Can't use variables
-# theme syntax to look the `customtheme.toml`
+# theme syntax to look the `example_theme.toml`
 user_theme_path = "foo/bar/anyname.toml"
 
 # Item sort priority
