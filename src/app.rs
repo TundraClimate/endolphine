@@ -39,7 +39,7 @@ impl HandleError for Error {
             Self::ParseToml(_) => panic!("{}", self),
             Self::InvalidArgument(_) => panic!("{}", self),
             Self::CommandRun(cmd, kind) => {
-                crate::log!(format!("Failed to run \"{}\": {}", cmd, kind))
+                crate::log!("Failed to run \"{}\": {}", cmd, kind)
             }
         }
     }

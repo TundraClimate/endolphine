@@ -170,28 +170,28 @@ impl Config {
     fn load_user_theme(&self) -> Option<Scheme> {
         if let Some(ref path) = self.user_theme_path {
             if !path.exists() {
-                crate::log!(format!(
+                crate::log!(
                     "Couldn't load the user-defined theme: \"{}\" is not exists",
                     path.to_string_lossy()
-                ));
+                );
                 return None;
             }
 
             let Ok(read_content) = std::fs::read_to_string(path) else {
-                crate::log!(format!(
+                crate::log!(
                     "Couldn't load the user-defined theme: unable to read the \"{}\"",
                     path.to_string_lossy()
-                ));
+                );
                 return None;
             };
 
             let Ok(parsed): Result<theme::SchemeWrap, toml::de::Error> =
                 toml::from_str(&read_content)
             else {
-                crate::log!(format!(
+                crate::log!(
                     "Couldn't load the user-defined theme: invalid syntax in the content of \"{}\"",
                     path.to_string_lossy()
-                ));
+                );
                 return None;
             };
 

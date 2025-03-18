@@ -102,10 +102,7 @@ fn handle_action(content: &str, act: String) {
             let path = app::get_path().join(content);
 
             if path.exists() {
-                crate::log!(format!(
-                    "Add new file failed: \"{}\" is already exists.",
-                    &content
-                ));
+                crate::log!("Add new file failed: \"{}\" is already exists.", &content);
                 return;
             }
 
@@ -114,12 +111,12 @@ fn handle_action(content: &str, act: String) {
             } else {
                 std::fs::write(&path, "")
             } {
-                crate::log!(format!("Add new file failed: {}", e.kind()));
+                crate::log!("Add new file failed: {}", e.kind());
                 return;
             }
 
             cursor::load().resize(misc::child_files_len(&app::get_path()));
-            crate::log!(format!("\"{}\" create successful.", &content))
+            crate::log!("\"{}\" create successful.", &content)
         }
         "RmFileOrDirectory" => {
             if !["y", "Y", config::load().key.delete.to_string().as_str()].contains(&content) {
@@ -154,7 +151,7 @@ fn handle_action(content: &str, act: String) {
 
                         let text = format!("file://{}", tmp_path.to_string_lossy());
                         if let Err(e) = clipboard::clip(&text, "text/uri-list") {
-                            crate::log!(format!("Yank failed: {}", e.kind()));
+                            crate::log!("Yank failed: {}", e.kind());
                         }
                     }
                     misc::into_tmp(&[under_cursor_file.to_path_buf()])
@@ -165,12 +162,12 @@ fn handle_action(content: &str, act: String) {
                 };
 
                 if let Err(e) = res {
-                    crate::log!(format!("Delete file failed: {}", e.kind()));
+                    crate::log!("Delete file failed: {}", e.kind());
                     return;
                 }
 
                 cursor::load().resize(misc::child_files_len(&app::get_path()));
-                crate::log!(format!("\"{}\" delete successful.", name));
+                crate::log!("\"{}\" delete successful.", name);
             } else {
                 crate::log!("Delete file failed: target cannot find.");
             }
@@ -206,11 +203,11 @@ fn handle_action(content: &str, act: String) {
                     });
 
                     if let Err(e) = clipboard::clip(&text, "text/uri-list") {
-                        crate::log!(format!("Yank failed: {}", e.kind()));
+                        crate::log!("Yank failed: {}", e.kind());
                     }
                 }
                 if let Err(e) = misc::into_tmp(&selected) {
-                    crate::log!(format!("Delete file failed: {}", e.kind()));
+                    crate::log!("Delete file failed: {}", e.kind());
                     return;
                 }
             } else {
@@ -232,7 +229,7 @@ fn handle_action(content: &str, act: String) {
                     };
 
                     if let Err(e) = res {
-                        crate::log!(format!("Delete file failed: {}", e.kind()));
+                        crate::log!("Delete file failed: {}", e.kind());
                         return;
                     }
                 }
@@ -240,7 +237,7 @@ fn handle_action(content: &str, act: String) {
 
             cursor::load().resize(misc::child_files_len(&app::get_path()));
             cursor::disable_selection();
-            crate::log!(format!("{} items delete successful.", selected.len()));
+            crate::log!("{} items delete successful.", selected.len());
         }
         "Rename" => {
             let path = app::get_path();
@@ -255,20 +252,20 @@ fn handle_action(content: &str, act: String) {
                 };
 
                 if !under_cursor_file.exists() && !metadata.is_symlink() {
-                    crate::log!(format!("Rename failed: \"{}\" is not exists.", &content));
+                    crate::log!("Rename failed: \"{}\" is not exists.", &content);
                     return;
                 }
 
                 if let Err(e) = std::fs::rename(under_cursor_file, &renamed) {
-                    crate::log!(format!("Rename failed: {}", e.kind()));
+                    crate::log!("Rename failed: {}", e.kind());
                     return;
                 }
 
-                crate::log!(format!(
+                crate::log!(
                     "\"{}\" renamed to \"{}\"",
                     misc::file_name(under_cursor_file),
                     misc::file_name(&renamed)
-                ));
+                );
             }
         }
         "Paste" => {
@@ -280,7 +277,7 @@ fn handle_action(content: &str, act: String) {
                     .filter(|f| misc::exists_item(f))
                     .collect::<Vec<PathBuf>>(),
                 Err(e) => {
-                    crate::log!(format!("Paste failed: {}", e.kind()));
+                    crate::log!("Paste failed: {}", e.kind());
                     return;
                 }
             };
@@ -324,7 +321,7 @@ fn handle_action(content: &str, act: String) {
                     && (!misc::exists_item(&copied_path) || overwrite_mode)
                 {
                     if let Err(e) = std::fs::copy(file, &copied_path) {
-                        crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                        crate::log!("Paste failed: \"{}\"", e.kind());
                     }
                 }
 
@@ -343,13 +340,13 @@ fn handle_action(content: &str, act: String) {
                             let parent = misc::parent(&copied_path);
                             if !parent.exists() {
                                 if let Err(e) = std::fs::create_dir_all(parent) {
-                                    crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                                    crate::log!("Paste failed: \"{}\"", e.kind());
                                     continue;
                                 }
                             }
 
                             if let Err(e) = std::fs::copy(entry.path(), &copied_path) {
-                                crate::log!(format!("Paste failed: \"{}\"", e.kind()));
+                                crate::log!("Paste failed: \"{}\"", e.kind());
                             }
                         }
                     }
@@ -357,7 +354,7 @@ fn handle_action(content: &str, act: String) {
             }
             cursor::load().resize(misc::child_files_len(&app::get_path()));
 
-            crate::log!(format!("{} files paste successful.", files.len()));
+            crate::log!("{} files paste successful.", files.len());
         }
         "Search" => {
             let cursor = cursor::load();
@@ -371,7 +368,7 @@ fn handle_action(content: &str, act: String) {
                 .unwrap_or(0);
 
             cursor.shift_loop(first_match_pos as isize);
-            crate::log!(format!("/{}", app::read_grep()));
+            crate::log!("/{}", app::read_grep());
         }
         _ => {}
     }
@@ -464,7 +461,7 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
                 let path = &element.path;
 
                 if !path.is_dir() {
-                    crate::log!(format!("\"{}\" is not Directory", element.tag));
+                    crate::log!("\"{}\" is not Directory", element.tag);
                     return Ok(false);
                 }
 
@@ -570,11 +567,11 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
                 .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
                 .collect::<Vec<_>>();
             input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
-            crate::log!(format!(
+            crate::log!(
                 "Delete {} items ? (y/Y/{})",
                 keyconf.delete,
                 selected_files.len()
-            ));
+            );
             return Ok(false);
         }
 
@@ -582,11 +579,11 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
             misc::sorted_child_files(&app::get_path()).get(cursor.current())
         {
             input::use_f_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
-            crate::log!(format!(
+            crate::log!(
                 "Delete \"{}\" ? (y/Y/{})",
                 keyconf.delete,
                 misc::file_name(under_cursor_file)
-            ));
+            );
         }
     }
 
@@ -604,7 +601,7 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
         {
             let name = misc::file_name(under_cursor_file);
             input::use_f_mut(|i| i.enable(name, Some("Rename".into())));
-            crate::log!(format!("Enter new name for \"{}\"", name));
+            crate::log!("Enter new name for \"{}\"", name);
         }
     }
 
@@ -629,12 +626,12 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
                 .collect::<Vec<_>>();
 
             if let Err(e) = clipboard::clip(&selected_files.join("\n"), "text/uri-list") {
-                crate::log!(format!("Yank failed: {}", e.kind()));
+                crate::log!("Yank failed: {}", e.kind());
                 return Ok(false);
             }
 
             cursor::disable_selection();
-            crate::log!(format!("Yanked {} items", selected_files.len()));
+            crate::log!("Yanked {} items", selected_files.len());
             return Ok(false);
         }
 
@@ -644,11 +641,11 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
             let text = format!("file://{}", under_cursor_file.to_string_lossy());
 
             if let Err(e) = clipboard::clip(&text, "text/uri-list") {
-                crate::log!(format!("Yank failed: {}", e.kind()));
+                crate::log!("Yank failed: {}", e.kind());
                 return Ok(false);
             }
 
-            crate::log!(format!("Yanked \"{}\"", misc::file_name(under_cursor_file)));
+            crate::log!("Yanked \"{}\"", misc::file_name(under_cursor_file));
         }
     }
 
@@ -675,7 +672,7 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
             if config.paste.force_mode {
                 handle_input_mode(i, KeyEvent::from(KeyCode::Enter));
             } else {
-                crate::log!(format!("overwrite the same files? (y/Y/{})", keyconf.paste));
+                crate::log!("overwrite the same files? (y/Y/{})", keyconf.paste);
             };
 
             Ok::<(), app::Error>(())

@@ -49,7 +49,7 @@ impl crate::error::HandleError for Error {
 
 #[macro_export]
 macro_rules! log {
-    ($text:expr) => {{
+    ($($args:expr),+) => {{
         use crossterm::cursor;
         use crossterm::style;
         use crossterm::terminal;
@@ -60,33 +60,32 @@ macro_rules! log {
             io::stdout(),
             style::ResetColor,
             cursor::MoveTo(0, row),
-            style::Print($text),
+            style::Print(format_args!($($args),+)),
             terminal::Clear(ClearType::UntilNewLine)
         )
         .unwrap_or_else(|_| $crate::canvas::Error::InLog.handle());
     }};
 
-    ($text:expr, $is_dbg:expr) => {{
-        if $is_dbg {
-            use crossterm::cursor;
-            use crossterm::style;
-            use crossterm::terminal;
-            use crossterm::terminal::ClearType;
-            use std::io;
-            let row = terminal::size().map(|(_, h)| h).unwrap_or(100);
-            let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
-            let ts = if $text == "" { " ".to_string() } else { ts };
-            if let Err(_) = crossterm::execute!(
-                io::stdout(),
-                cursor::MoveTo(0, row),
-                style::Print(format!("{} {}", ts, $text)),
-                terminal::Clear(ClearType::UntilNewLine),
-            ) {
-                $crate::error::EpError::Display.handle()
-            };
-        } else {
-            $crate::log!($text);
-        }
+}
+
+#[macro_export]
+macro_rules! dbg_log {
+    ($($args:expr),+, $is_dbg:expr) => {{
+        use crossterm::cursor;
+        use crossterm::style;
+        use crossterm::terminal;
+        use crossterm::terminal::ClearType;
+        use std::io;
+        let row = terminal::size().map(|(_, h)| h).unwrap_or(100);
+        let ts = chrono::Local::now().format("[%H:%M:%S%.3f]").to_string();
+        if let Err(_) = crossterm::execute!(
+            io::stdout(),
+            cursor::MoveTo(0, row),
+            style::Print(format!("{} {}", ts, format_args!($($args),+))),
+            terminal::Clear(ClearType::UntilNewLine),
+        ) {
+            $crate::error::EpError::Display.handle()
+        };
     }};
 }
 
