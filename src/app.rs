@@ -1,7 +1,7 @@
 use crate::{
     canvas,
     config::{self, Config},
-    error::*,
+    error::HandleError,
     global, handler, misc,
 };
 use std::{
@@ -12,6 +12,38 @@ use std::{
     },
 };
 use tokio::time::{self, Duration, Instant};
+
+#[derive(thiserror::Error, Debug)]
+pub enum Error {
+    #[error("Unable to change the screen mode")]
+    UnableSwitchMode,
+
+    #[error("filesystem error: {0}")]
+    FsErr(String),
+
+    #[error("The struct parsing failed: {0}")]
+    ParseToml(String),
+
+    #[error("invalid argument: {0}")]
+    InvalidArgument(String),
+
+    #[error("Found error in running \"{0}\": {1}")]
+    CommandRun(String, String),
+}
+
+impl HandleError for Error {
+    fn handle(self) {
+        match self {
+            Self::UnableSwitchMode => panic!("{}", self),
+            Self::FsErr(_) => panic!("{}", self),
+            Self::ParseToml(_) => panic!("{}", self),
+            Self::InvalidArgument(_) => panic!("{}", self),
+            Self::CommandRun(cmd, kind) => {
+                crate::log!(format!("Failed to run \"{}\": {}", cmd, kind))
+            }
+        }
+    }
+}
 
 #[macro_export]
 macro_rules! global {
@@ -38,7 +70,7 @@ macro_rules! enable_tui {
                 terminal::DisableLineWrap
             )
         }
-        .map_err(|_| $crate::error::EpError::SwitchScreen)
+        .map_err(|_| $crate::app::Error::UnableSwitchMode)
     };
 }
 
@@ -60,7 +92,7 @@ macro_rules! disable_tui {
                 terminal::EnableLineWrap,
             )
         }
-        .map_err(|_| $crate::error::EpError::SwitchScreen)
+        .map_err(|_| $crate::app::Error::UnableSwitchMode)
     };
 }
 
@@ -134,7 +166,7 @@ pub fn procs() -> u16 {
     PROCS_COUNT.load(Ordering::Relaxed)
 }
 
-pub async fn launch(path: &Path) -> EpResult<()> {
+pub async fn launch(path: &Path) -> Result<(), Error> {
     init(path)?;
     enable_tui!()?;
 
@@ -158,10 +190,10 @@ pub async fn launch(path: &Path) -> EpResult<()> {
     Ok(())
 }
 
-fn init(path: &Path) -> EpResult<()> {
+fn init(path: &Path) -> Result<(), Error> {
     let path = path
         .canonicalize()
-        .map_err(|e| EpError::Init(e.kind().to_string()))?;
+        .map_err(|e| Error::FsErr(e.kind().to_string()))?;
 
     set_path(&path);
 
@@ -171,29 +203,29 @@ fn init(path: &Path) -> EpResult<()> {
     if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
-            std::fs::create_dir_all(tmp_path).map_err(|e| EpError::Init(e.to_string()))?;
+            std::fs::create_dir_all(tmp_path).map_err(|e| Error::FsErr(e.to_string()))?;
         }
     }
 
     Ok(())
 }
 
-pub fn config_init() -> EpResult<()> {
+pub fn config_init() -> Result<(), Error> {
     let conf_path = config::file_path();
     if let Some(conf_path) = conf_path {
         if !conf_path.exists() {
             let parent = misc::parent(&conf_path);
 
             if !parent.exists() {
-                std::fs::create_dir_all(parent).map_err(|e| EpError::Init(e.kind().to_string()))?;
+                std::fs::create_dir_all(parent).map_err(|e| Error::FsErr(e.kind().to_string()))?;
             }
 
             let config_default = toml::to_string_pretty(&Config::default())
-                .map_err(|e| EpError::Init(e.to_string()))?;
+                .map_err(|e| Error::ParseToml(e.to_string()))?;
 
             if !conf_path.exists() {
                 std::fs::write(&conf_path, config_default)
-                    .map_err(|e| EpError::Init(e.kind().to_string()))?;
+                    .map_err(|e| Error::FsErr(e.kind().to_string()))?;
             }
         }
     }

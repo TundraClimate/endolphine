@@ -7,7 +7,7 @@ use crate::{
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::path::{Path, PathBuf};
 
-pub fn handle_event() -> EpResult<bool> {
+pub fn handle_event() -> Result<bool, app::Error> {
     if let Ok(event) = event::read() {
         match event {
             Event::Key(key) => return handle_key_event(key),
@@ -22,7 +22,7 @@ pub fn handle_event() -> EpResult<bool> {
     Ok(false)
 }
 
-fn handle_key_event(key: KeyEvent) -> EpResult<bool> {
+fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
     if input::use_f(|i| i.is_enable()) {
         input::use_f_mut(|i| handle_input_mode(i, key));
         return Ok(false);
@@ -377,7 +377,7 @@ fn handle_action(content: &str, act: String) {
     }
 }
 
-fn handle_esc_key() -> EpResult<()> {
+fn handle_esc_key() -> Result<(), app::Error> {
     cursor::disable_selection();
 
     Ok(())
@@ -394,7 +394,7 @@ fn move_current_dir(path: &Path) {
     cursor.reset();
 }
 
-fn handle_char_key(key: char) -> EpResult<bool> {
+fn handle_char_key(key: char) -> Result<bool, app::Error> {
     let keyconf = &config::load().key;
 
     if key == keyconf.exit_app {
@@ -507,17 +507,13 @@ fn handle_char_key(key: char) -> EpResult<bool> {
             };
 
             crate::disable_tui!()?;
-            let cmd_result = editor.arg(target_path).status().map_err(|e| {
-                EpError::CommandExecute(
+            editor.arg(target_path).status().map_err(|e| {
+                app::Error::CommandRun(
                     editor.get_program().to_string_lossy().into_owned(),
                     e.kind().to_string(),
                 )
-            });
+            })?;
             crate::enable_tui!()?;
-
-            if let Err(e) = cmd_result {
-                e.handle();
-            }
 
             canvas::cache_clear();
         }
@@ -682,7 +678,7 @@ fn handle_char_key(key: char) -> EpResult<bool> {
                 crate::log!(format!("overwrite the same files? (y/Y/{})", keyconf.paste));
             };
 
-            Ok::<(), EpError>(())
+            Ok::<(), app::Error>(())
         })?;
     }
 

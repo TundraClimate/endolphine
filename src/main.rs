@@ -13,6 +13,8 @@ mod menu;
 mod misc;
 mod theme;
 
+use error::HandleError;
+
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -43,7 +45,7 @@ fn terminate<D: std::fmt::Display>(e: D) {
     eprintln!("{}", "-".repeat(41));
 }
 
-async fn start() -> error::EpResult<()> {
+async fn start() -> Result<(), impl crate::error::HandleError> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
 
@@ -78,7 +80,7 @@ async fn start() -> error::EpResult<()> {
     }
 
     if !misc::exists_item(&args.path) || args.path.is_file() {
-        return Err(error::EpError::Init(format!(
+        return Err(app::Error::InvalidArgument(format!(
             "invalid path (-> {})",
             args.path.to_string_lossy()
         )));

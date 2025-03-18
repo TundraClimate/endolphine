@@ -35,8 +35,8 @@ pub enum Error {
     ScreenNotFlushable(String),
 }
 
-impl Error {
-    pub fn handle(self) {
+impl crate::error::HandleError for Error {
+    fn handle(self) {
         match self {
             Self::InLog => panic!("{}", self),
             Self::InRenderRow => panic!("{}", self),
