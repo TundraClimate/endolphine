@@ -1,5 +1,5 @@
 use super::Widget;
-use crate::{app, cursor, error::*, misc, theme};
+use crate::{app, cursor, misc, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Print, SetBackgroundColor, SetForegroundColor},
@@ -10,7 +10,7 @@ pub struct Header;
 impl Widget for Header {
     const ID: u8 = 0;
 
-    fn render(size: (u16, u16)) -> EpResult<()> {
+    fn render(size: (u16, u16)) -> Result<(), super::Error> {
         let current_path = app::get_path();
         let filename = format!("{}/", misc::file_name(&current_path));
 

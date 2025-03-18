@@ -1,5 +1,5 @@
 use super::Widget;
-use crate::{error::*, menu, misc, theme};
+use crate::{menu, misc, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor},
@@ -13,7 +13,7 @@ fn render_menu_line(
     slide_len: u16,
     is_cursor_pos: bool,
     menu_enabled: bool,
-) -> EpResult<()> {
+) -> Result<(), super::Error> {
     let tag = tag.chars().take(slide_len as usize - 6).collect::<String>();
     let cur = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(theme::widget_item_bg(is_cursor_pos, menu_enabled));
@@ -37,7 +37,7 @@ fn render_menu_line(
 impl Widget for Menu {
     const ID: u8 = 3;
 
-    fn render(_size: (u16, u16)) -> EpResult<()> {
+    fn render(_size: (u16, u16)) -> Result<(), super::Error> {
         let slide_len = super::get_view_shift();
         if slide_len == 0 {
             return Ok(());

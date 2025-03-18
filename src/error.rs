@@ -10,14 +10,8 @@ pub enum EpError {
     #[error("Initialization of the application failed: {0}")]
     Init(String),
 
-    #[error("The display of the screen lines failed")]
-    Display,
-
     #[error("Command execution failed")]
     CommandExecute(String, String),
-
-    #[error("Terminal flush failed: {0}")]
-    Flush(String),
 }
 
 impl EpError {
@@ -25,11 +19,9 @@ impl EpError {
         match self {
             Self::SwitchScreen => panic!("{}", self),
             Self::Init(_) => panic!("{}", self),
-            Self::Display => panic!("{}", self),
             Self::CommandExecute(command, kind) => {
                 crate::log!(format!("Failed to run \"{}\": {}", command, kind))
             }
-            Self::Flush(_) => panic!("{}", self),
         };
     }
 }

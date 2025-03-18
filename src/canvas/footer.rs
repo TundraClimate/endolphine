@@ -1,5 +1,5 @@
 use super::Widget;
-use crate::{app, error::*, theme};
+use crate::{app, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Print, SetBackgroundColor, SetForegroundColor},
@@ -10,7 +10,7 @@ pub struct Footer;
 impl Widget for Footer {
     const ID: u8 = 2;
 
-    fn render(size: (u16, u16)) -> EpResult<()> {
+    fn render(size: (u16, u16)) -> Result<(), super::Error> {
         let procs = app::procs();
         let bar_text = format!(
             "{}{} {} process running",
