@@ -1,12 +1,12 @@
-use super::rgb;
 use crate::scheme;
+use crate::theme::rgb;
 
 scheme! {
     fg_focused: rgb("#FFFFFF"),
     fg_unfocused: rgb("#FFFFFF"),
-    bg_focused: crossterm::style::Color::Reset,
-    bg_unfocused: crossterm::style::Color::Reset,
     label: rgb("#646464"),
+    bg_focused: rgb("#3C3C3C"),
+    bg_unfocused: rgb("#1E1E1E"),
     bar: rgb("#969696"),
     bar_dark: rgb("#787878"),
     unnecessary_text: rgb("#969696"),

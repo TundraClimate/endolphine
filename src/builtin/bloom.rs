@@ -1,5 +1,5 @@
-use super::rgb;
 use crate::scheme;
+use crate::theme::rgb;
 
 scheme! {
     fg_focused: rgb("#AFFFAF"),

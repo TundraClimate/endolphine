@@ -1,21 +1,6 @@
 use crossterm::style::Color;
 use std::path::PathBuf;
 
-pub mod bloom;
-pub mod collapse;
-pub mod dark;
-pub mod dark_no_bg;
-pub mod holiday;
-pub mod ice;
-pub mod light;
-pub mod light_no_bg;
-pub mod mars;
-pub mod monochrome;
-pub mod mossy;
-pub mod neon;
-pub mod nept;
-pub mod volcano;
-
 #[derive(serde::Deserialize, serde::Serialize)]
 pub enum Theme {
     Dark,
@@ -153,7 +138,7 @@ impl From<std::sync::LazyLock<Scheme>> for Scheme {
 macro_rules! scheme {
     ($($name:ident : $value:expr),* $(,)?) => {
         #[allow(clippy::declare_interior_mutable_const)]
-        pub const SCHEME: std::sync::LazyLock<super::Scheme> = std::sync::LazyLock::new(|| super::Scheme {
+        pub const SCHEME: std::sync::LazyLock<$crate::theme::Scheme> = std::sync::LazyLock::new(|| $crate::theme::Scheme {
             $($name: $value),*
         });
     }

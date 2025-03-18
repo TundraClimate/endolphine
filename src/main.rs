@@ -2,6 +2,7 @@ use clap::Parser;
 use std::path::PathBuf;
 
 mod app;
+mod builtin;
 mod canvas;
 mod clipboard;
 mod config;

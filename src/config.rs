@@ -1,5 +1,5 @@
 use crate::{
-    config,
+    builtin, config,
     error::*,
     global,
     menu::MenuElement,
@@ -206,20 +206,20 @@ impl Config {
         }
 
         match self.theme {
-            Theme::Dark => theme::dark::SCHEME.into(),
-            Theme::DarkNoBg => theme::dark_no_bg::SCHEME.into(),
-            Theme::Light => theme::light::SCHEME.into(),
-            Theme::LightNoBg => theme::light_no_bg::SCHEME.into(),
-            Theme::Mars => theme::mars::SCHEME.into(),
-            Theme::Neon => theme::neon::SCHEME.into(),
-            Theme::Ice => theme::ice::SCHEME.into(),
-            Theme::Nept => theme::nept::SCHEME.into(),
-            Theme::Volcano => theme::volcano::SCHEME.into(),
-            Theme::Mossy => theme::mossy::SCHEME.into(),
-            Theme::Monochrome => theme::monochrome::SCHEME.into(),
-            Theme::Holiday => theme::holiday::SCHEME.into(),
-            Theme::Bloom => theme::bloom::SCHEME.into(),
-            Theme::Collapse => theme::collapse::SCHEME.into(),
+            Theme::Dark => builtin::Dark.into(),
+            Theme::DarkNoBg => builtin::DarkNoBg.into(),
+            Theme::Light => builtin::Light.into(),
+            Theme::LightNoBg => builtin::LightNoBg.into(),
+            Theme::Mars => builtin::Mars.into(),
+            Theme::Neon => builtin::Neon.into(),
+            Theme::Ice => builtin::Ice.into(),
+            Theme::Nept => builtin::Nept.into(),
+            Theme::Volcano => builtin::Volcano.into(),
+            Theme::Mossy => builtin::Mossy.into(),
+            Theme::Monochrome => builtin::Monochrome.into(),
+            Theme::Holiday => builtin::Holiday.into(),
+            Theme::Bloom => builtin::Bloom.into(),
+            Theme::Collapse => builtin::Collapse.into(),
         }
     }
 }
