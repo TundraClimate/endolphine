@@ -7,7 +7,6 @@ mod canvas;
 mod clipboard;
 mod config;
 mod cursor;
-mod error;
 mod handler;
 mod input;
 mod menu;
