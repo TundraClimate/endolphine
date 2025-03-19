@@ -48,6 +48,26 @@ fn terminate<D: std::fmt::Display>(e: D) {
     eprintln!("{}", "-".repeat(41));
 }
 
+fn out_checked() -> ! {
+    if let Err((e, lines)) = config::check() {
+        eprintln!(
+            "{}{}",
+            crossterm::style::SetForegroundColor(crossterm::style::Color::DarkCyan),
+            crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
+        );
+        eprintln!("-------Invalid syntax detected-------");
+        eprintln!("{}", e.message());
+        eprintln!();
+        eprintln!("{}", lines);
+        eprintln!();
+        eprintln!("-------------------------------------");
+
+        std::process::exit(1)
+    } else {
+        std::process::exit(0)
+    }
+}
+
 async fn start() -> Result<(), impl HandleError> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
@@ -66,23 +86,7 @@ async fn start() -> Result<(), impl HandleError> {
 
     if args.edit_config {
         config::edit().await;
-        if let Err((e, lines)) = config::check() {
-            eprintln!(
-                "{}{}",
-                crossterm::style::SetForegroundColor(crossterm::style::Color::DarkCyan),
-                crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-            );
-            eprintln!("-------Invalid syntax detected-------");
-            eprintln!("{}", e.message());
-            eprintln!();
-            eprintln!("{}", lines);
-            eprintln!();
-            eprintln!("-------------------------------------");
-
-            std::process::exit(0);
-        }
-
-        std::process::exit(1);
+        out_checked();
     }
 
     app::launch(&args.path).await?;
