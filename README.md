@@ -240,7 +240,6 @@ cargo uninstall endolphine
 - Add a logger to file
 - Impl for the realtime displaying system
 - Improve the search logic (Now: contains TEXT)
-- Refactor backend logics
 - Impl for the application-level yank and paste
 - Add a command mode
 - Improve the rendering system to nvim like
@@ -248,6 +247,7 @@ cargo uninstall endolphine
   - Allow widgets to be rendered to variable size
     - When viewed from inside the renderer, it is assumed that (0, 0) to (x, y) of the "window" to be rendered can be used
   - Impl for the floating window
+  - Add component rendering
 - Impl the layout system and logic (ratatui?)
 
 ## LICENSE
