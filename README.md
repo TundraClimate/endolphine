@@ -240,7 +240,6 @@ cargo uninstall endolphine
 - Add a logger to file
 - Impl for the realtime displaying system
 - Improve the search logic (Now: contains TEXT)
-- Improve the error handling
 - Refactor backend logics
 - Impl for the application-level yank and paste
 - Add a command mode
