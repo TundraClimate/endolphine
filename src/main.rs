@@ -14,7 +14,9 @@ mod menu;
 mod misc;
 mod theme;
 
-use error::HandleError;
+pub trait HandleError {
+    fn handle(self);
+}
 
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
@@ -46,7 +48,7 @@ fn terminate<D: std::fmt::Display>(e: D) {
     eprintln!("{}", "-".repeat(41));
 }
 
-async fn start() -> Result<(), impl crate::error::HandleError> {
+async fn start() -> Result<(), impl HandleError> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
 

@@ -1,7 +1,5 @@
 use crate::{
-    builtin, config,
-    error::*,
-    global,
+    builtin, config, global,
     menu::MenuElement,
     theme::{self, Scheme, Theme},
 };

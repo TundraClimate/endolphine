@@ -1,7 +1,6 @@
 use crate::{
-    canvas,
+    HandleError, canvas,
     config::{self, Config},
-    error::HandleError,
     global, handler, misc,
 };
 use std::{

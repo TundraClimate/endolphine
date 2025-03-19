@@ -35,7 +35,7 @@ pub enum Error {
     ScreenNotFlushable(String),
 }
 
-impl crate::error::HandleError for Error {
+impl crate::HandleError for Error {
     fn handle(self) {
         match self {
             Self::InLog => panic!("{}", self),
@@ -63,7 +63,9 @@ macro_rules! log {
             style::Print(format_args!($($args),+)),
             terminal::Clear(ClearType::UntilNewLine)
         )
-        .unwrap_or_else(|_| $crate::canvas::Error::InLog.handle());
+        .unwrap_or_else(|_| {
+            $crate::HandleError::handle($crate::canvas::Error::InLog);
+        });
     }};
 
 }

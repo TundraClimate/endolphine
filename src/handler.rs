@@ -1,6 +1,5 @@
 use crate::{
     app, canvas, clipboard, config, cursor,
-    error::*,
     input::{self, Input},
     menu, misc,
 };
