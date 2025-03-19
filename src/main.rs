@@ -65,7 +65,7 @@ fn out_checked() -> ! {
 
 async fn start() -> Result<(), app::Error> {
     std::panic::set_hook(Box::new(|e| {
-        crate::disable_tui!().ok();
+        app::disable_tui().ok();
 
         if let Some(e) = e.payload().downcast_ref::<String>() {
             terminate(e);

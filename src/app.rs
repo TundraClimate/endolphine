@@ -3,6 +3,7 @@ use crate::{
     config::{self, Config},
     global, handler, misc,
 };
+use crossterm::{cursor, terminal};
 use std::{
     path::{Path, PathBuf},
     sync::{
@@ -63,48 +64,32 @@ macro_rules! global {
     };
 }
 
-#[macro_export]
-macro_rules! enable_tui {
-    () => {
-        'blk: {
-            use crossterm::cursor;
-            use crossterm::terminal;
-            use std::io;
-            if let Err(e) = terminal::enable_raw_mode() {
-                break 'blk Err(e);
-            }
-            $crate::app::enable_render();
+pub fn enable_tui() -> Result<(), Error> {
+    terminal::enable_raw_mode()
+        .and_then(|_| {
+            enable_render();
             crossterm::execute!(
-                io::stdout(),
+                std::io::stdout(),
                 terminal::EnterAlternateScreen,
                 cursor::Hide,
-                terminal::DisableLineWrap
+                terminal::DisableLineWrap,
             )
-        }
-        .map_err(|_| $crate::app::Error::UnableSwitchMode)
-    };
+        })
+        .map_err(|_| Error::UnableSwitchMode)
 }
 
-#[macro_export]
-macro_rules! disable_tui {
-    () => {
-        'blk: {
-            use crossterm::cursor;
-            use crossterm::terminal;
-            use std::io;
-            if let Err(e) = terminal::disable_raw_mode() {
-                break 'blk Err(e);
-            }
-            $crate::app::disable_render();
+pub fn disable_tui() -> Result<(), Error> {
+    terminal::disable_raw_mode()
+        .and_then(|_| {
+            disable_render();
             crossterm::execute!(
-                io::stdout(),
+                std::io::stdout(),
                 terminal::LeaveAlternateScreen,
                 cursor::Show,
                 terminal::EnableLineWrap,
             )
-        }
-        .map_err(|_| $crate::app::Error::UnableSwitchMode)
-    };
+        })
+        .map_err(|_| Error::UnableSwitchMode)
 }
 
 global! {
@@ -186,7 +171,7 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
     }
 
     init(path)?;
-    enable_tui!()?;
+    enable_tui()?;
 
     let quit_flag = Arc::new(AtomicBool::new(false));
 
@@ -203,7 +188,7 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
     event_handle.await.unwrap();
     ui_handle.await.unwrap();
 
-    disable_tui!()?;
+    disable_tui()?;
 
     Ok(())
 }

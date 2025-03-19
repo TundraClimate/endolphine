@@ -497,14 +497,14 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
             return Ok(());
         };
 
-        crate::disable_tui!()?;
+        app::disable_tui()?;
         editor.arg(target_path).status().map_err(|e| {
             app::Error::CommandRun(
                 editor.get_program().to_string_lossy().into_owned(),
                 e.kind().to_string(),
             )
         })?;
-        crate::enable_tui!()?;
+        app::enable_tui()?;
 
         canvas::cache_clear();
     }
