@@ -39,7 +39,7 @@ pub fn file_path() -> Option<PathBuf> {
     })
 }
 
-pub async fn edit() -> Result<(), crate::app::Error> {
+pub async fn edit() {
     let editor = option_env!("EDITOR").unwrap_or("vi");
 
     let Some(config_path) = config::file_path() else {
@@ -50,9 +50,7 @@ pub async fn edit() -> Result<(), crate::app::Error> {
         .arg(config_path)
         .status()
         .await
-        .map_err(|e| crate::app::Error::CommandRun(editor.to_string(), e.kind().to_string()))?;
-
-    Ok(())
+        .ok();
 }
 
 pub fn check() -> Result<(), (toml::de::Error, String)> {

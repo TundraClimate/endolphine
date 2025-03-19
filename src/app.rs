@@ -166,6 +166,13 @@ pub fn procs() -> u16 {
 }
 
 pub async fn launch(path: &Path) -> Result<(), Error> {
+    if !misc::exists_item(path) || path.is_file() {
+        return Err(Error::InvalidArgument(format!(
+            "invalid path (-> {})",
+            path.to_string_lossy()
+        )));
+    }
+
     init(path)?;
     enable_tui!()?;
 

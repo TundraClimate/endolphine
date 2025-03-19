@@ -65,7 +65,7 @@ async fn start() -> Result<(), impl HandleError> {
     let args = Args::parse();
 
     if args.edit_config {
-        config::edit().await?;
+        config::edit().await;
         if let Err((e, lines)) = config::check() {
             eprintln!(
                 "{}{}",
@@ -78,18 +78,14 @@ async fn start() -> Result<(), impl HandleError> {
             eprintln!("{}", lines);
             eprintln!();
             eprintln!("-------------------------------------");
-        }
-        return Ok(());
-    }
 
-    if !misc::exists_item(&args.path) || args.path.is_file() {
-        return Err(app::Error::InvalidArgument(format!(
-            "invalid path (-> {})",
-            args.path.to_string_lossy()
-        )));
+            std::process::exit(0);
+        }
+
+        std::process::exit(1);
     }
 
     app::launch(&args.path).await?;
 
-    Ok(())
+    Ok::<(), app::Error>(())
 }
