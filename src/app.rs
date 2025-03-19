@@ -1,5 +1,5 @@
 use crate::{
-    HandleError, canvas,
+    canvas,
     config::{self, Config},
     global, handler, misc,
 };
@@ -28,18 +28,30 @@ pub enum Error {
 
     #[error("Found error in running \"{0}\": {1}")]
     CommandRun(String, String),
+
+    #[error("Display the log failed")]
+    InRenderLog,
+
+    #[error("The row rendering failed")]
+    InRenderRow,
+
+    #[error("The input-area rendering failed")]
+    InRenderInput,
+
+    #[error("Found platform error: {0}")]
+    PlatformErr(String),
+
+    #[error("Screen flush failed: {0}")]
+    ScreenNotFlushable(String),
 }
 
-impl HandleError for Error {
-    fn handle(self) {
+impl Error {
+    pub fn handle(self) {
         match self {
-            Self::UnableSwitchMode => panic!("{}", self),
-            Self::FsErr(_) => panic!("{}", self),
-            Self::ParseToml(_) => panic!("{}", self),
-            Self::InvalidArgument(_) => panic!("{}", self),
             Self::CommandRun(cmd, kind) => {
                 crate::log!("Failed to run \"{}\": {}", cmd, kind)
             }
+            _ => panic!("{}", self),
         }
     }
 }

@@ -1,4 +1,4 @@
-use crate::{global, theme};
+use crate::{app, global, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
@@ -17,36 +17,6 @@ mod footer;
 mod header;
 mod menu;
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Display the log failed")]
-    InLog,
-
-    #[error("The row rendering failed")]
-    InRenderRow,
-
-    #[error("The input-area rendering failed")]
-    InRenderInput,
-
-    #[error("Found platform error: {0}")]
-    PlatformErr(String),
-
-    #[error("Screen flush failed: {0}")]
-    ScreenNotFlushable(String),
-}
-
-impl crate::HandleError for Error {
-    fn handle(self) {
-        match self {
-            Self::InLog => panic!("{}", self),
-            Self::InRenderRow => panic!("{}", self),
-            Self::InRenderInput => panic!("{}", self),
-            Self::PlatformErr(_) => panic!("{}", self),
-            Error::ScreenNotFlushable(_) => panic!("{}", self),
-        }
-    }
-}
-
 #[macro_export]
 macro_rules! log {
     ($($args:expr),+) => {{
@@ -64,7 +34,7 @@ macro_rules! log {
             terminal::Clear(ClearType::UntilNewLine)
         )
         .unwrap_or_else(|_| {
-            $crate::HandleError::handle($crate::canvas::Error::InLog);
+            $crate::app::Error::InRenderLog.handle();
         });
     }};
 
@@ -122,16 +92,16 @@ pub fn cache_clear() {
 trait Widget {
     const ID: u8;
 
-    fn cached_render_row(tag: &str, row: u16, cmds: String) -> Result<(), Error> {
+    fn cached_render_row(tag: &str, row: u16, cmds: String) -> Result<(), app::Error> {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
-            Self::render_row(row, cmds).map_err(|_| Error::InRenderRow)
+            Self::render_row(row, cmds).map_err(|_| app::Error::InRenderRow)
         } else {
             Ok(())
         }
     }
 
-    fn render(size: (u16, u16)) -> Result<(), Error>;
+    fn render(size: (u16, u16)) -> Result<(), app::Error>;
 
     fn render_row(row: u16, cmds: String) -> std::io::Result<()> {
         crossterm::queue!(
@@ -146,9 +116,9 @@ trait Widget {
     }
 }
 
-pub fn render() -> Result<(), Error> {
+pub fn render() -> Result<(), app::Error> {
     let (width, height) =
-        crossterm::terminal::size().map_err(|e| Error::PlatformErr(e.kind().to_string()))?;
+        crossterm::terminal::size().map_err(|e| app::Error::PlatformErr(e.kind().to_string()))?;
 
     if height <= 4 {
         return Ok(());
@@ -170,7 +140,7 @@ pub fn render() -> Result<(), Error> {
 
     std::io::stdout()
         .flush()
-        .map_err(|e| Error::ScreenNotFlushable(e.kind().to_string()))?;
+        .map_err(|e| app::Error::ScreenNotFlushable(e.kind().to_string()))?;
 
     Ok(())
 }

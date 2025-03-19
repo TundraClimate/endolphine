@@ -26,7 +26,7 @@ fn pagenate(full: &[PathBuf], page_size: u16, current_page: usize) -> Vec<PathBu
         .unwrap_or(vec![])
 }
 
-fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), super::Error> {
+fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), app::Error> {
     let Some(buf) = input::use_f(|i| i.buffer_load().clone()) else {
         return Ok(());
     };
@@ -50,12 +50,12 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), 
         Print(buf),
         ResetColor
     )
-    .map_err(|_| super::Error::InRenderInput)?;
+    .map_err(|_| app::Error::InRenderInput)?;
 
     Ok(())
 }
 
-fn render_input_line(rel_i: u16) -> Result<(), super::Error> {
+fn render_input_line(rel_i: u16) -> Result<(), app::Error> {
     let name_col = 39;
     render_input((super::get_view_shift() + name_col, rel_i + 2), 20, (0, 5))?;
 
@@ -67,7 +67,7 @@ fn render_file_line(
     is_cursor_pos: bool,
     file: &PathBuf,
     is_selected: bool,
-) -> Result<(), super::Error> {
+) -> Result<(), app::Error> {
     let c = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(theme::item_bg(is_selected, is_cursor_pos));
     let body_row = BodyRow::new(file, c.into(), under_name_color);
@@ -78,7 +78,7 @@ fn render_file_line(
     )
 }
 
-fn render_empty_line(rel_i: u16) -> Result<(), super::Error> {
+fn render_empty_line(rel_i: u16) -> Result<(), app::Error> {
     if rel_i == 0 {
         let row = format!(
             "{}> | Press 'a' to create the New file | Empty",
@@ -291,7 +291,7 @@ impl std::fmt::Display for BodyRow {
 impl Widget for Body {
     const ID: u8 = 1;
 
-    fn render(_size: (u16, u16)) -> Result<(), super::Error> {
+    fn render(_size: (u16, u16)) -> Result<(), app::Error> {
         let height = misc::body_height();
         let cursor = cursor::load();
         let page = cursor.current() / height as usize + 1;

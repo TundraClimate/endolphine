@@ -14,10 +14,6 @@ mod menu;
 mod misc;
 mod theme;
 
-pub trait HandleError {
-    fn handle(self);
-}
-
 #[derive(Parser)]
 #[command(version, about, long_about = None)]
 struct Args {
@@ -68,7 +64,7 @@ fn out_checked() -> ! {
     }
 }
 
-async fn start() -> Result<(), impl HandleError> {
+async fn start() -> Result<(), app::Error> {
     std::panic::set_hook(Box::new(|e| {
         crate::disable_tui!().ok();
 

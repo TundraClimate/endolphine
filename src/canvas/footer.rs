@@ -10,7 +10,7 @@ pub struct Footer;
 impl Widget for Footer {
     const ID: u8 = 2;
 
-    fn render(size: (u16, u16)) -> Result<(), super::Error> {
+    fn render(size: (u16, u16)) -> Result<(), app::Error> {
         let procs = app::procs();
         let bar_text = format!(
             "{}{} {} process running",
