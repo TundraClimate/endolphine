@@ -92,76 +92,6 @@ pub fn disable_tui() -> Result<(), Error> {
         .map_err(|_| Error::UnableSwitchMode)
 }
 
-global! {
-    static PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
-}
-
-pub fn get_path() -> PathBuf {
-    (*PATH.read().unwrap()).clone()
-}
-
-pub fn set_path(new_path: &Path) {
-    let mut lock = PATH.write().unwrap();
-    *lock = new_path.to_path_buf();
-}
-
-global! {
-    static RENDER: AtomicBool = AtomicBool::new(false);
-}
-
-pub fn disable_render() {
-    RENDER.swap(false, Ordering::Relaxed);
-}
-
-pub fn enable_render() {
-    RENDER.swap(true, Ordering::Relaxed);
-}
-
-global! {
-    static GREP: RwLock<String> =  RwLock::new(String::new());
-}
-
-pub fn read_grep() -> String {
-    let lock = GREP.read().unwrap();
-    lock.to_owned()
-}
-
-pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
-    let mut lock = GREP.write().unwrap();
-    f(&mut lock);
-}
-
-pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
-    let lock = GREP.read().unwrap();
-    f(&lock)
-}
-
-pub fn sync_grep(input: &mut crate::input::Input) {
-    crate::app::grep_update(|f| {
-        *f = input
-            .buffer_load()
-            .clone()
-            .and_then(|b| b.strip_prefix("/").map(|b| b.to_string()))
-            .unwrap_or(" ".to_string())
-    });
-}
-
-global! {
-    static PROCS_COUNT:AtomicU16 = AtomicU16::new(0);
-}
-
-pub fn proc_count_up() {
-    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
-}
-
-pub fn proc_count_down() {
-    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
-}
-
-pub fn procs() -> u16 {
-    PROCS_COUNT.load(Ordering::Relaxed)
-}
-
 pub async fn launch(path: &Path) -> Result<(), Error> {
     if !misc::exists_item(path) || path.is_file() {
         return Err(Error::InvalidArgument(format!(
@@ -266,4 +196,74 @@ async fn ui(quit_flag: Arc<AtomicBool>) {
             time::sleep(Duration::from_millis(tick) - elapsed).await;
         }
     }
+}
+
+global! {
+    static PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
+}
+
+pub fn get_path() -> PathBuf {
+    (*PATH.read().unwrap()).clone()
+}
+
+pub fn set_path(new_path: &Path) {
+    let mut lock = PATH.write().unwrap();
+    *lock = new_path.to_path_buf();
+}
+
+global! {
+    static RENDER: AtomicBool = AtomicBool::new(false);
+}
+
+pub fn disable_render() {
+    RENDER.swap(false, Ordering::Relaxed);
+}
+
+pub fn enable_render() {
+    RENDER.swap(true, Ordering::Relaxed);
+}
+
+global! {
+    static GREP: RwLock<String> =  RwLock::new(String::new());
+}
+
+pub fn read_grep() -> String {
+    let lock = GREP.read().unwrap();
+    lock.to_owned()
+}
+
+pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
+    let mut lock = GREP.write().unwrap();
+    f(&mut lock);
+}
+
+pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
+    let lock = GREP.read().unwrap();
+    f(&lock)
+}
+
+pub fn sync_grep(input: &mut crate::input::Input) {
+    crate::app::grep_update(|f| {
+        *f = input
+            .buffer_load()
+            .clone()
+            .and_then(|b| b.strip_prefix("/").map(|b| b.to_string()))
+            .unwrap_or(" ".to_string())
+    });
+}
+
+global! {
+    static PROCS_COUNT: AtomicU16 = AtomicU16::new(0);
+}
+
+pub fn proc_count_up() {
+    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+}
+
+pub fn proc_count_down() {
+    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+}
+
+pub fn procs() -> u16 {
+    PROCS_COUNT.load(Ordering::Relaxed)
 }

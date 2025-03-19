@@ -5,14 +5,6 @@ use std::{
     sync::atomic::{AtomicBool, Ordering},
 };
 
-global! {
-    static MENU: Menu = Menu::default();
-}
-
-pub fn refs() -> &'static Menu {
-    &MENU
-}
-
 const MENU_LENGTH: u16 = 20;
 
 pub fn toggle_open() {
@@ -106,4 +98,12 @@ impl<'de> serde::Deserialize<'de> for MenuElement {
         let s = String::deserialize(deserializer)?;
         MenuElement::from_str(&s).map_err(|e| serde::de::Error::custom(&e))
     }
+}
+
+global! {
+    static MENU: Menu = Menu::default();
+}
+
+pub fn refs() -> &'static Menu {
+    &MENU
 }

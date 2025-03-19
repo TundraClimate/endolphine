@@ -1,20 +1,6 @@
 use crate::{cursor::Cursor, global};
 use std::sync::RwLock;
 
-global! {
-    static INPUT: RwLock<Input> = RwLock::new(Input::default());
-}
-
-pub fn use_f<F: FnOnce(&Input) -> R, R>(f: F) -> R {
-    let lock = INPUT.read().unwrap();
-    f(&lock)
-}
-
-pub fn use_f_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
-    let mut lock = INPUT.write().unwrap();
-    f(&mut lock)
-}
-
 #[derive(Default)]
 pub struct Input {
     buffer: Option<String>,
@@ -98,4 +84,18 @@ impl Input {
     pub fn load_action(&self) -> &Option<String> {
         &self.action
     }
+}
+
+global! {
+    static INPUT: RwLock<Input> = RwLock::new(Input::default());
+}
+
+pub fn use_f<F: FnOnce(&Input) -> R, R>(f: F) -> R {
+    let lock = INPUT.read().unwrap();
+    f(&lock)
+}
+
+pub fn use_f_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
+    let mut lock = INPUT.write().unwrap();
+    f(&mut lock)
 }

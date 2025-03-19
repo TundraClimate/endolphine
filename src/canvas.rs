@@ -61,34 +61,6 @@ macro_rules! dbg_log {
     }};
 }
 
-global! {
-    static VIEW_SHIFT: AtomicU16 = AtomicU16::new(0);
-}
-
-pub fn get_view_shift() -> u16 {
-    VIEW_SHIFT.load(Ordering::Relaxed)
-}
-
-pub fn set_view_shift(new_value: u16) {
-    VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
-}
-
-global! {
-    static CACHE: RwLock<HashMap<(u16, u8), String>> = RwLock::new(HashMap::new());
-}
-
-pub fn cache_insert(key: (u16, u8), tag: String) {
-    CACHE.write().unwrap().insert(key, tag);
-}
-
-pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
-    CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
-}
-
-pub fn cache_clear() {
-    CACHE.write().unwrap().clear();
-}
-
 trait Widget {
     const ID: u8;
 
@@ -152,4 +124,32 @@ fn colored_bar(color: Color, len: u16) -> String {
         " ".repeat(len as usize),
         ResetColor
     )
+}
+
+global! {
+    static VIEW_SHIFT: AtomicU16 = AtomicU16::new(0);
+}
+
+pub fn get_view_shift() -> u16 {
+    VIEW_SHIFT.load(Ordering::Relaxed)
+}
+
+pub fn set_view_shift(new_value: u16) {
+    VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
+}
+
+global! {
+    static CACHE: RwLock<HashMap<(u16, u8), String>> = RwLock::new(HashMap::new());
+}
+
+pub fn cache_insert(key: (u16, u8), tag: String) {
+    CACHE.write().unwrap().insert(key, tag);
+}
+
+pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
+    CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
+}
+
+pub fn cache_clear() {
+    CACHE.write().unwrap().clear();
 }
