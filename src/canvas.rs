@@ -34,7 +34,7 @@ macro_rules! log {
             terminal::Clear(ClearType::UntilNewLine)
         )
         .unwrap_or_else(|_| {
-            $crate::app::Error::InRenderLog.handle();
+            $crate::app::Error::LogDisplayFailed.handle();
         });
     }};
 
@@ -67,7 +67,7 @@ trait Widget {
     fn cached_render_row(tag: &str, row: u16, cmds: String) -> Result<(), app::Error> {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
-            Self::render_row(row, cmds).map_err(|_| app::Error::InRenderRow)
+            Self::render_row(row, cmds).map_err(|_| app::Error::RowRenderingFailed)
         } else {
             Ok(())
         }
@@ -90,7 +90,7 @@ trait Widget {
 
 pub fn render() -> Result<(), app::Error> {
     let (width, height) =
-        crossterm::terminal::size().map_err(|e| app::Error::PlatformErr(e.kind().to_string()))?;
+        crossterm::terminal::size().map_err(|e| app::Error::PlatformError(e.kind().to_string()))?;
 
     if height <= 4 {
         return Ok(());
@@ -112,7 +112,7 @@ pub fn render() -> Result<(), app::Error> {
 
     std::io::stdout()
         .flush()
-        .map_err(|e| app::Error::ScreenNotFlushable(e.kind().to_string()))?;
+        .map_err(|e| app::Error::ScreenFlushFailed(e.kind().to_string()))?;
 
     Ok(())
 }

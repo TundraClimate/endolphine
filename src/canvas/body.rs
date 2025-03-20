@@ -50,7 +50,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), 
         Print(buf),
         ResetColor
     )
-    .map_err(|_| app::Error::InRenderInput)?;
+    .map_err(|_| app::Error::InputRenderingFailed)?;
 
     Ok(())
 }

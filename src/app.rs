@@ -16,40 +16,42 @@ use tokio::time::{self, Duration, Instant};
 #[derive(thiserror::Error, Debug)]
 pub enum Error {
     #[error("Unable to change the screen mode")]
-    UnableSwitchMode,
+    ScreenModeChangeFailed,
 
     #[error("filesystem error: {0}")]
-    FsErr(String),
+    #[allow(clippy::enum_variant_names)]
+    FilesystemError(String),
 
     #[error("The struct parsing failed: {0}")]
-    ParseToml(String),
+    TomlParseFailed(String),
 
     #[error("invalid argument: {0}")]
     InvalidArgument(String),
 
     #[error("Found error in running \"{0}\": {1}")]
-    CommandRun(String, String),
+    CommandExecutionFailed(String, String),
 
     #[error("Display the log failed")]
-    InRenderLog,
+    LogDisplayFailed,
 
     #[error("The row rendering failed")]
-    InRenderRow,
+    RowRenderingFailed,
 
     #[error("The input-area rendering failed")]
-    InRenderInput,
+    InputRenderingFailed,
 
     #[error("Found platform error: {0}")]
-    PlatformErr(String),
+    #[allow(clippy::enum_variant_names)]
+    PlatformError(String),
 
     #[error("Screen flush failed: {0}")]
-    ScreenNotFlushable(String),
+    ScreenFlushFailed(String),
 }
 
 impl Error {
     pub fn handle(self) {
         match self {
-            Self::CommandRun(cmd, kind) => {
+            Self::CommandExecutionFailed(cmd, kind) => {
                 crate::log!("Failed to run \"{}\": {}", cmd, kind)
             }
             _ => panic!("{}", self),
@@ -75,7 +77,7 @@ pub fn enable_tui() -> Result<(), Error> {
                 terminal::DisableLineWrap,
             )
         })
-        .map_err(|_| Error::UnableSwitchMode)
+        .map_err(|_| Error::ScreenModeChangeFailed)
 }
 
 pub fn disable_tui() -> Result<(), Error> {
@@ -89,7 +91,7 @@ pub fn disable_tui() -> Result<(), Error> {
                 terminal::EnableLineWrap,
             )
         })
-        .map_err(|_| Error::UnableSwitchMode)
+        .map_err(|_| Error::ScreenModeChangeFailed)
 }
 
 pub async fn launch(path: &Path) -> Result<(), Error> {
@@ -126,7 +128,7 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
 fn init(path: &Path) -> Result<(), Error> {
     let path = path
         .canonicalize()
-        .map_err(|e| Error::FsErr(e.kind().to_string()))?;
+        .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
 
     set_path(&path);
 
@@ -136,7 +138,7 @@ fn init(path: &Path) -> Result<(), Error> {
     if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
-            std::fs::create_dir_all(tmp_path).map_err(|e| Error::FsErr(e.to_string()))?;
+            std::fs::create_dir_all(tmp_path).map_err(|e| Error::FilesystemError(e.to_string()))?;
         }
     }
 
@@ -150,15 +152,16 @@ pub fn config_init() -> Result<(), Error> {
             let parent = misc::parent(&conf_path);
 
             if !parent.exists() {
-                std::fs::create_dir_all(parent).map_err(|e| Error::FsErr(e.kind().to_string()))?;
+                std::fs::create_dir_all(parent)
+                    .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
             }
 
             let config_default = toml::to_string_pretty(&Config::default())
-                .map_err(|e| Error::ParseToml(e.to_string()))?;
+                .map_err(|e| Error::TomlParseFailed(e.to_string()))?;
 
             if !conf_path.exists() {
                 std::fs::write(&conf_path, config_default)
-                    .map_err(|e| Error::FsErr(e.kind().to_string()))?;
+                    .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
             }
         }
     }
