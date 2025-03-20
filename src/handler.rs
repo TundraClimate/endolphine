@@ -45,8 +45,8 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
         KeyCode::Char(c) => {
             if key.modifiers.contains(KeyModifiers::CONTROL) {
                 match c {
-                    c if c == config::load().key.move_parent => input.cursor_left(),
-                    c if c == config::load().key.enter_dir_or_edit => input.cursor_right(),
+                    'h' => input.cursor_left(),
+                    'l' => input.cursor_right(),
                     _ => {}
                 }
 
