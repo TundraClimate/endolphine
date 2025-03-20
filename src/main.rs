@@ -50,12 +50,12 @@ fn out_checked() -> ! {
             crossterm::style::SetForegroundColor(crossterm::style::Color::DarkCyan),
             crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
         );
-        eprintln!("-------Invalid syntax detected-------");
+        eprintln!("{:-^39}", "Invalid syntax detected");
         eprintln!("{}", e.message());
         eprintln!();
         eprintln!("{}", lines);
         eprintln!();
-        eprintln!("-------------------------------------");
+        eprintln!("{}", "-".repeat(39));
 
         std::process::exit(1)
     } else {
