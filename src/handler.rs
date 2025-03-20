@@ -65,13 +65,13 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
         }
         KeyCode::Delete => {
             input.buffer_pick_next();
-            if input.load_action() == &Some("Search".to_owned()) {
+            if input.load_action().as_deref() == Some("Search") {
                 app::sync_grep(input);
             }
         }
         KeyCode::Backspace => {
             input.buffer_pick();
-            if input.load_action() == &Some("Search".to_owned()) {
+            if input.load_action().as_deref() == Some("Search") {
                 app::sync_grep(input);
             }
         }
