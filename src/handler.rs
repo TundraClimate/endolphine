@@ -24,16 +24,21 @@ pub fn handle_event() -> Result<bool, app::Error> {
 fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
     if input::use_f(|i| i.is_enable()) {
         input::use_f_mut(|i| handle_input_mode(i, key));
+
         return Ok(false);
     }
 
     match key.code {
         KeyCode::Char(c) => return handle_char_key(c),
-        KeyCode::Esc => handle_esc_key()?,
+        KeyCode::Esc => handle_esc_key(),
         _ => {}
     }
 
     Ok(false)
+}
+
+fn handle_esc_key() {
+    cursor::disable_selection();
 }
 
 fn handle_input_mode(input: &mut Input, key: KeyEvent) {
@@ -52,7 +57,9 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
 
                 return;
             }
+
             input.buffer_insert(c);
+
             if let Some(act) = input.load_action() {
                 match act.as_str() {
                     "Search" => app::sync_grep(input),
@@ -65,12 +72,14 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
         }
         KeyCode::Delete => {
             input.buffer_pick_next();
+
             if input.load_action().as_deref() == Some("Search") {
                 app::sync_grep(input);
             }
         }
         KeyCode::Backspace => {
             input.buffer_pick();
+
             if input.load_action().as_deref() == Some("Search") {
                 app::sync_grep(input);
             }
@@ -81,6 +90,7 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
 
             let content = input.drain_storage();
             let act = input.drain_action();
+
             tokio::task::spawn_blocking(|| {
                 let Some(content) = content else { return };
 
@@ -100,15 +110,19 @@ fn act_add_file_or_dir(content: &str) {
 
     if path.exists() {
         crate::log!("Add new file failed: \"{}\" is already exists.", &content);
+
         return;
     }
 
-    if let Err(e) = if content.ends_with("/") {
+    let add_res = if content.ends_with("/") {
         std::fs::create_dir(&path)
     } else {
         std::fs::write(&path, "")
-    } {
+    };
+
+    if let Err(e) = add_res {
         crate::log!("Add new file failed: {}", e.kind());
+
         return;
     }
 
@@ -126,11 +140,13 @@ fn act_rm_file_or_dir(content: &str) {
     {
         let Ok(metadata) = under_cursor_file.symlink_metadata() else {
             crate::log!("Delete file failed: cannot access metadata.");
+
             return;
         };
 
         if !under_cursor_file.exists() && !metadata.is_symlink() {
             crate::log!("Delete file failed: target not exists.");
+
             return;
         }
 
@@ -140,14 +156,15 @@ fn act_rm_file_or_dir(content: &str) {
             if config::load().rm.yank {
                 if !clipboard::is_cmd_installed() {
                     crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+
                     return;
                 }
 
                 let tmp_path = Path::new("/tmp")
                     .join("endolphine")
                     .join(misc::file_name(under_cursor_file));
-
                 let text = format!("file://{}", tmp_path.to_string_lossy());
+
                 if let Err(e) = clipboard::clip(&text, "text/uri-list") {
                     crate::log!("Yank failed: {}", e.kind());
                 }
@@ -161,6 +178,7 @@ fn act_rm_file_or_dir(content: &str) {
 
         if let Err(e) = res {
             crate::log!("Delete file failed: {}", e.kind());
+
             return;
         }
 
@@ -186,6 +204,7 @@ fn act_rm_selected(content: &str) {
         if config::load().rm.yank {
             if !clipboard::is_cmd_installed() {
                 crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+
                 return;
             }
 
@@ -207,17 +226,20 @@ fn act_rm_selected(content: &str) {
         }
         if let Err(e) = misc::into_tmp(&selected) {
             crate::log!("Delete file failed: {}", e.kind());
+
             return;
         }
     } else {
         for target in &selected {
             let Ok(metadata) = target.symlink_metadata() else {
                 crate::log!("Delete file failed: cannot access metadata.");
+
                 return;
             };
 
             if !target.exists() && !metadata.is_symlink() {
                 crate::log!("Delete file failed: target not exists.");
+
                 return;
             }
 
@@ -229,6 +251,7 @@ fn act_rm_selected(content: &str) {
 
             if let Err(e) = res {
                 crate::log!("Delete file failed: {}", e.kind());
+
                 return;
             }
         }
@@ -241,21 +264,25 @@ fn act_rm_selected(content: &str) {
 
 fn act_rename(content: &str) {
     let path = app::get_path();
+
     if let Some(under_cursor_file) = misc::sorted_child_files(&path).get(cursor::load().current()) {
         let renamed = path.join(content);
 
         let Ok(metadata) = under_cursor_file.symlink_metadata() else {
             crate::log!("Rename failed: cannot access metadata.");
+
             return;
         };
 
         if !under_cursor_file.exists() && !metadata.is_symlink() {
             crate::log!("Rename failed: \"{}\" is not exists.", &content);
+
             return;
         }
 
         if let Err(e) = std::fs::rename(under_cursor_file, &renamed) {
             crate::log!("Rename failed: {}", e.kind());
+
             return;
         }
 
@@ -277,6 +304,7 @@ fn act_paste(content: &str) {
             .collect::<Vec<PathBuf>>(),
         Err(e) => {
             crate::log!("Paste failed: {}", e.kind());
+
             return;
         }
     };
@@ -296,6 +324,7 @@ fn act_paste(content: &str) {
 
         let copied_path = {
             let copied = current_path.join(misc::file_name(file));
+
             if copied == *file {
                 let stem = copied
                     .file_stem()
@@ -309,7 +338,7 @@ fn act_paste(content: &str) {
                         format!("{}{}", stem, suffix)
                     };
 
-                current_path.join(PathBuf::from(added_suffix))
+                current_path.join(added_suffix)
             } else {
                 copied
             }
@@ -334,11 +363,14 @@ fn act_paste(content: &str) {
                 };
 
                 let copied_path = copied_path.join(rel_path);
+
                 if !misc::exists_item(&copied_path) || overwrite_mode {
                     let parent = misc::parent(&copied_path);
+
                     if !parent.exists() {
                         if let Err(e) = std::fs::create_dir_all(parent) {
                             crate::log!("Paste failed: \"{}\"", e.kind());
+
                             continue;
                         }
                     }
@@ -350,8 +382,8 @@ fn act_paste(content: &str) {
             }
         }
     }
-    cursor::load().resize(misc::child_files_len(&app::get_path()));
 
+    cursor::load().resize(misc::child_files_len(&app::get_path()));
     crate::log!("{} files paste successful.", files.len());
 }
 
@@ -382,14 +414,9 @@ fn handle_action(content: &str, act: String) {
     }
 }
 
-fn handle_esc_key() -> Result<(), app::Error> {
-    cursor::disable_selection();
-
-    Ok(())
-}
-
 fn move_current_dir(path: &Path) {
     let cursor = cursor::load();
+
     cursor::disable_selection();
     app::set_path(path);
     canvas::cache_clear();
@@ -416,31 +443,29 @@ fn handle_vertical_move(key: char, keyconf: &config::KeyConfig) {
 }
 
 fn handle_move_parent() {
-    let menu = menu::refs();
-    if menu.is_enabled() {
+    if menu::refs().is_enabled() {
         return;
     }
 
     let path = app::get_path();
 
-    if path == PathBuf::from("/") {
+    if path == Path::new("/") {
         return;
     }
 
     let parent = misc::parent(&path);
-
     let cursor = cursor::load();
     let child_files = misc::sorted_child_files(&path);
-    {
-        if let Some(target_path) = child_files.get(cursor.current()) {
-            let mut cur = cursor.cache.write().unwrap();
-            cur.wrap_node(target_path);
-        }
+
+    if let Some(target_path) = child_files.get(cursor.current()) {
+        let mut cur = cursor.cache.write().unwrap();
+        cur.wrap_node(target_path);
     }
 
     move_current_dir(&parent);
 
     let child_files = misc::sorted_child_files(&parent);
+
     if let Some(pos) = child_files.into_iter().position(|p| p == path) {
         cursor.shift(pos as isize);
     }
@@ -448,20 +473,20 @@ fn handle_move_parent() {
 
 fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
     let cursor = cursor::captured();
-
     let menu = menu::refs();
+
     if menu.is_enabled() {
         if let Some(element) = menu.elements.get(cursor.current()) {
             let path = &element.path;
 
             if !path.is_dir() {
                 crate::log!("\"{}\" is not Directory", element.tag);
+
                 return Ok(());
             }
 
             move_current_dir(path);
             menu.toggle_enable();
-
             cursor::load().cache.write().unwrap().reset();
         }
 
@@ -485,6 +510,7 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
         move_current_dir(target_path);
 
         let mut cache = cursor.cache.write().unwrap();
+
         if let Some(pos) = child_files.iter().position(|e| cache.inner_equal(e)) {
             cursor.shift(pos as isize);
             cache.unwrap_surface();
@@ -494,18 +520,20 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
     } else if target_path.is_file() {
         let Some(mut editor) = config::load().editor_command() else {
             crate::log!("invalid config: editor");
+
             return Ok(());
         };
 
         app::disable_tui()?;
+
         editor.arg(target_path).status().map_err(|e| {
             app::Error::CommandExecutionFailed(
                 editor.get_program().to_string_lossy().into_owned(),
                 e.kind().to_string(),
             )
         })?;
-        app::enable_tui()?;
 
+        app::enable_tui()?;
         canvas::cache_clear();
     }
 
@@ -544,7 +572,6 @@ fn handler_create_new() {
     }
 
     cursor::disable_selection();
-
     input::use_f_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
     crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
 }
@@ -562,12 +589,14 @@ fn handle_delete(keyconf: &config::KeyConfig) {
             .enumerate()
             .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
             .collect::<Vec<_>>();
+
         input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
         crate::log!(
             "Delete {} items ? (y/Y/{})",
             keyconf.delete,
             selected_files.len()
         );
+
         return;
     }
 
@@ -596,6 +625,7 @@ fn handle_rename() {
         misc::sorted_child_files(&app::get_path()).get(cursor.current())
     {
         let name = misc::file_name(under_cursor_file);
+
         input::use_f_mut(|i| i.enable(name, Some("Rename".into())));
         crate::log!("Enter new name for \"{}\"", name);
     }
@@ -608,6 +638,7 @@ fn handle_yank() {
 
     if !clipboard::is_cmd_installed() {
         crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+
         return;
     }
 
@@ -628,6 +659,7 @@ fn handle_yank() {
 
         cursor::disable_selection();
         crate::log!("Yanked {} items", selected_files.len());
+
         return;
     }
 
@@ -638,6 +670,7 @@ fn handle_yank() {
 
         if let Err(e) = clipboard::clip(&text, "text/uri-list") {
             crate::log!("Yank failed: {}", e.kind());
+
             return;
         }
 
@@ -652,6 +685,7 @@ fn handle_paste(keyconf: &config::KeyConfig) {
 
     if !clipboard::is_cmd_installed() {
         crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
+
         return;
     }
 
