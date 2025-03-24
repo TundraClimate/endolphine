@@ -104,6 +104,20 @@ items = [
     "Downloads:/home/${USER}/Downloads",
     "Desktop:/home/${USER}/Desktop",
 ]
+
+# Override the file open command by extension
+[opener]
+# OPTIONAL
+
+# Format:
+# EXTENSION = { cmd = ["command"], in_term = bool }
+#
+# cmd = ["COMMAND", "ARGS1", "ARGS2", ...]
+# in_term: if command processing in the terminal
+# in_term is OPTIONAL (default: true)
+
+# Example:
+# txt = { cmd = ["nvim"] }
 ```
 
 ### Keymapping
@@ -235,7 +249,6 @@ cargo uninstall endolphine
 # TODO
 
 - Impl for the multi-key command system
-- Add a config for command override that open it by extension
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
 - Add a logger to file
 - Impl for the realtime displaying system
