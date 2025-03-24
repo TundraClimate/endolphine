@@ -518,23 +518,38 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
             cache.reset();
         }
     } else if target_path.is_file() {
-        let Some(mut editor) = config::load().editor_command() else {
-            crate::log!("invalid config: editor");
+        let mut cmd = config::load().editor.clone();
+        let mut in_term = true;
+
+        if let Some(extension) = target_path.extension().map(|e| e.to_string_lossy()) {
+            if let Some(opts) = config::load().opener.corresponding_with(&extension) {
+                cmd = opts.cmd;
+                in_term = opts.in_term.unwrap_or(true);
+            }
+        }
+
+        let Some((cmd, args)) = cmd.split_first() else {
+            crate::log!("Invalid config: editor or opener");
 
             return Ok(());
         };
 
-        app::disable_tui()?;
+        if in_term {
+            app::disable_tui()?;
+        }
 
-        editor.arg(target_path).status().map_err(|e| {
-            app::Error::CommandExecutionFailed(
-                editor.get_program().to_string_lossy().into_owned(),
-                e.kind().to_string(),
-            )
-        })?;
+        std::process::Command::new(cmd)
+            .args(args)
+            .arg(target_path)
+            .status()
+            .map_err(|e| {
+                app::Error::CommandExecutionFailed(cmd.to_owned(), e.kind().to_string())
+            })?;
 
-        app::enable_tui()?;
-        canvas::cache_clear();
+        if in_term {
+            app::enable_tui()?;
+            canvas::cache_clear();
+        }
     }
 
     Ok(())

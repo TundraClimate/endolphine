@@ -57,7 +57,7 @@ pub fn check() -> Result<(), (toml::de::Error, String)> {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct Config {
-    editor: Vec<String>,
+    pub editor: Vec<String>,
     theme: Theme,
     user_theme_path: Option<PathBuf>,
     pub sort_by_priority: [u8; 4],
@@ -65,6 +65,7 @@ pub struct Config {
     pub paste: PasteConfig,
     pub menu: MenuConfig,
     pub key: KeyConfig,
+    pub opener: OpenConfig,
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
@@ -107,6 +108,15 @@ pub struct KeyConfig {
     pub search_next: char,
 }
 
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+pub struct OpenOpts {
+    pub cmd: Vec<String>,
+    pub in_term: Option<bool>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct OpenConfig(Option<std::collections::BTreeMap<String, OpenOpts>>);
+
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -126,18 +136,12 @@ impl Default for Config {
             menu: MenuConfig::default(),
             theme: Theme::Dark,
             key: KeyConfig::default(),
+            opener: OpenConfig(None),
         }
     }
 }
 
 impl Config {
-    pub fn editor_command(&self) -> Option<std::process::Command> {
-        let (cmd, args) = self.editor.split_first()?;
-        let mut command = std::process::Command::new(cmd);
-        command.args(args);
-        Some(command)
-    }
-
     fn load_user_theme(&self) -> Option<Scheme> {
         if let Some(ref path) = self.user_theme_path {
             if !path.exists() {
@@ -239,6 +243,12 @@ impl Default for KeyConfig {
             search: '/',
             search_next: 'n',
         }
+    }
+}
+
+impl OpenConfig {
+    pub fn corresponding_with(&self, extension: &str) -> Option<OpenOpts> {
+        self.0.as_ref()?.get(extension).cloned()
     }
 }
 
