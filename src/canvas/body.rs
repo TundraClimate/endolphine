@@ -71,8 +71,9 @@ fn render_file_line(
     let c = if is_cursor_pos { ">" } else { " " };
     let under_name_color = SetBackgroundColor(theme::item_bg(is_selected, is_cursor_pos));
     let body_row = BodyRow::new(file, c.into(), under_name_color);
+    let input_enabled = is_cursor_pos && input::use_f(input::Input::is_enable);
     Body::cached_render_row(
-        &format!("{}{}", rel_i, body_row.gen_key()),
+        &format!("{}{}{}", input_enabled, rel_i, body_row.gen_key()),
         rel_i,
         body_row.to_string(),
     )
@@ -296,15 +297,14 @@ impl Widget for Body {
             let abs_i = (height as usize * (page - 1)) + rel_i as usize;
             let is_cursor_pos = cursor.current() == abs_i;
 
-            if is_cursor_pos && input::use_f(|i| i.is_enable()) {
-                render_input_line(rel_i)?;
-                continue;
-            }
-
             if let Some(f) = pagenated.get(rel_i as usize) {
                 render_file_line(rel_i, is_cursor_pos, f, cursor::is_selected(abs_i))?;
             } else {
                 render_empty_line(rel_i)?;
+            }
+
+            if is_cursor_pos && input::use_f(|i| i.is_enable()) {
+                render_input_line(rel_i)?;
             }
         }
         Ok(())

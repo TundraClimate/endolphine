@@ -45,7 +45,6 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
     match key.code {
         KeyCode::Esc => {
             input.disable();
-            canvas::cache_clear();
         }
         KeyCode::Char(c) => {
             if key.modifiers.contains(KeyModifiers::CONTROL) {
@@ -86,7 +85,6 @@ fn handle_input_mode(input: &mut Input, key: KeyEvent) {
         }
         KeyCode::Enter => {
             input.complete_input();
-            canvas::cache_clear();
 
             let content = input.drain_storage();
             let act = input.drain_action();
