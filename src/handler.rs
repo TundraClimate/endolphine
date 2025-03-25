@@ -413,7 +413,7 @@ fn act_search() {
     let first_match_pos = child_files[cursor.current() + 1..]
         .iter()
         .chain(child_files[..cursor.current()].iter())
-        .position(|f| app::is_match_grep(|m| misc::file_name(f).contains(m)))
+        .position(|f| app::regex_match(misc::file_name(f)))
         .map(|pos| pos + 1)
         .unwrap_or(0);
 
@@ -785,7 +785,7 @@ fn handle_search(key: char, keyconf: &config::KeyConfig) {
             input::use_f_mut(|i| i.enable("/", Some("Search".to_string())));
         }
         c if c == keyconf.search_next => {
-            if !app::is_match_grep(|m| m.is_empty()) {
+            if !app::is_regex_empty() {
                 input::use_f_mut(|i| {
                     i.enable("/", Some("Search".to_string()));
                     handle_input_mode(i, KeyEvent::from(KeyCode::Enter))

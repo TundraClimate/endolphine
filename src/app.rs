@@ -240,9 +240,27 @@ pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
     f(&mut lock);
 }
 
-pub fn is_match_grep<F: FnOnce(&str) -> bool>(f: F) -> bool {
+pub fn is_regex_empty() -> bool {
+    GREP.read().unwrap().is_empty()
+}
+
+pub fn regex_match(buf: &str) -> bool {
     let lock = GREP.read().unwrap();
-    f(&lock)
+
+    let Ok(regex) = regex::Regex::new(&lock) else {
+        return false;
+    };
+
+    regex.find(buf).is_some()
+}
+
+pub fn regex_range(buf: &str) -> Option<(usize, usize)> {
+    let lock = GREP.read().unwrap();
+
+    let Ok(regex) = regex::Regex::new(&lock) else {
+        return None;
+    };
+    regex.find(buf).map(|m| (m.start(), m.end()))
 }
 
 pub fn sync_grep(input: &mut crate::input::Input) {

@@ -252,7 +252,6 @@ cargo uninstall endolphine
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
 - Add a logger to file
 - Impl for the realtime displaying system
-- Improve the search logic (Now: contains TEXT)
 - Add a command mode
 - Improve the rendering system to nvim like
   - Make renderings independently as one "window" per grid

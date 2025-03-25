@@ -140,22 +140,17 @@ impl BodyRow {
     }
 
     fn surround_from_matcher(text: String) -> String {
-        let mut pos = 0usize;
-        let mut pat_len = 0usize;
-        if app::is_match_grep(|m| {
-            pat_len = m.len();
-            !m.is_empty() && (text).find(m).inspect(|p| pos = *p).is_some()
-        }) {
-            let end_pos = pos + pat_len;
+        if let Some((start, end)) = app::regex_range(&text) {
             let surround_color = SetBackgroundColor(theme::scheme().search_surround);
             let reset_color = SetBackgroundColor(theme::app_bg());
+
             format!(
                 "{}{}{}{}{}",
-                &text[..pos],
+                &text[..start],
                 surround_color,
-                &text[pos..end_pos],
+                &text[start..end],
                 reset_color,
-                &text[end_pos..]
+                &text[end..]
             )
         } else {
             text
