@@ -23,11 +23,19 @@ pub fn is_cmd_installed() -> bool {
     WindowSystem::is_cmd_installed()
 }
 
-pub fn clip(text: &str, ty: &str) -> std::io::Result<()> {
+pub fn clip(text: &str) {
+    *APP_REGISTER.write().unwrap() = text.to_string();
+}
+
+pub fn clip_native(text: &str, ty: &str) -> std::io::Result<()> {
     WindowSystem::clip(text, ty)
 }
 
-pub fn read_clipboard(ty: &str) -> std::io::Result<String> {
+pub fn read_clipboard() -> String {
+    APP_REGISTER.read().unwrap().to_string()
+}
+
+pub fn read_clipboard_native(ty: &str) -> std::io::Result<String> {
     WindowSystem::read_clipboard(ty)
 }
 
@@ -124,4 +132,8 @@ impl WindowSystem {
         let output = String::from_utf8_lossy(output.stdout.as_slice());
         Ok(String::from(output))
     }
+}
+
+crate::global! {
+    static APP_REGISTER: std::sync::RwLock<String> = std::sync::RwLock::new(String::new());
 }

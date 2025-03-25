@@ -253,7 +253,6 @@ cargo uninstall endolphine
 - Add a logger to file
 - Impl for the realtime displaying system
 - Improve the search logic (Now: contains TEXT)
-- Impl for the application-level yank and paste
 - Add a command mode
 - Improve the rendering system to nvim like
   - Make renderings independently as one "window" per grid

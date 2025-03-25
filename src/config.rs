@@ -61,6 +61,7 @@ pub struct Config {
     theme: Theme,
     user_theme_path: Option<PathBuf>,
     pub sort_by_priority: [u8; 4],
+    pub native_clip: bool,
     pub rm: RmConfig,
     pub paste: PasteConfig,
     pub menu: MenuConfig,
@@ -123,6 +124,7 @@ impl Default for Config {
             editor: vec!["vim"].into_iter().map(ToString::to_string).collect(),
             sort_by_priority: [0, 1, 2, 3],
             user_theme_path: None,
+            native_clip: true,
             rm: RmConfig {
                 no_enter: true,
                 for_tmp: true,

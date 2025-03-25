@@ -130,7 +130,7 @@ fn act_add_file_or_dir(content: &str) {
     crate::log!("\"{}\" create successful.", &content)
 }
 
-fn act_rm_file_or_dir(content: &str) {
+fn act_rm_file_or_dir(content: &str, native: bool) {
     if !["y", "Y", config::load().key.delete.to_string().as_str()].contains(&content) {
         return;
     }
@@ -154,7 +154,7 @@ fn act_rm_file_or_dir(content: &str) {
 
         let res = if config::load().rm.for_tmp {
             if config::load().rm.yank {
-                if !clipboard::is_cmd_installed() {
+                if native && !clipboard::is_cmd_installed() {
                     crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
 
                     return;
@@ -163,10 +163,16 @@ fn act_rm_file_or_dir(content: &str) {
                 let tmp_path = Path::new("/tmp")
                     .join("endolphine")
                     .join(misc::file_name(under_cursor_file));
-                let text = format!("file://{}", tmp_path.to_string_lossy());
 
-                if let Err(e) = clipboard::clip(&text, "text/uri-list") {
-                    crate::log!("Yank failed: {}", e.kind());
+                if native {
+                    if let Err(e) = clipboard::clip_native(
+                        &format!("file://{}", tmp_path.to_string_lossy()),
+                        "text/uri-list",
+                    ) {
+                        crate::log!("Yank failed: {}", e.kind());
+                    }
+                } else {
+                    clipboard::clip(&tmp_path.to_string_lossy());
                 }
             }
             misc::into_tmp(&[under_cursor_file.to_path_buf()])
@@ -189,7 +195,7 @@ fn act_rm_file_or_dir(content: &str) {
     }
 }
 
-fn act_rm_selected(content: &str) {
+fn act_rm_selected(content: &str, native: bool) {
     if !["y", "Y", config::load().key.delete.to_string().as_str()].contains(&content) {
         return;
     }
@@ -202,7 +208,7 @@ fn act_rm_selected(content: &str) {
 
     if config::load().rm.for_tmp {
         if config::load().rm.yank {
-            if !clipboard::is_cmd_installed() {
+            if native && !clipboard::is_cmd_installed() {
                 crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
 
                 return;
@@ -214,14 +220,19 @@ fn act_rm_selected(content: &str) {
             let text = selected.iter().fold(String::new(), |mut acc, p| {
                 let _ = writeln!(
                     acc,
-                    "file://{}",
+                    "{}{}",
+                    if native { "file://" } else { "" },
                     tmp.join(misc::file_name(p)).to_string_lossy()
                 );
                 acc
             });
 
-            if let Err(e) = clipboard::clip(&text, "text/uri-list") {
-                crate::log!("Yank failed: {}", e.kind());
+            if native {
+                if let Err(e) = clipboard::clip_native(&text, "text/uri-list") {
+                    crate::log!("Yank failed: {}", e.kind());
+                }
+            } else {
+                clipboard::clip(&text)
             }
         }
         if let Err(e) = misc::into_tmp(&selected) {
@@ -294,19 +305,27 @@ fn act_rename(content: &str) {
     }
 }
 
-fn act_paste(content: &str) {
-    let files = match clipboard::read_clipboard("text/uri-list") {
-        Ok(text) => text
-            .lines()
-            .filter_map(|f| f.strip_prefix("file://"))
-            .map(PathBuf::from)
-            .filter(|f| misc::exists_item(f))
-            .collect::<Vec<PathBuf>>(),
-        Err(e) => {
-            crate::log!("Paste failed: {}", e.kind());
+fn act_paste(content: &str, native: bool) {
+    let files = if native {
+        match clipboard::read_clipboard_native("text/uri-list") {
+            Ok(text) => text
+                .lines()
+                .filter_map(|f| f.strip_prefix("file://"))
+                .map(PathBuf::from)
+                .filter(|f| misc::exists_item(f))
+                .collect::<Vec<PathBuf>>(),
+            Err(e) => {
+                crate::log!("Paste failed: {}", e.kind());
 
-            return;
+                return;
+            }
         }
+    } else {
+        clipboard::read_clipboard()
+            .split('\n')
+            .map(PathBuf::from)
+            .filter(|c| misc::exists_item(c))
+            .collect::<Vec<_>>()
     };
 
     let current_path = app::get_path();
@@ -405,10 +424,10 @@ fn act_search() {
 fn handle_action(content: &str, act: String) {
     match act.as_str() {
         "AddNewFileOrDirectory" => act_add_file_or_dir(content),
-        "RmFileOrDirectory" => act_rm_file_or_dir(content),
-        "RmSelected" => act_rm_selected(content),
+        "RmFileOrDirectory" => act_rm_file_or_dir(content, config::load().native_clip),
+        "RmSelected" => act_rm_selected(content, config::load().native_clip),
         "Rename" => act_rename(content),
-        "Paste" => act_paste(content),
+        "Paste" => act_paste(content, config::load().native_clip),
         "Search" => act_search(),
         _ => {}
     }
@@ -646,7 +665,7 @@ fn handle_rename() {
     }
 }
 
-fn handle_yank() {
+fn handle_yank_native() {
     if menu::refs().is_enabled() {
         return;
     }
@@ -667,7 +686,7 @@ fn handle_yank() {
             .map(|f| format!("file://{}", f.to_string_lossy()))
             .collect::<Vec<_>>();
 
-        if let Err(e) = clipboard::clip(&selected_files.join("\n"), "text/uri-list") {
+        if let Err(e) = clipboard::clip_native(&selected_files.join("\n"), "text/uri-list") {
             crate::log!("Yank failed: {}", e.kind());
             return;
         }
@@ -683,11 +702,42 @@ fn handle_yank() {
     {
         let text = format!("file://{}", under_cursor_file.to_string_lossy());
 
-        if let Err(e) = clipboard::clip(&text, "text/uri-list") {
+        if let Err(e) = clipboard::clip_native(&text, "text/uri-list") {
             crate::log!("Yank failed: {}", e.kind());
 
             return;
         }
+
+        crate::log!("Yanked \"{}\"", misc::file_name(under_cursor_file));
+    }
+}
+
+fn handle_yank() {
+    if menu::refs().is_enabled() {
+        return;
+    }
+
+    let cursor = cursor::load();
+
+    if cursor::is_selection() {
+        let selected_files = misc::sorted_child_files(&app::get_path())
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, f)| cursor::is_selected(i).then_some(f.to_string_lossy().to_string()))
+            .collect::<Vec<_>>();
+
+        clipboard::clip(&selected_files.join("\n"));
+
+        cursor::disable_selection();
+        crate::log!("Yanked {} items", selected_files.len());
+
+        return;
+    }
+
+    if let Some(under_cursor_file) =
+        misc::sorted_child_files(&app::get_path()).get(cursor.current())
+    {
+        clipboard::clip(&under_cursor_file.to_string_lossy());
 
         crate::log!("Yanked \"{}\"", misc::file_name(under_cursor_file));
     }
@@ -797,7 +847,11 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
     }
 
     if key == keyconf.yank {
-        handle_yank();
+        if config::load().native_clip {
+            handle_yank_native();
+        } else {
+            handle_yank();
+        }
     }
 
     if key == keyconf.paste {
