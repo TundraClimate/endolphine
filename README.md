@@ -250,7 +250,6 @@ cargo uninstall endolphine
 
 - Impl for the multi-key command system
 - Support MacOS (NEVER SUPPORT for **WINDOWS**)
-- Add a logger to file
 - Impl for the realtime displaying system
 - Add a command mode
 - Improve the rendering system to nvim like

@@ -68,14 +68,22 @@ macro_rules! global {
 
 #[macro_export]
 macro_rules! sys_log {
-    ($($fmt:expr),+) => {{
+    ($lv:expr, $($fmt:expr),+) => {{
+        let now = chrono::Local::now();
         let output_path = std::path::Path::new(option_env!("HOME").unwrap_or("/root"))
             .join(".local")
             .join("share")
             .join("endolphine")
             .join("log")
-            .join(chrono::Local::now().format("%Y_%m_%d.log").to_string());
-        let fmt_txt = format!("\n{}", format_args!($($fmt),+));
+            .join(now.format("%Y_%m_%d.log").to_string());
+        let log_header = now.format("[%H:%M:%S]").to_string();
+        let log_lvl = match $lv.to_ascii_lowercase().as_str() {
+            "warn" | "w" => "[WARN]",
+            "error" | "err" | "e" => "[ERROR]",
+            "info" | "i" => "[INFO]",
+            _ => "[INFO]",
+        };
+        let fmt_txt = format!("\n{} {} {}", log_header, log_lvl, format_args!($($fmt),+));
 
         use std::io::Write;
 
@@ -83,13 +91,17 @@ macro_rules! sys_log {
             .append(true)
             .create(true)
             .open(output_path)
-            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+            .map_err(|e| $crate::app::Error::FilesystemError(e.kind().to_string()))?;
         output_file
             .write_all(fmt_txt.as_bytes())
-            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+            .map_err(|e| $crate::app::Error::FilesystemError(e.kind().to_string()))?;
 
         Ok(())
-    }}
+    }};
+
+    ($($fmt:expr),+) => {{
+        $crate::sys_log!("info", $($fmt),+)
+    }};
 }
 
 pub fn enable_tui() -> Result<(), Error> {
