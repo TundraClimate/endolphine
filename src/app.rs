@@ -66,6 +66,32 @@ macro_rules! global {
     };
 }
 
+#[macro_export]
+macro_rules! sys_log {
+    ($($fmt:expr),+) => {{
+        let output_path = std::path::Path::new(option_env!("HOME").unwrap_or("/root"))
+            .join(".local")
+            .join("share")
+            .join("endolphine")
+            .join("log")
+            .join(chrono::Local::now().format("%Y_%m_%d.log").to_string());
+        let fmt_txt = format!("\n{}", format_args!($($fmt),+));
+
+        use std::io::Write;
+
+        let mut output_file = std::fs::OpenOptions::new()
+            .append(true)
+            .create(true)
+            .open(output_path)
+            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+        output_file
+            .write_all(fmt_txt.as_bytes())
+            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+
+        Ok(())
+    }}
+}
+
 pub fn enable_tui() -> Result<(), Error> {
     terminal::enable_raw_mode()
         .and_then(|_| {
@@ -138,8 +164,20 @@ fn init(path: &Path) -> Result<(), Error> {
     if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
-            std::fs::create_dir_all(tmp_path).map_err(|e| Error::FilesystemError(e.to_string()))?;
+            std::fs::create_dir_all(tmp_path)
+                .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
         }
+    }
+
+    let log_path = std::path::Path::new(option_env!("HOME").unwrap_or("/root"))
+        .join(".local")
+        .join("share")
+        .join("endolphine")
+        .join("log");
+
+    if !log_path.exists() {
+        std::fs::create_dir_all(log_path)
+            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
     }
 
     Ok(())
