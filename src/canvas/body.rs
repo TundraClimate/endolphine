@@ -65,12 +65,11 @@ fn render_input_line(rel_i: u16) -> Result<(), app::Error> {
 fn render_file_line(
     rel_i: u16,
     is_cursor_pos: bool,
-    file: &PathBuf,
+    file: &Path,
     is_selected: bool,
 ) -> Result<(), app::Error> {
     let c = if is_cursor_pos { ">" } else { " " };
-    let under_name_color = SetBackgroundColor(theme::item_bg(is_selected, is_cursor_pos));
-    let body_row = BodyRow::new(file, c.into(), under_name_color);
+    let body_row = BodyRow::new(file, c.into(), is_cursor_pos, is_selected);
     let input_enabled = is_cursor_pos && input::use_f(input::Input::is_enable);
     Body::cached_render_row(
         &format!("{}{}{}", input_enabled, rel_i, body_row.gen_key()),
@@ -93,37 +92,25 @@ fn render_empty_line(rel_i: u16) -> Result<(), app::Error> {
 
 struct BodyRow {
     cursor: String,
-    filename: String,
-    filetype: String,
-    bsize: String,
-    time: String,
-    permission: String,
-    under_name_color: SetBackgroundColor,
+    path: PathBuf,
+    is_cursor_pos: bool,
+    is_selected: bool,
 }
 
 impl BodyRow {
-    fn new(path: &PathBuf, cursor: String, under_name_color: SetBackgroundColor) -> Self {
+    fn new(path: &Path, cursor: String, is_cursor_pos: bool, is_selected: bool) -> Self {
         Self {
             cursor,
-            filename: Self::colored_file_name(path),
-            filetype: Self::colored_file_type(path),
-            bsize: Self::colored_bsize(path),
-            time: Self::colored_last_modified(path),
-            permission: Self::colored_permission(Self::format_permission(path)),
-            under_name_color,
+            path: path.to_path_buf(),
+            is_cursor_pos,
+            is_selected,
         }
     }
 
     fn gen_key(&self) -> String {
         format!(
-            "{}{}{}{}{}{}{}",
-            self.cursor,
-            self.filename,
-            self.filetype,
-            self.bsize,
-            self.time,
-            self.permission,
-            self.under_name_color
+            "{}{:?}{}{}",
+            self.cursor, self.path, self.is_cursor_pos, self.is_selected
         )
     }
 
@@ -269,16 +256,24 @@ impl BodyRow {
 
 impl std::fmt::Display for BodyRow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let file_name = Self::colored_file_name(&self.path);
+        let file_type = Self::colored_file_type(&self.path);
+        let bsize = Self::colored_bsize(&self.path);
+        let time = Self::colored_last_modified(&self.path);
+        let permission = Self::colored_permission(Self::format_permission(&self.path));
+        let under_name_color =
+            SetBackgroundColor(theme::item_bg(self.is_selected, self.is_cursor_pos));
+
         write!(
             f,
             "{} | {}{} {} {} {}{}{}",
             self.cursor,
-            self.filetype,
-            self.permission,
-            self.bsize,
-            self.time,
-            self.under_name_color,
-            self.filename,
+            file_type,
+            permission,
+            bsize,
+            time,
+            under_name_color,
+            file_name,
             SetBackgroundColor(theme::app_bg())
         )
     }
