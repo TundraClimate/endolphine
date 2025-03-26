@@ -295,9 +295,14 @@ pub fn regex_match(buf: &str) -> bool {
 pub fn regex_range(buf: &str) -> Option<(usize, usize)> {
     let lock = GREP.read().unwrap();
 
+    if lock.is_empty() {
+        return None;
+    }
+
     let Ok(regex) = regex::Regex::new(&lock) else {
         return None;
     };
+
     regex.find(buf).map(|m| (m.start(), m.end()))
 }
 
