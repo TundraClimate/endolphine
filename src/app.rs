@@ -98,10 +98,6 @@ macro_rules! sys_log {
 
         Ok(())
     }};
-
-    ($($fmt:expr),+) => {{
-        $crate::sys_log!("info", $($fmt),+)
-    }};
 }
 
 pub fn enable_tui() -> Result<(), Error> {
