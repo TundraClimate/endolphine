@@ -46,6 +46,9 @@ pub enum Error {
 
     #[error("Screen flush failed: {0}")]
     ScreenFlushFailed(String),
+
+    #[error("out log failed: {0}")]
+    OutLogToFileFailed(String),
 }
 
 impl Error {
@@ -91,12 +94,12 @@ macro_rules! sys_log {
             .append(true)
             .create(true)
             .open(output_path)
-            .map_err(|e| $crate::app::Error::FilesystemError(e.kind().to_string()))?;
+            .map_err(|e| $crate::app::Error::OutLogToFileFailed(e.kind().to_string()))
+            .unwrap();
         output_file
             .write_all(fmt_txt.as_bytes())
-            .map_err(|e| $crate::app::Error::FilesystemError(e.kind().to_string()))?;
-
-        Ok(())
+            .map_err(|e| $crate::app::Error::OutLogToFileFailed(e.kind().to_string()))
+            .unwrap();
     }};
 }
 
