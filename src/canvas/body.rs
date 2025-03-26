@@ -74,7 +74,7 @@ fn render_file_line(
     Body::cached_render_row(
         &format!("{}{}{}", input_enabled, rel_i, body_row.gen_key()),
         rel_i,
-        body_row.to_string(),
+        body_row,
     )
 }
 

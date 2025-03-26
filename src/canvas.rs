@@ -64,10 +64,14 @@ macro_rules! dbg_log {
 trait Widget {
     const ID: u8;
 
-    fn cached_render_row(tag: &str, row: u16, cmds: String) -> Result<(), app::Error> {
+    fn cached_render_row<D: std::fmt::Display>(
+        tag: &str,
+        row: u16,
+        cmds: D,
+    ) -> Result<(), app::Error> {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
-            Self::render_row(row, cmds).map_err(|_| app::Error::RowRenderingFailed)
+            Self::render_row(row, cmds.to_string()).map_err(|_| app::Error::RowRenderingFailed)
         } else {
             Ok(())
         }
