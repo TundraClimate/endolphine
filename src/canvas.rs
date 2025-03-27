@@ -71,7 +71,10 @@ trait Widget {
     ) -> Result<(), app::Error> {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
-            Self::render_row(row, cmds.to_string()).map_err(|_| app::Error::RowRenderingFailed)
+            Self::render_row(row, cmds.to_string()).map_err(|_| {
+                crate::sys_log!("e", "The widget rendering failed: ID={}", Self::ID);
+                app::Error::RowRenderingFailed
+            })
         } else {
             Ok(())
         }
@@ -93,8 +96,10 @@ trait Widget {
 }
 
 pub fn render() -> Result<(), app::Error> {
-    let (width, height) =
-        crossterm::terminal::size().map_err(|e| app::Error::PlatformError(e.kind().to_string()))?;
+    let (width, height) = crossterm::terminal::size().map_err(|e| {
+        crate::sys_log!("e", "Couldn't get the terminal size");
+        app::Error::PlatformError(e.kind().to_string())
+    })?;
 
     if height <= 4 {
         return Ok(());

@@ -55,7 +55,26 @@ impl Error {
     pub fn handle(self) {
         match self {
             Self::CommandExecutionFailed(cmd, kind) => {
-                crate::log!("Failed to run \"{}\": {}", cmd, kind)
+                crate::sys_log!("w", "Can't be execute \"{}\": {}", cmd, kind);
+                crate::log!("Failed to run \"{}\": {}", cmd, kind);
+            }
+            Self::ScreenModeChangeFailed => {
+                crate::sys_log!(
+                    "e",
+                    "Couldn't change the screen mode: disabled the mode in terminal or operation system"
+                );
+
+                panic!("{}", self);
+            }
+            Self::LogDisplayFailed | Self::RowRenderingFailed | Self::InputRenderingFailed => {
+                crate::sys_log!("e", "Rendering failed");
+
+                panic!("{}", self);
+            }
+            Self::ScreenFlushFailed(_) => {
+                crate::sys_log!("e", "The stdout can't flush");
+
+                panic!("{}", self);
             }
             _ => panic!("{}", self),
         }
@@ -133,6 +152,8 @@ pub fn disable_tui() -> Result<(), Error> {
 
 pub async fn launch(path: &Path) -> Result<(), Error> {
     if !misc::exists_item(path) || path.is_file() {
+        sys_log!("e", "Invalid input detected");
+
         return Err(Error::InvalidArgument(format!(
             "invalid path (-> {})",
             path.to_string_lossy()
@@ -141,6 +162,14 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
 
     init(path)?;
     enable_tui()?;
+
+    sys_log!(
+        "i",
+        "Endolphine launch in {} successfully",
+        path.canonicalize()
+            .map(|p| p.to_string_lossy().to_string())
+            .unwrap_or(path.to_string_lossy().to_string())
+    );
 
     let quit_flag = Arc::new(AtomicBool::new(false));
 
@@ -159,13 +188,16 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
 
     disable_tui()?;
 
+    sys_log!("i", "Endolphine close successfully");
+
     Ok(())
 }
 
 fn init(path: &Path) -> Result<(), Error> {
-    let path = path
-        .canonicalize()
-        .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+    let path = path.canonicalize().map_err(|e| {
+        crate::sys_log!("e", "Couldn't get the canonicalized path");
+        Error::FilesystemError(e.kind().to_string())
+    })?;
 
     set_path(&path);
 
@@ -175,8 +207,10 @@ fn init(path: &Path) -> Result<(), Error> {
     if config::load().rm.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
-            std::fs::create_dir_all(tmp_path)
-                .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+            std::fs::create_dir_all(tmp_path).map_err(|e| {
+                crate::sys_log!("e", "Couldn't create the \"/tmp/\"");
+                Error::FilesystemError(e.kind().to_string())
+            })?;
         }
     }
 
@@ -187,8 +221,10 @@ fn init(path: &Path) -> Result<(), Error> {
         .join("log");
 
     if !log_path.exists() {
-        std::fs::create_dir_all(log_path)
-            .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+        std::fs::create_dir_all(log_path).map_err(|e| {
+            crate::sys_log!("e", "Couldn't create the log directory");
+            Error::FilesystemError(e.kind().to_string())
+        })?;
     }
 
     Ok(())
@@ -201,16 +237,22 @@ pub fn config_init() -> Result<(), Error> {
             let parent = misc::parent(&conf_path);
 
             if !parent.exists() {
-                std::fs::create_dir_all(parent)
-                    .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+                std::fs::create_dir_all(parent).map_err(|e| {
+                    crate::sys_log!("e", "Couldn't create the configration dir");
+                    Error::FilesystemError(e.kind().to_string())
+                })?;
             }
 
-            let config_default = toml::to_string_pretty(&Config::default())
-                .map_err(|e| Error::TomlParseFailed(e.to_string()))?;
+            let config_default = toml::to_string_pretty(&Config::default()).map_err(|e| {
+                crate::sys_log!("e", "Couldn't generate the default configration");
+                Error::TomlParseFailed(e.to_string())
+            })?;
 
             if !conf_path.exists() {
-                std::fs::write(&conf_path, config_default)
-                    .map_err(|e| Error::FilesystemError(e.kind().to_string()))?;
+                std::fs::write(&conf_path, config_default).map_err(|e| {
+                    crate::sys_log!("e", "Couldn't create the configration file");
+                    Error::FilesystemError(e.kind().to_string())
+                })?;
             }
         }
     }

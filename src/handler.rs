@@ -107,7 +107,12 @@ fn act_add_file_or_dir(content: &str) {
     let path = app::get_path().join(content);
 
     if path.exists() {
-        crate::log!("Add new file failed: \"{}\" is already exists.", &content);
+        crate::sys_log!(
+            "w",
+            "Command AddNewFileOrDirectory failed: \"{}\" is already exists",
+            content
+        );
+        crate::log!("Add new file failed: \"{}\" is already exists", &content);
 
         return;
     }
@@ -119,13 +124,19 @@ fn act_add_file_or_dir(content: &str) {
     };
 
     if let Err(e) = add_res {
+        crate::sys_log!("w", "Command AddNewFileOrDirectory failed: {}", e.kind());
         crate::log!("Add new file failed: {}", e.kind());
 
         return;
     }
 
     cursor::load().resize(misc::child_files_len(&app::get_path()));
-    crate::log!("\"{}\" create successful.", &content)
+    crate::sys_log!(
+        "w",
+        "Command AddNewFileOrDirectory successful: create the {}",
+        &content
+    );
+    crate::log!("\"{}\" create successful", &content)
 }
 
 fn act_rm_file_or_dir(content: &str, native: bool) {
@@ -137,13 +148,21 @@ fn act_rm_file_or_dir(content: &str, native: bool) {
         misc::sorted_child_files(&app::get_path()).get(cursor::load().current())
     {
         let Ok(metadata) = under_cursor_file.symlink_metadata() else {
-            crate::log!("Delete file failed: cannot access metadata.");
+            crate::sys_log!(
+                "w",
+                "Command RmFileOrDirectory failed: target metadata cannot access"
+            );
+            crate::log!("Delete file failed: cannot access metadata");
 
             return;
         };
 
         if !under_cursor_file.exists() && !metadata.is_symlink() {
-            crate::log!("Delete file failed: target not exists.");
+            crate::sys_log!(
+                "w",
+                "Command RmFileOrDirectory failed: target file not exists"
+            );
+            crate::log!("Delete file failed: target not exists");
 
             return;
         }
@@ -153,6 +172,10 @@ fn act_rm_file_or_dir(content: &str, native: bool) {
         let res = if config::load().rm.for_tmp {
             if config::load().rm.yank {
                 if native && !clipboard::is_cmd_installed() {
+                    crate::sys_log!(
+                        "w",
+                        "File yank failed: native command not installed, and config the native-clip is enabled"
+                    );
                     crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
 
                     return;
@@ -167,6 +190,7 @@ fn act_rm_file_or_dir(content: &str, native: bool) {
                         &format!("file://{}", tmp_path.to_string_lossy()),
                         "text/uri-list",
                     ) {
+                        crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
                         crate::log!("Yank failed: {}", e.kind());
                     }
                 } else {
@@ -181,15 +205,25 @@ fn act_rm_file_or_dir(content: &str, native: bool) {
         };
 
         if let Err(e) = res {
+            crate::sys_log!("w", "Command RmFileOrDirectory failed: {}", e.kind());
             crate::log!("Delete file failed: {}", e.kind());
 
             return;
         }
 
         cursor::load().resize(misc::child_files_len(&app::get_path()));
-        crate::log!("\"{}\" delete successful.", name);
+        crate::sys_log!(
+            "i",
+            "Command RmFileOrDirectory successful: delete the \"{}\"",
+            name
+        );
+        crate::log!("\"{}\" delete successful", name);
     } else {
-        crate::log!("Delete file failed: target cannot find.");
+        crate::sys_log!(
+            "w",
+            "Command RmFileOrDirectory failed: cursor in invalid position"
+        );
+        crate::log!("Delete file failed: target cannot find");
     }
 }
 
@@ -207,6 +241,10 @@ fn act_rm_selected(content: &str, native: bool) {
     if config::load().rm.for_tmp {
         if config::load().rm.yank {
             if native && !clipboard::is_cmd_installed() {
+                crate::sys_log!(
+                    "w",
+                    "File yank failed: native command not installed, and config the native-clip is enabled"
+                );
                 crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
 
                 return;
@@ -227,13 +265,16 @@ fn act_rm_selected(content: &str, native: bool) {
 
             if native {
                 if let Err(e) = clipboard::clip_native(&text, "text/uri-list") {
+                    crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
                     crate::log!("Yank failed: {}", e.kind());
                 }
             } else {
                 clipboard::clip(&text)
             }
         }
+
         if let Err(e) = misc::into_tmp(&selected) {
+            crate::sys_log!("w", "Command RmSelected failed: {}", e.kind());
             crate::log!("Delete file failed: {}", e.kind());
 
             return;
@@ -241,13 +282,18 @@ fn act_rm_selected(content: &str, native: bool) {
     } else {
         for target in &selected {
             let Ok(metadata) = target.symlink_metadata() else {
-                crate::log!("Delete file failed: cannot access metadata.");
+                crate::sys_log!(
+                    "w",
+                    "Command RmSelected failed: target metadata cannot access"
+                );
+                crate::log!("Delete file failed: cannot access metadata");
 
                 return;
             };
 
             if !target.exists() && !metadata.is_symlink() {
-                crate::log!("Delete file failed: target not exists.");
+                crate::sys_log!("w", "Command RmSelected failed: target file not exists");
+                crate::log!("Delete file failed: target not exists");
 
                 return;
             }
@@ -259,6 +305,7 @@ fn act_rm_selected(content: &str, native: bool) {
             };
 
             if let Err(e) = res {
+                crate::sys_log!("w", "Command RmSelected failed: {}", e.kind());
                 crate::log!("Delete file failed: {}", e.kind());
 
                 return;
@@ -268,7 +315,12 @@ fn act_rm_selected(content: &str, native: bool) {
 
     cursor::load().resize(misc::child_files_len(&app::get_path()));
     cursor::disable_selection();
-    crate::log!("{} items delete successful.", selected.len());
+    crate::sys_log!(
+        "i",
+        "Command RmSelected successful: {} files deleted",
+        selected.len()
+    );
+    crate::log!("{} items delete successful", selected.len());
 }
 
 fn act_rename(content: &str) {
@@ -278,23 +330,32 @@ fn act_rename(content: &str) {
         let renamed = path.join(content);
 
         let Ok(metadata) = under_cursor_file.symlink_metadata() else {
-            crate::log!("Rename failed: cannot access metadata.");
+            crate::sys_log!("w", "Command Rename failed: target metadata cannot access");
+            crate::log!("Rename failed: cannot access metadata");
 
             return;
         };
 
         if !under_cursor_file.exists() && !metadata.is_symlink() {
-            crate::log!("Rename failed: \"{}\" is not exists.", &content);
+            crate::sys_log!("w", "Command Rename failed: target file not exists");
+            crate::log!("Rename failed: \"{}\" is not exists", &content);
 
             return;
         }
 
         if let Err(e) = std::fs::rename(under_cursor_file, &renamed) {
+            crate::sys_log!("w", "Command Rename failed: {}", e.kind());
             crate::log!("Rename failed: {}", e.kind());
 
             return;
         }
 
+        crate::sys_log!(
+            "i",
+            "Command Rename successful: \"{}\" into the \"{}\"",
+            under_cursor_file.to_string_lossy(),
+            renamed.to_string_lossy()
+        );
         crate::log!(
             "\"{}\" renamed to \"{}\"",
             misc::file_name(under_cursor_file),
@@ -313,6 +374,7 @@ fn act_paste(content: &str, native: bool) {
                 .filter(|f| misc::exists_item(f))
                 .collect::<Vec<PathBuf>>(),
             Err(e) => {
+                crate::sys_log!("w", "Couldn't read a clipboard: {}", e.kind());
                 crate::log!("Paste failed: {}", e.kind());
 
                 return;
@@ -365,6 +427,7 @@ fn act_paste(content: &str, native: bool) {
             && (!misc::exists_item(&copied_path) || overwrite_mode)
         {
             if let Err(e) = std::fs::copy(file, &copied_path) {
+                crate::sys_log!("w", "Paste from clipboard failed: {}", e.kind());
                 crate::log!("Paste failed: \"{}\"", e.kind());
             }
         }
@@ -386,6 +449,7 @@ fn act_paste(content: &str, native: bool) {
 
                     if !parent.exists() {
                         if let Err(e) = std::fs::create_dir_all(parent) {
+                            crate::sys_log!("w", "Command Paste failed: {}", e.kind());
                             crate::log!("Paste failed: \"{}\"", e.kind());
 
                             continue;
@@ -393,6 +457,7 @@ fn act_paste(content: &str, native: bool) {
                     }
 
                     if let Err(e) = std::fs::copy(entry.path(), &copied_path) {
+                        crate::sys_log!("w", "Command Paste failed: {}", e.kind());
                         crate::log!("Paste failed: \"{}\"", e.kind());
                     }
                 }
@@ -401,6 +466,7 @@ fn act_paste(content: &str, native: bool) {
     }
 
     cursor::load().resize(misc::child_files_len(&app::get_path()));
+    crate::sys_log!("i", "Command Paste successful: {} files", files.len());
     crate::log!("{} files paste successful.", files.len());
 }
 
@@ -436,6 +502,9 @@ fn move_current_dir(path: &Path) {
 
     cursor::disable_selection();
     app::set_path(path);
+
+    crate::sys_log!("i", "Change the open directory: {}", path.to_string_lossy());
+
     canvas::cache_clear();
     app::grep_update(|m| m.clear());
 
@@ -497,6 +566,7 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
             let path = &element.path;
 
             if !path.is_dir() {
+                crate::sys_log!("w", "Found the invalid Shortcut in MENU: {}", element.tag);
                 crate::log!("\"{}\" is not Directory", element.tag);
 
                 return Ok(());
@@ -542,10 +612,13 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
             if let Some(opts) = config::load().opener.corresponding_with(&extension) {
                 cmd = opts.cmd;
                 in_term = opts.in_term.unwrap_or(true);
+
+                crate::sys_log!("i", "Override open command: {}", cmd.join(" "));
             }
         }
 
         let Some((cmd, args)) = cmd.split_first() else {
+            crate::sys_log!("w", "Invalid config: open command is empty");
             crate::log!("Invalid config: editor or opener");
 
             return Ok(());
@@ -554,6 +627,13 @@ fn handle_enter_dir_or_edit() -> Result<(), app::Error> {
         if in_term {
             app::disable_tui()?;
         }
+
+        crate::sys_log!(
+            "i",
+            "Open file with {}: {}",
+            cmd,
+            target_path.to_string_lossy()
+        );
 
         std::process::Command::new(cmd)
             .args(args)
@@ -605,6 +685,7 @@ fn handler_create_new() {
 
     cursor::disable_selection();
     input::use_f_mut(|i| i.enable("", Some("AddNewFileOrDirectory".into())));
+    crate::sys_log!("i", "Called command: AddNewFileOrDirectory");
     crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
 }
 
@@ -623,6 +704,7 @@ fn handle_delete(keyconf: &config::KeyConfig) {
             .collect::<Vec<_>>();
 
         input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
+        crate::sys_log!("i", "Called command: RmSelected");
         crate::log!(
             "Delete {} items ? (y/Y/{})",
             keyconf.delete,
@@ -636,6 +718,7 @@ fn handle_delete(keyconf: &config::KeyConfig) {
         misc::sorted_child_files(&app::get_path()).get(cursor.current())
     {
         input::use_f_mut(|i| i.enable("", Some("RmFileOrDirectory".into())));
+        crate::sys_log!("i", "Called command: RmFileOrDirectory");
         crate::log!(
             "Delete \"{}\" ? (y/Y/{})",
             keyconf.delete,
@@ -659,6 +742,7 @@ fn handle_rename() {
         let name = misc::file_name(under_cursor_file);
 
         input::use_f_mut(|i| i.enable(name, Some("Rename".into())));
+        crate::sys_log!("i", "Called command: Rename");
         crate::log!("Enter new name for \"{}\"", name);
     }
 }
@@ -669,6 +753,10 @@ fn handle_yank_native() {
     }
 
     if !clipboard::is_cmd_installed() {
+        crate::sys_log!(
+            "w",
+            "File yank failed: native command not installed, and config the native-clip is enabled"
+        );
         crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
 
         return;
@@ -685,11 +773,14 @@ fn handle_yank_native() {
             .collect::<Vec<_>>();
 
         if let Err(e) = clipboard::clip_native(&selected_files.join("\n"), "text/uri-list") {
+            crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
             crate::log!("Yank failed: {}", e.kind());
+
             return;
         }
 
         cursor::disable_selection();
+        crate::sys_log!("i", "{} files yanked", selected_files.len());
         crate::log!("Yanked {} items", selected_files.len());
 
         return;
@@ -701,11 +792,17 @@ fn handle_yank_native() {
         let text = format!("file://{}", under_cursor_file.to_string_lossy());
 
         if let Err(e) = clipboard::clip_native(&text, "text/uri-list") {
+            crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
             crate::log!("Yank failed: {}", e.kind());
 
             return;
         }
 
+        crate::sys_log!(
+            "i",
+            "File the {} yanked",
+            under_cursor_file.to_string_lossy()
+        );
         crate::log!("Yanked \"{}\"", misc::file_name(under_cursor_file));
     }
 }
@@ -727,6 +824,7 @@ fn handle_yank() {
         clipboard::clip(&selected_files.join("\n"));
 
         cursor::disable_selection();
+        crate::sys_log!("i", "{} files yanked", selected_files.len());
         crate::log!("Yanked {} items", selected_files.len());
 
         return;
@@ -737,6 +835,11 @@ fn handle_yank() {
     {
         clipboard::clip(&under_cursor_file.to_string_lossy());
 
+        crate::sys_log!(
+            "i",
+            "File the {} yanked",
+            under_cursor_file.to_string_lossy()
+        );
         crate::log!("Yanked \"{}\"", misc::file_name(under_cursor_file));
     }
 }
@@ -747,6 +850,10 @@ fn handle_paste(keyconf: &config::KeyConfig) {
     }
 
     if !clipboard::is_cmd_installed() {
+        crate::sys_log!(
+            "w",
+            "File paste failed: native command not installed, and config the native-clip is enabled"
+        );
         crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
 
         return;

@@ -41,6 +41,7 @@ fn terminate<D: std::fmt::Display>(e: D) {
     eprintln!("{:-^41}", "Endolphine terminated");
     eprintln!(" {}", e);
     eprintln!("{}", "-".repeat(41));
+    crate::sys_log!("e", "Endolphine terminated\n{}", e);
 }
 
 fn out_checked() -> ! {

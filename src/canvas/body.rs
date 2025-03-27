@@ -50,7 +50,14 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), 
         Print(buf),
         ResetColor
     )
-    .map_err(|_| app::Error::InputRenderingFailed)?;
+    .map_err(|_| {
+        crate::sys_log!(
+            "e",
+            "The widget rendering failed: ID={}, from input",
+            Body::ID
+        );
+        app::Error::InputRenderingFailed
+    })?;
 
     Ok(())
 }
