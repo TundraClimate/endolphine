@@ -259,6 +259,7 @@ cargo uninstall endolphine
   - Impl for the floating window
   - Add component rendering
 - Impl the layout system and logic (ratatui?)
+- Improve sys_log
 
 ## LICENSE
 
