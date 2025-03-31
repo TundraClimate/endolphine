@@ -9,6 +9,7 @@ mod config;
 mod cursor;
 mod handler;
 mod input;
+mod key;
 mod menu;
 mod misc;
 mod theme;
