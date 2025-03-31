@@ -1,6 +1,52 @@
+struct Keymap(Vec<Key>);
+
+impl<'de> serde::Deserialize<'de> for Keymap {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let deserialize = String::deserialize(deserializer)?;
+        deserialize.parse().map_err(serde::de::Error::custom)
+    }
+}
+
 struct Key {
     code: KeyCode,
     modifiers: KeyModifiers,
+}
+
+impl std::str::FromStr for Keymap {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut in_tag = false;
+        let mut buf = String::new();
+        let mut keys: Vec<Key> = vec![];
+
+        for c in s.chars() {
+            if c == '<' {
+                in_tag = true;
+            }
+
+            if in_tag {
+                buf.push(c);
+            } else {
+                keys.push(c.to_string().parse()?)
+            }
+
+            if c == '>' {
+                in_tag = false;
+                keys.push(buf.parse()?);
+                buf.clear();
+            }
+        }
+
+        if in_tag {
+            return Err(String::from("invalid format"));
+        }
+
+        Ok(Keymap(keys))
+    }
 }
 
 impl std::str::FromStr for Key {
@@ -127,6 +173,7 @@ impl std::str::FromStr for Key {
 }
 
 #[repr(u8)]
+#[derive(Clone, Copy)]
 enum KeyCode {
     Backspace = 8,
     Tab = 9,
