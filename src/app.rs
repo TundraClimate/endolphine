@@ -397,7 +397,7 @@ pub fn clear_key_buf() {
     KEYBUF.write().unwrap().clear();
 }
 
-pub fn is_similar_buf(other: &[crate::key::Key]) -> bool {
+pub fn is_similar_buf(other: &crate::key::Keymap) -> bool {
     let lock = KEYBUF.read().unwrap();
     let buf_len = lock.len();
     let other_len = other.len();
@@ -406,15 +406,19 @@ pub fn is_similar_buf(other: &[crate::key::Key]) -> bool {
         return false;
     }
 
-    lock.iter().enumerate().all(|(i, k)| &other[i] == k)
+    lock.iter()
+        .enumerate()
+        .all(|(i, k)| other.nth(i) == Some(k))
 }
 
-pub fn eq_buf(other: &[crate::key::Key]) -> bool {
+pub fn eq_buf(other: &crate::key::Keymap) -> bool {
     let lock = KEYBUF.read().unwrap();
 
     if lock.len() != other.len() {
         return false;
     }
 
-    lock.iter().enumerate().all(|(i, k)| &other[i] == k)
+    lock.iter()
+        .enumerate()
+        .all(|(i, k)| other.nth(i) == Some(k))
 }

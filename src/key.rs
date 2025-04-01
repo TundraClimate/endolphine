@@ -1,5 +1,15 @@
 pub struct Keymap(Vec<Key>);
 
+impl Keymap {
+    pub fn nth(&self, index: usize) -> Option<&Key> {
+        self.0.iter().nth(index)
+    }
+
+    pub fn len(&self) -> usize {
+        self.0.len()
+    }
+}
+
 impl From<&str> for Keymap {
     fn from(value: &str) -> Self {
         value.parse().unwrap_or(Keymap(vec![]))

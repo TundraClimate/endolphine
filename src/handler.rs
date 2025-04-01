@@ -28,15 +28,30 @@ fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
         return Ok(false);
     }
 
-    match key.code {
-        KeyCode::Char(c) => return handle_char_key(c),
-        KeyCode::Esc => handle_esc_key(),
-        _ => {}
+    {
+        let key = crate::key::Key::from_keyevent(&key);
+
+        app::push_key_buf(key);
     }
 
-    let key = crate::key::Key::from_keyevent(&key);
+    let registerd = config::KeyConfig::registerd();
 
-    app::push_key_buf(key);
+    if !registerd.iter().any(|(_, map)| app::is_similar_buf(map)) {
+        app::clear_key_buf();
+
+        return Ok(false);
+    }
+
+    for (name, map) in registerd.into_iter() {
+        if app::eq_buf(map) {
+            match name {
+                "ExitApp" => return Ok(true),
+                _ => {}
+            }
+
+            app::clear_key_buf();
+        }
+    }
 
     Ok(false)
 }
@@ -515,7 +530,7 @@ fn move_current_dir(path: &Path) {
     cursor.resize(misc::child_files_len(path));
     cursor.reset();
 }
-
+/*
 fn handle_vertical_move(key: char, keyconf: &config::KeyConfig) {
     let cursor = cursor::captured();
 
@@ -903,10 +918,10 @@ fn handle_search(key: char, keyconf: &config::KeyConfig) {
         }
         _ => unreachable!(),
     }
-}
+} */
 
 fn handle_char_key(key: char) -> Result<bool, app::Error> {
-    let keyconf = &config::load().key;
+    /* let keyconf = &config::load().key;
 
     if key == keyconf.exit_app {
         return Ok(true);
@@ -969,7 +984,7 @@ fn handle_char_key(key: char) -> Result<bool, app::Error> {
 
     if [keyconf.search, keyconf.search_next].contains(&key) {
         handle_search(key, keyconf);
-    }
+    } */
 
     Ok(false)
 }

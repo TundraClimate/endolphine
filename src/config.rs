@@ -225,6 +225,29 @@ impl Default for MenuConfig {
     }
 }
 
+impl KeyConfig {
+    pub fn registerd() -> Vec<(&'static str, &'static Keymap)> {
+        vec![
+            ("ExitApp", &CONFIG.key.exit_app),
+            ("MoveUp", &CONFIG.key.move_up),
+            ("MoveUpTen", &CONFIG.key.move_up_ten),
+            ("MoveDown", &CONFIG.key.move_down),
+            ("MoveDownTen", &CONFIG.key.move_down_ten),
+            ("MoveParent", &CONFIG.key.move_parent),
+            ("EnterDirOrEdit", &CONFIG.key.enter_dir_or_edit),
+            ("VisualSelect", &CONFIG.key.visual_select),
+            ("MenuToggle", &CONFIG.key.menu_toggle),
+            ("MenuMove", &CONFIG.key.menu_move),
+            ("CreateNew", &CONFIG.key.create_new),
+            ("Delete", &CONFIG.key.delete),
+            ("Yank", &CONFIG.key.yank),
+            ("Paste", &CONFIG.key.paste),
+            ("Search", &CONFIG.key.search),
+            ("SearchNext", &CONFIG.key.search_next),
+        ]
+    }
+}
+
 impl Default for KeyConfig {
     fn default() -> Self {
         Self {
