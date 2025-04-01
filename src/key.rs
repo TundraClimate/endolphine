@@ -1,5 +1,39 @@
 struct Keymap(Vec<Key>);
 
+impl std::str::FromStr for Keymap {
+    type Err = String;
+
+    fn from_str(s: &str) -> Result<Self, Self::Err> {
+        let mut in_tag = false;
+        let mut buf = String::new();
+        let mut keys: Vec<Key> = vec![];
+
+        for c in s.chars() {
+            if c == '<' {
+                in_tag = true;
+            }
+
+            if in_tag {
+                buf.push(c);
+            } else {
+                keys.push(c.to_string().parse()?)
+            }
+
+            if c == '>' {
+                in_tag = false;
+                keys.push(buf.parse()?);
+                buf.clear();
+            }
+        }
+
+        if in_tag {
+            return Err(String::from("invalid format"));
+        }
+
+        Ok(Keymap(keys))
+    }
+}
+
 impl<'de> serde::Deserialize<'de> for Keymap {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -10,13 +44,13 @@ impl<'de> serde::Deserialize<'de> for Keymap {
     }
 }
 
-struct Key {
+pub struct Key {
     code: KeyCode,
     modifiers: KeyModifiers,
 }
 
 impl Key {
-    fn from_keyevent(e: &crossterm::event::KeyEvent) -> Key {
+    pub fn from_keyevent(e: &crossterm::event::KeyEvent) -> Key {
         let code = match e.code {
             crossterm::event::KeyCode::Backspace => KeyCode::Backspace,
             crossterm::event::KeyCode::Tab => KeyCode::Tab,
@@ -108,37 +142,9 @@ impl Key {
     }
 }
 
-impl std::str::FromStr for Keymap {
-    type Err = String;
-
-    fn from_str(s: &str) -> Result<Self, Self::Err> {
-        let mut in_tag = false;
-        let mut buf = String::new();
-        let mut keys: Vec<Key> = vec![];
-
-        for c in s.chars() {
-            if c == '<' {
-                in_tag = true;
-            }
-
-            if in_tag {
-                buf.push(c);
-            } else {
-                keys.push(c.to_string().parse()?)
-            }
-
-            if c == '>' {
-                in_tag = false;
-                keys.push(buf.parse()?);
-                buf.clear();
-            }
-        }
-
-        if in_tag {
-            return Err(String::from("invalid format"));
-        }
-
-        Ok(Keymap(keys))
+impl PartialEq for Key {
+    fn eq(&self, other: &Self) -> bool {
+        self.code == other.code && self.modifiers == other.modifiers
     }
 }
 
@@ -300,6 +306,12 @@ impl KeyCode {
     }
 }
 
+impl PartialEq for KeyCode {
+    fn eq(&self, other: &Self) -> bool {
+        *self as u8 == *other as u8
+    }
+}
+
 struct KeyModifiers(KeyModifier);
 
 impl KeyModifiers {
@@ -317,6 +329,12 @@ impl KeyModifiers {
 
     pub fn is_none(&self) -> bool {
         self.0 == KeyModifier::None
+    }
+}
+
+impl PartialEq for KeyModifiers {
+    fn eq(&self, other: &Self) -> bool {
+        self.0 as u8 == other.0 as u8
     }
 }
 

@@ -34,6 +34,10 @@ fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
         _ => {}
     }
 
+    let key = crate::key::Key::from_keyevent(&key);
+
+    app::push_key_buf(key);
+
     Ok(false)
 }
 

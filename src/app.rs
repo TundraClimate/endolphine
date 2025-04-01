@@ -384,3 +384,37 @@ pub fn proc_count_down() {
 pub fn procs() -> u16 {
     PROCS_COUNT.load(Ordering::Relaxed)
 }
+
+global! {
+    static KEYBUF: RwLock<Vec<crate::key::Key>> = RwLock::new(vec![]);
+}
+
+pub fn push_key_buf(key: crate::key::Key) {
+    KEYBUF.write().unwrap().push(key);
+}
+
+pub fn clear_key_buf() {
+    KEYBUF.write().unwrap().clear();
+}
+
+pub fn is_similar_buf(other: &[crate::key::Key]) -> bool {
+    let lock = KEYBUF.read().unwrap();
+    let buf_len = lock.len();
+    let other_len = other.len();
+
+    if other_len == 0 || buf_len > other_len {
+        return false;
+    }
+
+    lock.iter().enumerate().all(|(i, k)| &other[i] == k)
+}
+
+pub fn eq_buf(other: &[crate::key::Key]) -> bool {
+    let lock = KEYBUF.read().unwrap();
+
+    if lock.len() != other.len() {
+        return false;
+    }
+
+    lock.iter().enumerate().all(|(i, k)| &other[i] == k)
+}
