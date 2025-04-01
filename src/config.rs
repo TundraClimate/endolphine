@@ -1,5 +1,6 @@
 use crate::{
     builtin, config, global,
+    key::Keymap,
     menu::MenuElement,
     theme::{self, Scheme, Theme},
 };
@@ -90,23 +91,23 @@ pub struct MenuConfig {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct KeyConfig {
-    pub exit_app: char,
-    pub move_up: char,
-    pub move_up_ten: char,
-    pub move_down: char,
-    pub move_down_ten: char,
-    pub move_parent: char,
-    pub enter_dir_or_edit: char,
-    pub visual_select: char,
-    pub menu_toggle: char,
-    pub menu_move: char,
-    pub create_new: char,
-    pub delete: char,
-    pub rename: char,
-    pub yank: char,
-    pub paste: char,
-    pub search: char,
-    pub search_next: char,
+    pub exit_app: Keymap,
+    pub move_up: Keymap,
+    pub move_up_ten: Keymap,
+    pub move_down: Keymap,
+    pub move_down_ten: Keymap,
+    pub move_parent: Keymap,
+    pub enter_dir_or_edit: Keymap,
+    pub visual_select: Keymap,
+    pub menu_toggle: Keymap,
+    pub menu_move: Keymap,
+    pub create_new: Keymap,
+    pub delete: Keymap,
+    pub rename: Keymap,
+    pub yank: Keymap,
+    pub paste: Keymap,
+    pub search: Keymap,
+    pub search_next: Keymap,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
@@ -227,23 +228,23 @@ impl Default for MenuConfig {
 impl Default for KeyConfig {
     fn default() -> Self {
         Self {
-            exit_app: 'Q',
-            move_up: 'k',
-            move_up_ten: 'K',
-            move_down: 'j',
-            move_down_ten: 'J',
-            move_parent: 'h',
-            enter_dir_or_edit: 'l',
-            visual_select: 'V',
-            menu_toggle: 'M',
-            menu_move: 'm',
-            create_new: 'a',
-            delete: 'd',
-            rename: 'r',
-            yank: 'y',
-            paste: 'p',
-            search: '/',
-            search_next: 'n',
+            exit_app: "Q".into(),
+            move_up: "k".into(),
+            move_up_ten: "K".into(),
+            move_down: "j".into(),
+            move_down_ten: "J".into(),
+            move_parent: "h".into(),
+            enter_dir_or_edit: "l".into(),
+            visual_select: "V".into(),
+            menu_toggle: "M".into(),
+            menu_move: "m".into(),
+            create_new: "a".into(),
+            delete: "d".into(),
+            rename: "r".into(),
+            yank: "y".into(),
+            paste: "p".into(),
+            search: "/".into(),
+            search_next: "n".into(),
         }
     }
 }

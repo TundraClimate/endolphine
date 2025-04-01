@@ -1,4 +1,10 @@
-struct Keymap(Vec<Key>);
+pub struct Keymap(Vec<Key>);
+
+impl From<&str> for Keymap {
+    fn from(value: &str) -> Self {
+        value.parse().unwrap_or(Keymap(vec![]))
+    }
+}
 
 impl std::str::FromStr for Keymap {
     type Err = String;
@@ -34,6 +40,14 @@ impl std::str::FromStr for Keymap {
     }
 }
 
+impl ToString for Keymap {
+    fn to_string(&self) -> String {
+        self.0
+            .iter()
+            .fold(String::new(), |acc, k| format!("{}{}", acc, k.to_string()))
+    }
+}
+
 impl<'de> serde::Deserialize<'de> for Keymap {
     fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
     where
@@ -41,6 +55,15 @@ impl<'de> serde::Deserialize<'de> for Keymap {
     {
         let deserialize = String::deserialize(deserializer)?;
         deserialize.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+impl serde::Serialize for Keymap {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
     }
 }
 
@@ -230,6 +253,49 @@ impl std::str::FromStr for Key {
     }
 }
 
+impl ToString for Key {
+    fn to_string(&self) -> String {
+        if self.code == KeyCode::None {
+            return String::new();
+        }
+
+        let is_special = self.modifiers.is_alt() || self.modifiers.is_ctrl();
+        let is_shift = self.modifiers.is_shift();
+        let is_alpha = matches!(self.code as u8, 65..=90);
+
+        let code = match &self.code {
+            KeyCode::Backspace => "BS",
+            KeyCode::Tab => "TAB",
+            KeyCode::Enter => "CR",
+            KeyCode::Esc => "ESC",
+
+            keycode => {
+                let mut code = keycode.to_ascii();
+
+                if is_alpha && !is_shift {
+                    code = code.to_ascii_lowercase();
+                }
+
+                if self.modifiers.is_alt() {
+                    &format!("a-{}", code)
+                } else if self.modifiers.is_ctrl() {
+                    &format!("c-{}", code)
+                } else {
+                    &code.to_string()
+                }
+            }
+        };
+
+        if is_special {
+            format!("<{}>", code)
+        } else if is_shift && !is_alpha {
+            format!("<{}>", code)
+        } else {
+            code.to_string()
+        }
+    }
+}
+
 #[repr(u8)]
 #[derive(Clone, Copy)]
 enum KeyCode {
@@ -303,6 +369,10 @@ enum KeyCode {
 impl KeyCode {
     fn from_ascii(ascii: u8) -> KeyCode {
         unsafe { std::mem::transmute(ascii) }
+    }
+
+    fn to_ascii(&self) -> char {
+        unsafe { std::mem::transmute(*self as u32) }
     }
 }
 
