@@ -15,6 +15,99 @@ struct Key {
     modifiers: KeyModifiers,
 }
 
+impl Key {
+    fn from_keyevent(e: &crossterm::event::KeyEvent) -> Key {
+        let code = match e.code {
+            crossterm::event::KeyCode::Backspace => KeyCode::Backspace,
+            crossterm::event::KeyCode::Tab => KeyCode::Tab,
+            crossterm::event::KeyCode::Enter => KeyCode::Enter,
+            crossterm::event::KeyCode::Esc => KeyCode::Esc,
+            crossterm::event::KeyCode::Char(' ') => KeyCode::Space,
+            crossterm::event::KeyCode::Char('"') => KeyCode::QuotationMark,
+            crossterm::event::KeyCode::Char('#') => KeyCode::NumberSign,
+            crossterm::event::KeyCode::Char('$') => KeyCode::DollarSign,
+            crossterm::event::KeyCode::Char('%') => KeyCode::PercentSign,
+            crossterm::event::KeyCode::Char('(') => KeyCode::LeftParenthesis,
+            crossterm::event::KeyCode::Char(')') => KeyCode::RightParenthesis,
+            crossterm::event::KeyCode::Char('*') => KeyCode::Asterisk,
+            crossterm::event::KeyCode::Char('+') => KeyCode::PlusSign,
+            crossterm::event::KeyCode::Char(',') => KeyCode::Comma,
+            crossterm::event::KeyCode::Char('-') => KeyCode::HyphenMinus,
+            crossterm::event::KeyCode::Char('.') => KeyCode::FullStop,
+            crossterm::event::KeyCode::Char('/') => KeyCode::Solidus,
+            crossterm::event::KeyCode::Char('0') => KeyCode::Digit0,
+            crossterm::event::KeyCode::Char('1') => KeyCode::Digit1,
+            crossterm::event::KeyCode::Char('2') => KeyCode::Digit2,
+            crossterm::event::KeyCode::Char('3') => KeyCode::Digit3,
+            crossterm::event::KeyCode::Char('4') => KeyCode::Digit4,
+            crossterm::event::KeyCode::Char('5') => KeyCode::Digit5,
+            crossterm::event::KeyCode::Char('6') => KeyCode::Digit6,
+            crossterm::event::KeyCode::Char('7') => KeyCode::Digit7,
+            crossterm::event::KeyCode::Char('8') => KeyCode::Digit8,
+            crossterm::event::KeyCode::Char('9') => KeyCode::Digit9,
+            crossterm::event::KeyCode::Char(':') => KeyCode::Colon,
+            crossterm::event::KeyCode::Char(';') => KeyCode::Semicolon,
+            crossterm::event::KeyCode::Char('?') => KeyCode::QuestionMark,
+            crossterm::event::KeyCode::Char('@') => KeyCode::CommercialAt,
+            crossterm::event::KeyCode::Char('A') => KeyCode::A,
+            crossterm::event::KeyCode::Char('B') => KeyCode::B,
+            crossterm::event::KeyCode::Char('C') => KeyCode::C,
+            crossterm::event::KeyCode::Char('D') => KeyCode::D,
+            crossterm::event::KeyCode::Char('E') => KeyCode::E,
+            crossterm::event::KeyCode::Char('F') => KeyCode::F,
+            crossterm::event::KeyCode::Char('G') => KeyCode::G,
+            crossterm::event::KeyCode::Char('H') => KeyCode::H,
+            crossterm::event::KeyCode::Char('I') => KeyCode::I,
+            crossterm::event::KeyCode::Char('J') => KeyCode::J,
+            crossterm::event::KeyCode::Char('K') => KeyCode::K,
+            crossterm::event::KeyCode::Char('L') => KeyCode::L,
+            crossterm::event::KeyCode::Char('M') => KeyCode::M,
+            crossterm::event::KeyCode::Char('N') => KeyCode::N,
+            crossterm::event::KeyCode::Char('O') => KeyCode::O,
+            crossterm::event::KeyCode::Char('P') => KeyCode::P,
+            crossterm::event::KeyCode::Char('Q') => KeyCode::Q,
+            crossterm::event::KeyCode::Char('R') => KeyCode::R,
+            crossterm::event::KeyCode::Char('S') => KeyCode::S,
+            crossterm::event::KeyCode::Char('T') => KeyCode::T,
+            crossterm::event::KeyCode::Char('U') => KeyCode::U,
+            crossterm::event::KeyCode::Char('V') => KeyCode::V,
+            crossterm::event::KeyCode::Char('W') => KeyCode::W,
+            crossterm::event::KeyCode::Char('X') => KeyCode::X,
+            crossterm::event::KeyCode::Char('Y') => KeyCode::Y,
+            crossterm::event::KeyCode::Char('Z') => KeyCode::Z,
+            crossterm::event::KeyCode::Char('[') => KeyCode::LeftSquareBracket,
+            crossterm::event::KeyCode::Char('\\') => KeyCode::ReverseSolidas,
+            crossterm::event::KeyCode::Char(']') => KeyCode::RightSquareBracket,
+            crossterm::event::KeyCode::Char('^') => KeyCode::CircumflexAccent,
+            crossterm::event::KeyCode::Char('_') => KeyCode::LowLine,
+            crossterm::event::KeyCode::Char('{') => KeyCode::LeftCurlyBracket,
+            crossterm::event::KeyCode::Char('}') => KeyCode::RightCurlyBracket,
+            _ => KeyCode::None,
+        };
+
+        let mut modifiers = KeyModifier::None;
+
+        if e.modifiers.contains(crossterm::event::KeyModifiers::SHIFT) {
+            modifiers = modifiers | KeyModifier::Shift;
+        }
+
+        if e.modifiers.contains(crossterm::event::KeyModifiers::ALT) {
+            modifiers = modifiers | KeyModifier::Alt;
+        }
+
+        if e.modifiers
+            .contains(crossterm::event::KeyModifiers::CONTROL)
+        {
+            modifiers = modifiers | KeyModifier::Control;
+        }
+
+        Key {
+            code,
+            modifiers: KeyModifiers(modifiers),
+        }
+    }
+}
+
 impl std::str::FromStr for Keymap {
     type Err = String;
 
@@ -198,6 +291,7 @@ enum KeyCode {
     LowLine = 95,
     LeftCurlyBracket = 123,
     RightCurlyBracket = 125,
+    None = 0,
 }
 
 impl KeyCode {
