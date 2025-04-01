@@ -54,7 +54,7 @@ impl std::str::FromStr for Key {
 
     fn from_str(tag: &str) -> Result<Self, Self::Err> {
         if !tag.is_ascii() {
-            return Err(String::from("not supported format"));
+            return Err(String::from("unsupported key format"));
         }
 
         let is_special_tag = tag.len() > 3 && tag.starts_with("<") && tag.ends_with(">");
@@ -73,69 +73,37 @@ impl std::str::FromStr for Key {
                 (tag.as_str(), KeyModifier::None)
             };
 
-            match tag {
-                "enter" | "cr" => Ok(Key {
-                    code: KeyCode::Enter,
-                    modifiers: KeyModifiers(modifier),
-                }),
-                "tab" => Ok(Key {
-                    code: KeyCode::Tab,
-                    modifiers: KeyModifiers(modifier),
-                }),
-                "esc" => Ok(Key {
-                    code: KeyCode::Esc,
-                    modifiers: KeyModifiers(modifier),
-                }),
-                "leader" | "space" => Ok(Key {
-                    code: KeyCode::Space,
-                    modifiers: KeyModifiers(modifier),
-                }),
-                "bs" => Ok(Key {
-                    code: KeyCode::Backspace,
-                    modifiers: KeyModifiers(modifier),
-                }),
+            let code = match tag {
+                "enter" | "cr" => KeyCode::Enter,
+                "tab" => KeyCode::Tab,
+                "esc" => KeyCode::Esc,
+                "leader" | "space" => KeyCode::Space,
+                "bs" => KeyCode::Backspace,
                 "\"" | "#" | "$" | "%" | "(" | ")" | "*" | "+" | "?" | "_" | "{" | "}" | "-"
                 | "[" | "]" | "," | "." | "/" | ":" | ";" | "@" | "\\" | "^" => {
-                    let code = unsafe {
-                        std::mem::transmute::<u8, KeyCode>(tag.chars().nth(0).unwrap() as u8)
-                    };
-                    Ok(Key {
-                        code,
-                        modifiers: KeyModifiers(modifier),
-                    })
+                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8)
                 }
 
-                tag if tag.chars().nth(0).is_some_and(|c| c.is_ascii_digit()) => {
-                    let code = unsafe {
-                        std::mem::transmute::<u8, KeyCode>(tag.chars().nth(0).unwrap() as u8)
-                    };
-                    Ok(Key {
-                        code,
-                        modifiers: KeyModifiers(modifier),
-                    })
+                tag if tag.chars().next().is_some_and(|c| c.is_ascii_digit()) => {
+                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8)
                 }
 
-                tag if tag.chars().nth(0).is_some_and(|c| c.is_ascii_lowercase()) => {
-                    let code = unsafe {
-                        std::mem::transmute::<u8, KeyCode>(tag.chars().nth(0).unwrap() as u8 - 32)
-                    };
-                    if is_shift {
-                        Ok(Key {
-                            code,
-                            modifiers: KeyModifiers(KeyModifier::Shift | modifier),
-                        })
-                    } else {
-                        Ok(Key {
-                            code,
-                            modifiers: KeyModifiers(modifier),
-                        })
-                    }
+                tag if tag.chars().next().is_some_and(|c| c.is_ascii_lowercase()) => {
+                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8 - 32)
                 }
 
-                _ => Err(String::from("invalid tag format")),
-            }
+                _ => return Err(String::from("unsupported key format")),
+            };
+
+            let modifiers = KeyModifiers(if is_shift {
+                KeyModifier::Shift | modifier
+            } else {
+                modifier
+            });
+
+            Ok(Key { code, modifiers })
         } else {
-            let tag = tag.chars().nth(0).unwrap();
+            let tag = tag.chars().next().unwrap();
             let modifier = if tag.is_ascii_uppercase() {
                 KeyModifier::Shift
             } else {
@@ -143,31 +111,22 @@ impl std::str::FromStr for Key {
             };
             let tag = tag.to_ascii_lowercase();
 
-            match tag {
-                'a'..='z' => Ok(Key {
-                    code: unsafe { std::mem::transmute::<u8, KeyCode>(tag as u8 - 32) },
-                    modifiers: KeyModifiers(modifier),
-                }),
-
-                tag if tag.is_ascii_digit() => {
-                    let code = unsafe { std::mem::transmute::<u8, KeyCode>(tag as u8) };
-                    Ok(Key {
-                        code,
-                        modifiers: KeyModifiers(modifier),
-                    })
-                }
-
+            let code = match tag {
+                'a'..='z' => KeyCode::from_ascii(tag as u8 - 32),
                 '"' | '#' | '$' | '%' | '(' | ')' | '*' | '+' | '?' | '_' | '{' | '}' | '-'
                 | '[' | ']' | ',' | '.' | '/' | ':' | ';' | '@' | '\\' | '^' => {
-                    let code = unsafe { std::mem::transmute::<u8, KeyCode>(tag as u8) };
-                    Ok(Key {
-                        code,
-                        modifiers: KeyModifiers(KeyModifier::None),
-                    })
+                    KeyCode::from_ascii(tag as u8)
                 }
 
-                _ => Err(String::from("invalid format")),
-            }
+                tag if tag.is_ascii_digit() => KeyCode::from_ascii(tag as u8),
+
+                _ => return Err(String::from("unsupported key format")),
+            };
+
+            Ok(Key {
+                code,
+                modifiers: KeyModifiers(modifier),
+            })
         }
     }
 }
@@ -239,6 +198,12 @@ enum KeyCode {
     LowLine = 95,
     LeftCurlyBracket = 123,
     RightCurlyBracket = 125,
+}
+
+impl KeyCode {
+    fn from_ascii(ascii: u8) -> KeyCode {
+        unsafe { std::mem::transmute(ascii) }
+    }
 }
 
 struct KeyModifiers(KeyModifier);
