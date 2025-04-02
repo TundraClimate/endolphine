@@ -180,8 +180,6 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
 
     disable_tui()?;
 
-    sys_log!("i", "Endolphine close successfully");
-
     Ok(())
 }
 

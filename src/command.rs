@@ -25,6 +25,8 @@ impl Command for ExitApp {
     fn run(&self) -> Result<(), app::Error> {
         app::disable_tui()?;
 
+        crate::sys_log!("i", "Endolphine close successfully");
+
         std::process::exit(0)
     }
 }
