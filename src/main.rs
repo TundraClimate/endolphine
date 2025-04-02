@@ -5,6 +5,7 @@ mod app;
 mod builtin;
 mod canvas;
 mod clipboard;
+mod command;
 mod config;
 mod cursor;
 mod handler;

@@ -1,5 +1,5 @@
 use crate::{
-    builtin, config, global,
+    builtin, command, config, global,
     key::Keymap,
     menu::MenuElement,
     theme::{self, Scheme, Theme},
@@ -92,6 +92,7 @@ pub struct MenuConfig {
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct KeyConfig {
     pub exit_app: Keymap,
+    pub reset_view: Keymap,
     pub move_up: Keymap,
     pub move_up_ten: Keymap,
     pub move_down: Keymap,
@@ -226,24 +227,37 @@ impl Default for MenuConfig {
 }
 
 impl KeyConfig {
-    pub fn registerd() -> Vec<(&'static str, &'static Keymap)> {
+    pub fn registerd() -> Vec<(Box<dyn crate::command::Command>, &'static Keymap)> {
         vec![
-            ("ExitApp", &CONFIG.key.exit_app),
-            ("MoveUp", &CONFIG.key.move_up),
-            ("MoveUpTen", &CONFIG.key.move_up_ten),
-            ("MoveDown", &CONFIG.key.move_down),
-            ("MoveDownTen", &CONFIG.key.move_down_ten),
-            ("MoveParent", &CONFIG.key.move_parent),
-            ("EnterDirOrEdit", &CONFIG.key.enter_dir_or_edit),
-            ("VisualSelect", &CONFIG.key.visual_select),
-            ("MenuToggle", &CONFIG.key.menu_toggle),
-            ("MenuMove", &CONFIG.key.menu_move),
-            ("CreateNew", &CONFIG.key.create_new),
-            ("Delete", &CONFIG.key.delete),
-            ("Yank", &CONFIG.key.yank),
-            ("Paste", &CONFIG.key.paste),
-            ("Search", &CONFIG.key.search),
-            ("SearchNext", &CONFIG.key.search_next),
+            (Box::new(command::ExitApp), &CONFIG.key.exit_app),
+            (Box::new(command::ResetView), &CONFIG.key.reset_view),
+            (Box::new(command::Move(-1)), &CONFIG.key.move_up),
+            (Box::new(command::Move(-10)), &CONFIG.key.move_up_ten),
+            (Box::new(command::Move(1)), &CONFIG.key.move_down),
+            (Box::new(command::Move(10)), &CONFIG.key.move_down_ten),
+            (Box::new(command::MoveParent), &CONFIG.key.move_parent),
+            (
+                Box::new(command::EnterDirOrEdit),
+                &CONFIG.key.enter_dir_or_edit,
+            ),
+            (Box::new(command::VisualSelect), &CONFIG.key.visual_select),
+            (Box::new(command::MenuToggle), &CONFIG.key.menu_toggle),
+            (Box::new(command::MenuMove), &CONFIG.key.menu_move),
+            (Box::new(command::CreateNew), &CONFIG.key.create_new),
+            (Box::new(command::Delete), &CONFIG.key.delete),
+            (Box::new(command::Rename), &CONFIG.key.rename),
+            (
+                Box::new(command::Yank {
+                    native: config::load().native_clip,
+                }),
+                &CONFIG.key.yank,
+            ),
+            (Box::new(command::Paste), &CONFIG.key.paste),
+            (Box::new(command::Search { new: true }), &CONFIG.key.search),
+            (
+                Box::new(command::Search { new: false }),
+                &CONFIG.key.search_next,
+            ),
         ]
     }
 }
@@ -252,6 +266,7 @@ impl Default for KeyConfig {
     fn default() -> Self {
         Self {
             exit_app: "Q".into(),
+            reset_view: "<ESC>".into(),
             move_up: "k".into(),
             move_up_ten: "K".into(),
             move_down: "j".into(),
