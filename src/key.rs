@@ -2,7 +2,7 @@ pub struct Keymap(Vec<Key>);
 
 impl Keymap {
     pub fn nth(&self, index: usize) -> Option<&Key> {
-        self.0.iter().nth(index)
+        self.0.get(index)
     }
 
     pub fn len(&self) -> usize {
@@ -50,11 +50,15 @@ impl std::str::FromStr for Keymap {
     }
 }
 
-impl ToString for Keymap {
-    fn to_string(&self) -> String {
-        self.0
-            .iter()
-            .fold(String::new(), |acc, k| format!("{}{}", acc, k.to_string()))
+impl std::fmt::Display for Keymap {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            self.0
+                .iter()
+                .fold(String::new(), |acc, k| format!("{}{}", acc, k))
+        )
     }
 }
 
@@ -289,46 +293,46 @@ impl std::str::FromStr for Key {
     }
 }
 
-impl ToString for Key {
-    fn to_string(&self) -> String {
-        if self.code == KeyCode::None {
-            return String::new();
-        }
-
-        let is_special = self.modifiers.is_alt() || self.modifiers.is_ctrl();
-        let is_shift = self.modifiers.is_shift();
-        let is_alpha = matches!(self.code as u8, 65..=90);
-
-        let code = match &self.code {
-            KeyCode::Backspace => "BS",
-            KeyCode::Tab => "TAB",
-            KeyCode::Enter => "CR",
-            KeyCode::Esc => "ESC",
-
-            keycode => {
-                let mut code = keycode.to_ascii();
-
-                if is_alpha && !is_shift {
-                    code = code.to_ascii_lowercase();
-                }
-
-                if self.modifiers.is_alt() {
-                    &format!("a-{}", code)
-                } else if self.modifiers.is_ctrl() {
-                    &format!("c-{}", code)
-                } else {
-                    &code.to_string()
-                }
+impl std::fmt::Display for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}", 'blk: {
+            if self.code == KeyCode::None {
+                break 'blk String::new();
             }
-        };
 
-        if is_special {
-            format!("<{}>", code)
-        } else if is_shift && !is_alpha {
-            format!("<{}>", code)
-        } else {
-            code.to_string()
-        }
+            let is_special = self.modifiers.is_alt() || self.modifiers.is_ctrl();
+            let is_shift = self.modifiers.is_shift();
+            let is_alpha = matches!(self.code as u8, 65..=90);
+
+            let code = match &self.code {
+                KeyCode::Backspace => "BS",
+                KeyCode::Tab => "TAB",
+                KeyCode::Enter => "CR",
+                KeyCode::Esc => "ESC",
+
+                keycode => {
+                    let mut code = keycode.as_ascii();
+
+                    if is_alpha && !is_shift {
+                        code = code.to_ascii_lowercase();
+                    }
+
+                    if self.modifiers.is_alt() {
+                        &format!("a-{}", code)
+                    } else if self.modifiers.is_ctrl() {
+                        &format!("c-{}", code)
+                    } else {
+                        &code.to_string()
+                    }
+                }
+            };
+
+            if is_special || is_shift && !is_alpha {
+                format!("<{}>", code)
+            } else {
+                code.to_string()
+            }
+        })
     }
 }
 
@@ -407,8 +411,8 @@ impl KeyCode {
         unsafe { std::mem::transmute(ascii) }
     }
 
-    fn to_ascii(&self) -> char {
-        unsafe { std::mem::transmute(*self as u32) }
+    fn as_ascii(&self) -> char {
+        std::char::from_u32(*self as u32).unwrap()
     }
 }
 
@@ -431,10 +435,6 @@ impl KeyModifiers {
 
     pub fn is_ctrl(&self) -> bool {
         self.0 & KeyModifier::Control == KeyModifier::Control
-    }
-
-    pub fn is_none(&self) -> bool {
-        self.0 == KeyModifier::None
     }
 }
 
