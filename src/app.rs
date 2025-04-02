@@ -7,7 +7,7 @@ use crossterm::{cursor, terminal};
 use std::{
     path::{Path, PathBuf},
     sync::{
-        Arc, RwLock,
+        RwLock,
         atomic::{AtomicBool, AtomicU16, Ordering},
     },
 };
@@ -171,17 +171,9 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
             .unwrap_or(path.to_string_lossy().to_string())
     );
 
-    let quit_flag = Arc::new(AtomicBool::new(false));
+    let event_handle = tokio::spawn(async move { event_handler() });
 
-    let event_handle = {
-        let q = quit_flag.clone();
-        tokio::spawn(async move { event_handler(q) })
-    };
-
-    let ui_handle = {
-        let q = quit_flag.clone();
-        tokio::spawn(async move { ui(q).await })
-    };
+    let ui_handle = tokio::spawn(async move { ui().await });
 
     event_handle.await.unwrap();
     ui_handle.await.unwrap();
@@ -260,22 +252,16 @@ pub fn config_init() -> Result<(), Error> {
     Ok(())
 }
 
-fn event_handler(quit_flag: Arc<AtomicBool>) {
+fn event_handler() {
     loop {
-        match handler::handle_event() {
-            Ok(is_quit) => {
-                if is_quit {
-                    quit_flag.swap(true, Ordering::Relaxed);
-                    break;
-                }
-            }
-            Err(e) => e.handle(),
+        if let Err(e) = handler::handle_event() {
+            e.handle();
         }
     }
 }
 
-async fn ui(quit_flag: Arc<AtomicBool>) {
-    while !quit_flag.load(Ordering::Relaxed) {
+async fn ui() {
+    loop {
         let start = Instant::now();
 
         if RENDER.load(Ordering::Relaxed) {

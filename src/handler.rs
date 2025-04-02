@@ -6,10 +6,10 @@ use crate::{
 use crossterm::event::{self, Event, KeyCode, KeyEvent, KeyModifiers};
 use std::path::{Path, PathBuf};
 
-pub fn handle_event() -> Result<bool, app::Error> {
+pub fn handle_event() -> Result<(), app::Error> {
     if let Ok(event) = event::read() {
         match event {
-            Event::Key(key) => return handle_key_event(key),
+            Event::Key(key) => handle_key_event(key)?,
             Event::Resize(_, _) => {
                 cursor::load().resize(misc::child_files_len(&app::get_path()));
                 canvas::cache_clear();
@@ -18,14 +18,14 @@ pub fn handle_event() -> Result<bool, app::Error> {
         }
     }
 
-    Ok(false)
+    Ok(())
 }
 
-fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
+fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
     if input::use_f(|i| i.is_enable()) {
         input::use_f_mut(|i| handle_input_mode(i, key));
 
-        return Ok(false);
+        return Ok(());
     }
 
     {
@@ -39,7 +39,7 @@ fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
     if !registerd.iter().any(|(_, map)| app::is_similar_buf(map)) {
         app::clear_key_buf();
 
-        return Ok(false);
+        return Ok(());
     }
 
     for (name, map) in registerd.into_iter() {
@@ -49,7 +49,7 @@ fn handle_key_event(key: KeyEvent) -> Result<bool, app::Error> {
         }
     }
 
-    Ok(false)
+    Ok(())
 }
 
 pub fn handle_input_mode(input: &mut Input, key: KeyEvent) {
