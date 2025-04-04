@@ -235,9 +235,9 @@ impl Command for MenuMove {
     }
 }
 
-pub struct CreateNew;
+pub struct AskCreate;
 
-impl Command for CreateNew {
+impl Command for AskCreate {
     fn run(&self) -> Result<(), app::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
@@ -252,9 +252,9 @@ impl Command for CreateNew {
     }
 }
 
-pub struct Delete;
+pub struct AskDelete;
 
-impl Command for Delete {
+impl Command for AskDelete {
     fn run(&self) -> Result<(), app::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
@@ -288,9 +288,9 @@ impl Command for Delete {
     }
 }
 
-pub struct Rename;
+pub struct AskRename;
 
-impl Command for Rename {
+impl Command for AskRename {
     fn run(&self) -> Result<(), app::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
@@ -424,9 +424,9 @@ impl Command for Yank {
     }
 }
 
-pub struct Paste;
+pub struct Ask;
 
-impl Command for Paste {
+impl Command for Ask {
     fn run(&self) -> Result<(), app::Error> {
         if menu::refs().is_enabled() {
             return Ok(());

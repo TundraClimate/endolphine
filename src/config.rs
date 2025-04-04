@@ -227,7 +227,7 @@ impl Default for MenuConfig {
 }
 
 impl KeyConfig {
-    pub fn registerd() -> Vec<(Box<dyn crate::command::Command>, &'static Keymap)> {
+    pub fn registerd() -> Vec<(Box<dyn command::Command>, &'static Keymap)> {
         vec![
             (Box::new(command::ExitApp), &CONFIG.key.exit_app),
             (Box::new(command::ResetView), &CONFIG.key.reset_view),
@@ -243,16 +243,16 @@ impl KeyConfig {
             (Box::new(command::VisualSelect), &CONFIG.key.visual_select),
             (Box::new(command::MenuToggle), &CONFIG.key.menu_toggle),
             (Box::new(command::MenuMove), &CONFIG.key.menu_move),
-            (Box::new(command::CreateNew), &CONFIG.key.create_new),
-            (Box::new(command::Delete), &CONFIG.key.delete),
-            (Box::new(command::Rename), &CONFIG.key.rename),
+            (Box::new(command::AskCreate), &CONFIG.key.create_new),
+            (Box::new(command::AskDelete), &CONFIG.key.delete),
+            (Box::new(command::AskRename), &CONFIG.key.rename),
             (
                 Box::new(command::Yank {
                     native: config::load().native_clip,
                 }),
                 &CONFIG.key.yank,
             ),
-            (Box::new(command::Paste), &CONFIG.key.paste),
+            (Box::new(command::Ask), &CONFIG.key.paste),
             (Box::new(command::Search { new: true }), &CONFIG.key.search),
             (
                 Box::new(command::Search { new: false }),
