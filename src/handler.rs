@@ -121,14 +121,14 @@ fn handle_action(content: &str, act: String) {
             is_file: !content.ends_with("/"),
         }
         .run(),
-        "RmFileOrDir" => command::RmFileOrDir {
-            content: content.to_string(),
-            native: config::load().native_clip,
+        "RmFileOrDir" if content.eq_ignore_ascii_case("y") => command::RmFileOrDir {
+            yank_and_native: (config::load().rm.yank, config::load().native_clip),
+            use_tmp: config::load().rm.for_tmp,
         }
         .run(),
-        "RmSelected" => command::RmSelected {
-            content: content.to_string(),
-            native: config::load().native_clip,
+        "RmSelected" if content.eq_ignore_ascii_case("y") => command::RmSelected {
+            yank_and_native: (config::load().rm.yank, config::load().native_clip),
+            use_tmp: config::load().rm.for_tmp,
         }
         .run(),
         "Rename" => command::Rename {
