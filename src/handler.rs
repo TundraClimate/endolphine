@@ -377,6 +377,16 @@ fn act_rename(content: &str) {
 
 fn act_paste(content: &str, native: bool) {
     let files = if native {
+        if !clipboard::is_cmd_installed() {
+            crate::sys_log!(
+                "w",
+                "File paste failed: native command not installed, and config the native-clip is enabled"
+            );
+            crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
+
+            return;
+        }
+
         match clipboard::read_clipboard_native("text/uri-list") {
             Ok(text) => text
                 .lines()
