@@ -68,6 +68,10 @@ impl Input {
         &self.buffer
     }
 
+    pub fn buffer_len(&self) -> usize {
+        self.buffer.as_ref().map(|b| b.len()).unwrap_or(0)
+    }
+
     pub fn complete_input(&mut self) {
         self.storage = self.buffer.take();
         self.cursor = Cursor::default();

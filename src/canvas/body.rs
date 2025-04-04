@@ -77,8 +77,11 @@ fn render_file_line(
 ) -> Result<(), app::Error> {
     let body_row = BodyRow::new(file, is_cursor_pos, is_selected);
     let input_enabled = input::use_f(input::Input::is_enable);
+    let input_buf = input::use_f(|i| i.buffer_len());
+    let input_key = format!("{}{}", input_enabled, input_buf);
+
     Body::cached_render_row(
-        &format!("{}{}{}", input_enabled, rel_i, body_row.gen_key()),
+        &format!("{}{}{}", input_key, rel_i, body_row.gen_key()),
         rel_i,
         body_row,
     )
