@@ -118,7 +118,7 @@ fn handle_action(content: &str, act: String) {
     if let Err(e) = match act.as_str() {
         "CreateFileOrDir" => command::CreateFileOrDir {
             content: content.to_string(),
-            is_file: content.ends_with("/"),
+            is_file: !content.ends_with("/"),
         }
         .run(),
         "RmFileOrDir" => command::RmFileOrDir {
