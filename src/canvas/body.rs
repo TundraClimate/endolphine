@@ -75,9 +75,8 @@ fn render_file_line(
     file: &Path,
     is_selected: bool,
 ) -> Result<(), app::Error> {
-    let c = if is_cursor_pos { ">" } else { " " };
-    let body_row = BodyRow::new(file, c.into(), is_cursor_pos, is_selected);
-    let input_enabled = is_cursor_pos && input::use_f(input::Input::is_enable);
+    let body_row = BodyRow::new(file, is_cursor_pos, is_selected);
+    let input_enabled = input::use_f(input::Input::is_enable);
     Body::cached_render_row(
         &format!("{}{}{}", input_enabled, rel_i, body_row.gen_key()),
         rel_i,
@@ -98,16 +97,14 @@ fn render_empty_line(rel_i: u16) -> Result<(), app::Error> {
 }
 
 struct BodyRow {
-    cursor: String,
     path: PathBuf,
     is_cursor_pos: bool,
     is_selected: bool,
 }
 
 impl BodyRow {
-    fn new(path: &Path, cursor: String, is_cursor_pos: bool, is_selected: bool) -> Self {
+    fn new(path: &Path, is_cursor_pos: bool, is_selected: bool) -> Self {
         Self {
-            cursor,
             path: path.to_path_buf(),
             is_cursor_pos,
             is_selected,
@@ -115,10 +112,7 @@ impl BodyRow {
     }
 
     fn gen_key(&self) -> String {
-        format!(
-            "{}{:?}{}{}",
-            self.cursor, self.path, self.is_cursor_pos, self.is_selected
-        )
+        format!("{:?}{}{}", self.path, self.is_cursor_pos, self.is_selected)
     }
 
     fn colored_file_type(path: &PathBuf) -> String {
@@ -263,6 +257,7 @@ impl BodyRow {
 
 impl std::fmt::Display for BodyRow {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let cursor = if self.is_cursor_pos { ">" } else { " " };
         let file_name = Self::colored_file_name(&self.path);
         let file_type = Self::colored_file_type(&self.path);
         let bsize = Self::colored_bsize(&self.path);
@@ -274,7 +269,7 @@ impl std::fmt::Display for BodyRow {
         write!(
             f,
             "{} | {}{} {} {} {}{}{}",
-            self.cursor,
+            cursor,
             file_type,
             permission,
             bsize,
