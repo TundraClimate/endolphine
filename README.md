@@ -126,6 +126,9 @@ items = [
 # Exit application
 exit_app = "Q"
 
+# Reset view in application
+reset_view = "<ESC>"
+
 # Cursor moving
 # *_ten is skip to 10 items, so FAST
 move_up = "k"
