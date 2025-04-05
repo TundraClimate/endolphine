@@ -318,34 +318,39 @@ impl std::fmt::Display for Key {
                 break 'blk String::new();
             }
 
-            let is_special = self.modifiers.is_alt() || self.modifiers.is_ctrl();
+            let is_special = matches!(
+                self.code,
+                KeyCode::Enter | KeyCode::Tab | KeyCode::Esc | KeyCode::Space | KeyCode::Backspace
+            );
+            let is_modded = self.modifiers.is_alt() || self.modifiers.is_ctrl();
             let is_shift = self.modifiers.is_shift();
             let is_alpha = matches!(self.code as u8, 65..=90);
 
             let code = match &self.code {
-                KeyCode::Backspace => "BS",
-                KeyCode::Tab => "TAB",
                 KeyCode::Enter => "CR",
+                KeyCode::Tab => "TAB",
                 KeyCode::Esc => "ESC",
+                KeyCode::Space => "SPACE",
+                KeyCode::Backspace => "BS",
 
-                keycode => {
-                    let mut code = keycode.as_ascii();
-
-                    if is_alpha && !is_shift {
-                        code = code.to_ascii_lowercase();
-                    }
-
-                    if self.modifiers.is_alt() {
-                        &format!("a-{}", code)
-                    } else if self.modifiers.is_ctrl() {
-                        &format!("c-{}", code)
-                    } else {
-                        &code.to_string()
-                    }
+                keycode if !is_shift && is_alpha => {
+                    &format!("{}", keycode.as_ascii().to_ascii_lowercase())
                 }
+
+                keycode => &format!("{}", keycode.as_ascii()),
             };
 
-            if is_special || is_shift && !is_alpha {
+            let code = if self.modifiers.is_alt() {
+                &format!("a-{}", code)
+            } else if self.modifiers.is_ctrl() {
+                &format!("c-{}", code)
+            } else if is_shift && !is_alpha {
+                &format!("s-{}", code)
+            } else {
+                &code.to_string()
+            };
+
+            if is_special || is_modded || is_shift && !is_alpha {
                 format!("<{}>", code)
             } else {
                 code.to_string()
