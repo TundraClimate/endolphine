@@ -1,9 +1,7 @@
 use super::Command;
 use crate::{app, cursor, input, menu, misc};
 
-pub struct Search {
-    pub new: bool,
-}
+pub struct Search;
 
 impl Command for Search {
     fn run(&self) -> Result<(), app::Error> {
@@ -12,19 +10,8 @@ impl Command for Search {
         }
 
         cursor::disable_selection();
-
-        if self.new {
-            app::grep_update(|m| m.clear());
-            input::use_f_mut(|i| i.enable("/", Some("Search".to_string())));
-        } else if !app::is_regex_empty() {
-            input::use_f_mut(|i| {
-                i.enable("/", Some("Search".to_string()));
-                crate::handler::handle_input_mode(
-                    i,
-                    crossterm::event::KeyEvent::from(crossterm::event::KeyCode::Enter),
-                )
-            });
-        }
+        app::grep_update(|m| m.clear());
+        input::use_f_mut(|i| i.enable("/", Some("Search".to_string())));
 
         Ok(())
     }

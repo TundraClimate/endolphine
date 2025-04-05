@@ -315,10 +315,6 @@ pub fn grep_update<F: FnOnce(&mut String)>(f: F) {
     f(&mut lock);
 }
 
-pub fn is_regex_empty() -> bool {
-    GREP.read().unwrap().is_empty()
-}
-
 pub fn regex_match(buf: &str) -> bool {
     let lock = GREP.read().unwrap();
 

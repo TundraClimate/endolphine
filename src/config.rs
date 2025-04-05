@@ -253,11 +253,8 @@ impl KeyConfig {
                 &CONFIG.key.yank,
             ),
             (Box::new(command::AskPaste), &CONFIG.key.paste),
-            (Box::new(command::Search { new: true }), &CONFIG.key.search),
-            (
-                Box::new(command::Search { new: false }),
-                &CONFIG.key.search_next,
-            ),
+            (Box::new(command::Search), &CONFIG.key.search),
+            (Box::new(command::SearchNext), &CONFIG.key.search_next),
         ]
     }
 }
