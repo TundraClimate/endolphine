@@ -229,62 +229,25 @@ impl std::str::FromStr for Key {
             return Err(String::from("unsupported key format"));
         }
 
-        let is_special_tag = tag.len() > 3 && tag.starts_with("<") && tag.ends_with(">");
-        let tag = tag.trim_start_matches('<').trim_end_matches('>');
+        if tag.is_empty() {
+            return Err(String::from("format is empty"));
+        }
 
-        if is_special_tag {
-            let is_shift = tag.chars().nth(2).is_some_and(|c| c.is_ascii_uppercase());
-            let tag = tag.to_ascii_lowercase();
-            let (tag, modifier) = if let Some(tag) = tag.strip_prefix("s-") {
-                (tag, KeyModifier::Shift)
-            } else if let Some(tag) = tag.strip_prefix("a-") {
-                (tag, KeyModifier::Alt)
-            } else if let Some(tag) = tag.strip_prefix("c-") {
-                (tag, KeyModifier::Control)
-            } else {
-                (tag.as_str(), KeyModifier::None)
+        if tag.len() == 1 {
+            let Ok(tag) = char::from_str(tag) else {
+                return Err(String::from("unsupported key format"));
             };
 
-            let code = match tag {
-                "enter" | "cr" => KeyCode::Enter,
-                "tab" => KeyCode::Tab,
-                "esc" => KeyCode::Esc,
-                "leader" | "space" => KeyCode::Space,
-                "bs" => KeyCode::Backspace,
-                "\"" | "#" | "$" | "%" | "(" | ")" | "*" | "+" | "?" | "_" | "{" | "}" | "-"
-                | "[" | "]" | "," | "." | "/" | ":" | ";" | "@" | "\\" | "^" => {
-                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8)
-                }
-
-                tag if tag.chars().next().is_some_and(|c| c.is_ascii_digit()) => {
-                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8)
-                }
-
-                tag if tag.chars().next().is_some_and(|c| c.is_ascii_lowercase()) => {
-                    KeyCode::from_ascii(tag.chars().next().unwrap() as u8 - 32)
-                }
-
-                _ => return Err(String::from("unsupported key format")),
-            };
-
-            let modifiers = KeyModifiers(if is_shift {
-                KeyModifier::Shift | modifier
-            } else {
-                modifier
-            });
-
-            Ok(Key { code, modifiers })
-        } else {
-            let tag = tag.chars().next().unwrap();
             let modifier = if tag.is_ascii_uppercase() {
                 KeyModifier::Shift
             } else {
                 KeyModifier::None
             };
-            let tag = tag.to_ascii_lowercase();
+
+            let tag = tag.to_ascii_uppercase();
 
             let code = match tag {
-                'a'..='z' => KeyCode::from_ascii(tag as u8 - 32),
+                'A'..='Z' => KeyCode::from_ascii(tag as u8),
                 '"' | '#' | '$' | '%' | '(' | ')' | '*' | '+' | '?' | '_' | '{' | '}' | '-'
                 | '[' | ']' | ',' | '.' | '/' | ':' | ';' | '@' | '\\' | '^' => {
                     KeyCode::from_ascii(tag as u8)
@@ -295,11 +258,56 @@ impl std::str::FromStr for Key {
                 _ => return Err(String::from("unsupported key format")),
             };
 
-            Ok(Key {
+            return Ok(Key {
                 code,
                 modifiers: KeyModifiers(modifier),
-            })
+            });
         }
+
+        let is_special = tag.starts_with("<") && tag.ends_with(">");
+
+        if !is_special || tag.len() == 2 {
+            return Err(String::from("unsupported key format"));
+        }
+
+        let is_modded = tag.chars().nth(2).is_some_and(|c| c == '-');
+        let base = if is_modded {
+            &tag[3..tag.len() - 1]
+        } else {
+            &tag[1..tag.len() - 1]
+        };
+        let modifier = if is_modded {
+            match tag.chars().nth(1).map(|c| c.to_ascii_lowercase()) {
+                Some('a') => KeyModifier::Alt,
+                Some('c') => KeyModifier::Control,
+                Some('s') => KeyModifier::Shift,
+                _ => KeyModifier::None,
+            }
+        } else {
+            KeyModifier::None
+        };
+
+        if base.len() == 1 {
+            let mut key = Key::from_str(base)?;
+
+            key.modifiers = KeyModifiers(key.modifiers.0 | modifier);
+
+            return Ok(key);
+        }
+
+        let code = match base.to_lowercase().as_str() {
+            "enter" | "cr" => KeyCode::Enter,
+            "tab" => KeyCode::Tab,
+            "esc" => KeyCode::Esc,
+            "leader" | "space" => KeyCode::Space,
+            "bs" => KeyCode::Backspace,
+            _ => return Err(String::from("unsupported key format")),
+        };
+
+        Ok(Key {
+            code,
+            modifiers: KeyModifiers(modifier),
+        })
     }
 }
 
