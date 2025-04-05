@@ -86,6 +86,16 @@ pub struct Key {
     modifiers: KeyModifiers,
 }
 
+impl std::fmt::Debug for Key {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "Key {{ code: {}, modifiers: KeyModifiers({}) }}",
+            self.code as u8, self.modifiers.0 as u8
+        )
+    }
+}
+
 impl Key {
     pub fn from_keyevent(e: &crossterm::event::KeyEvent) -> Key {
         let code = match e.code {
