@@ -34,14 +34,14 @@ fn ask_rm_selected() {
         .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
         .collect::<Vec<_>>();
 
-    input::use_f_mut(|i| i.enable("", Some("RmSelected".into())));
-    crate::sys_log!("i", "Called command: RmSelected");
+    input::use_f_mut(|i| i.enable("", Some("DeleteSelected".into())));
+    crate::sys_log!("i", "Called command: DeleteSelected");
     crate::log!("Delete {} items ? (y/Y)", selected_files.len());
 }
 
 fn ask_rm_target(under_cursor_file: &std::path::Path) {
-    input::use_f_mut(|i| i.enable("", Some("RmFileOrDir".into())));
-    crate::sys_log!("i", "Called command: RmFileOrDir");
+    input::use_f_mut(|i| i.enable("", Some("DeleteFileOrDir".into())));
+    crate::sys_log!("i", "Called command: DeleteFileOrDir");
     crate::log!("Delete \"{}\" ? (y/Y)", misc::file_name(under_cursor_file));
 }
 
@@ -79,18 +79,18 @@ fn yank(native: bool, paths: &[std::path::PathBuf]) {
     }
 }
 
-pub struct RmFileOrDir {
+pub struct DeleteFileOrDir {
     pub use_tmp: bool,
     pub yank_and_native: (bool, bool),
 }
 
-impl Command for RmFileOrDir {
+impl Command for DeleteFileOrDir {
     fn run(&self) -> Result<(), crate::app::Error> {
         let files = misc::sorted_child_files(&app::get_path());
         let Some(under_cursor_file) = files.get(cursor::load().current()) else {
             crate::sys_log!(
                 "w",
-                "Command RmFileOrDir failed: cursor in invalid position"
+                "Command DeleteFileOrDir failed: cursor in invalid position"
             );
             crate::log!("Delete file failed: target cannot find");
 
@@ -100,7 +100,7 @@ impl Command for RmFileOrDir {
         let Ok(metadata) = under_cursor_file.symlink_metadata() else {
             crate::sys_log!(
                 "w",
-                "Command RmFileOrDir failed: target metadata cannot access"
+                "Command DeleteFileOrDir failed: target metadata cannot access"
             );
             crate::log!("Delete file failed: cannot access metadata");
 
@@ -108,7 +108,10 @@ impl Command for RmFileOrDir {
         };
 
         if !under_cursor_file.exists() && !metadata.is_symlink() {
-            crate::sys_log!("w", "Command RmFileOrDir failed: target file not exists");
+            crate::sys_log!(
+                "w",
+                "Command DeleteFileOrDir failed: target file not exists"
+            );
             crate::log!("Delete file failed: target not exists");
 
             return Ok(());
@@ -129,7 +132,7 @@ impl Command for RmFileOrDir {
         };
 
         if let Err(e) = res {
-            crate::sys_log!("w", "Command RmFileOrDir failed: {}", e.kind());
+            crate::sys_log!("w", "Command DeleteFileOrDir failed: {}", e.kind());
             crate::log!("Delete file failed: {}", e.kind());
 
             return Ok(());
@@ -138,7 +141,7 @@ impl Command for RmFileOrDir {
         cursor::load().resize(misc::child_files_len(&app::get_path()));
         crate::sys_log!(
             "i",
-            "Command RmFileOrDir successful: delete the \"{}\"",
+            "Command DeleteFileOrDir successful: delete the \"{}\"",
             name
         );
         crate::log!("\"{}\" delete successful", name);
@@ -147,12 +150,12 @@ impl Command for RmFileOrDir {
     }
 }
 
-pub struct RmSelected {
+pub struct DeleteSelected {
     pub use_tmp: bool,
     pub yank_and_native: (bool, bool),
 }
 
-impl Command for RmSelected {
+impl Command for DeleteSelected {
     fn run(&self) -> Result<(), crate::app::Error> {
         let selected = misc::sorted_child_files(&app::get_path())
             .into_iter()
@@ -166,7 +169,7 @@ impl Command for RmSelected {
 
         if self.use_tmp {
             if let Err(e) = misc::into_tmp(&selected) {
-                crate::sys_log!("w", "Command RmSelected failed: {}", e.kind());
+                crate::sys_log!("w", "Command DeleteSelected failed: {}", e.kind());
                 crate::log!("Delete file failed: {}", e.kind());
 
                 return Ok(());
@@ -176,7 +179,7 @@ impl Command for RmSelected {
                 let Ok(metadata) = target.symlink_metadata() else {
                     crate::sys_log!(
                         "w",
-                        "Command RmSelected failed: target metadata cannot access"
+                        "Command DeleteSelected failed: target metadata cannot access"
                     );
                     crate::log!("Delete file failed: cannot access metadata");
 
@@ -184,7 +187,7 @@ impl Command for RmSelected {
                 };
 
                 if !target.exists() && !metadata.is_symlink() {
-                    crate::sys_log!("w", "Command RmSelected failed: target file not exists");
+                    crate::sys_log!("w", "Command DeleteSelected failed: target file not exists");
                     crate::log!("Delete file failed: target not exists");
 
                     return Ok(());
@@ -197,7 +200,7 @@ impl Command for RmSelected {
                 };
 
                 if let Err(e) = res {
-                    crate::sys_log!("w", "Command RmSelected failed: {}", e.kind());
+                    crate::sys_log!("w", "Command DeleteSelected failed: {}", e.kind());
                     crate::log!("Delete file failed: {}", e.kind());
 
                     return Ok(());
@@ -209,7 +212,7 @@ impl Command for RmSelected {
         cursor::disable_selection();
         crate::sys_log!(
             "i",
-            "Command RmSelected successful: {} files deleted",
+            "Command DeleteSelected successful: {} files deleted",
             selected.len()
         );
         crate::log!("{} items delete successful", selected.len());

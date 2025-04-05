@@ -72,7 +72,7 @@ pub fn handle_input_mode(input: &mut Input, key: KeyEvent) {
             if let Some(act) = input.load_action() {
                 match act.as_str() {
                     "Search" => app::sync_grep(input),
-                    "RmSelected" | "RmFileOrDir" if config::load().rm.no_enter => {
+                    "DeleteSelected" | "DeleteFileOrDir" if config::load().delete.no_enter => {
                         handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
                     }
                     _ => {}
@@ -121,14 +121,14 @@ fn handle_action(content: &str, act: String) {
             is_file: !content.ends_with("/"),
         }
         .run(),
-        "RmFileOrDir" if content.eq_ignore_ascii_case("y") => command::RmFileOrDir {
-            yank_and_native: (config::load().rm.yank, config::load().native_clip),
-            use_tmp: config::load().rm.for_tmp,
+        "DeleteFileOrDir" if content.eq_ignore_ascii_case("y") => command::DeleteFileOrDir {
+            yank_and_native: (config::load().delete.yank, config::load().native_clip),
+            use_tmp: config::load().delete.for_tmp,
         }
         .run(),
-        "RmSelected" if content.eq_ignore_ascii_case("y") => command::RmSelected {
-            yank_and_native: (config::load().rm.yank, config::load().native_clip),
-            use_tmp: config::load().rm.for_tmp,
+        "DeleteSelected" if content.eq_ignore_ascii_case("y") => command::DeleteSelected {
+            yank_and_native: (config::load().delete.yank, config::load().native_clip),
+            use_tmp: config::load().delete.for_tmp,
         }
         .run(),
         "Rename" => command::Rename {

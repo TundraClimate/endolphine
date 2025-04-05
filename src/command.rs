@@ -11,7 +11,7 @@ mod visual;
 mod yank_file;
 
 pub use create_file::{AskCreate, CreateFileOrDir};
-pub use delete_file::{AskDelete, RmFileOrDir, RmSelected};
+pub use delete_file::{AskDelete, DeleteFileOrDir, DeleteSelected};
 pub use exit_app::ExitApp;
 pub use menuctl::{MenuMove, MenuToggle};
 pub use mv::{EnterDirOrEdit, Move, MoveParent};

@@ -63,7 +63,7 @@ pub struct Config {
     user_theme_path: Option<PathBuf>,
     pub sort_by_priority: [u8; 4],
     pub native_clip: bool,
-    pub rm: RmConfig,
+    pub delete: DeleteConfig,
     pub paste: PasteConfig,
     pub menu: MenuConfig,
     pub key: KeyConfig,
@@ -71,7 +71,7 @@ pub struct Config {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct RmConfig {
+pub struct DeleteConfig {
     pub no_enter: bool,
     pub yank: bool,
     pub for_tmp: bool,
@@ -127,7 +127,7 @@ impl Default for Config {
             sort_by_priority: [0, 1, 2, 3],
             user_theme_path: None,
             native_clip: true,
-            rm: RmConfig {
+            delete: DeleteConfig {
                 no_enter: true,
                 for_tmp: true,
                 yank: true,

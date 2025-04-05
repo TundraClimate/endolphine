@@ -194,7 +194,7 @@ fn init(path: &Path) -> Result<(), Error> {
     let c = misc::child_files_len(&path);
     crate::cursor::load().resize(c);
 
-    if config::load().rm.for_tmp {
+    if config::load().delete.for_tmp {
         let tmp_path = Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
             std::fs::create_dir_all(tmp_path).map_err(|e| {
