@@ -9,8 +9,19 @@ impl Command for AskPaste {
             return Ok(());
         }
 
+        let config = config::load();
+
+        if config.paste.force_mode {
+            Paste {
+                overwrite: config.paste.default_overwrite,
+                native: config::load().native_clip,
+            }
+            .run()?;
+
+            return Ok(());
+        };
+
         input::use_f_mut(|i| {
-            let config = config::load();
             let default_paste_input = if config.paste.default_overwrite {
                 "y"
             } else {
@@ -19,14 +30,7 @@ impl Command for AskPaste {
 
             i.enable(default_paste_input, Some("Paste".into()));
 
-            if config.paste.force_mode {
-                crate::handler::handle_input_mode(
-                    i,
-                    crossterm::event::KeyEvent::from(crossterm::event::KeyCode::Enter),
-                );
-            } else {
-                crate::log!("overwrite the same files? (y/Y)");
-            };
+            crate::log!("overwrite the same files? (y/Y)");
         });
 
         Ok(())
@@ -34,48 +38,17 @@ impl Command for AskPaste {
 }
 
 pub struct Paste {
-    pub content: String,
+    pub overwrite: bool,
     pub native: bool,
 }
 
 impl Command for Paste {
     fn run(&self) -> Result<(), crate::app::Error> {
-        let files = if self.native {
-            if !clipboard::is_cmd_installed() {
-                crate::sys_log!(
-                    "w",
-                    "File paste failed: native command not installed, and config the native-clip is enabled"
-                );
-                crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
-
-                return Ok(());
-            }
-
-            match clipboard::read_clipboard_native("text/uri-list") {
-                Ok(text) => text
-                    .lines()
-                    .filter_map(|f| f.strip_prefix("file://"))
-                    .map(std::path::PathBuf::from)
-                    .filter(|f| misc::exists_item(f))
-                    .collect::<Vec<std::path::PathBuf>>(),
-                Err(e) => {
-                    crate::sys_log!("w", "Couldn't read a clipboard: {}", e.kind());
-                    crate::log!("Paste failed: {}", e.kind());
-
-                    return Ok(());
-                }
-            }
-        } else {
-            clipboard::read_clipboard()
-                .split('\n')
-                .map(std::path::PathBuf::from)
-                .filter(|c| misc::exists_item(c))
-                .collect::<Vec<_>>()
+        let Some(files) = read_clipboard(self.native) else {
+            return Ok(());
         };
 
         let current_path = app::get_path();
-        let overwrite_mode = ["y", "Y", config::load().key.paste.to_string().as_str()]
-            .contains(&self.content.as_str());
 
         for file in files.iter() {
             let Ok(metadata) = file.symlink_metadata() else {
@@ -86,30 +59,10 @@ impl Command for Paste {
                 continue;
             }
 
-            let copied_path = {
-                let copied = current_path.join(misc::file_name(file));
-
-                if copied == *file {
-                    let stem = copied
-                        .file_stem()
-                        .map(|s| s.to_string_lossy())
-                        .unwrap_or_default();
-                    let suffix = config::load().paste.similar_file_suffix();
-                    let added_suffix =
-                        if let Some(extension) = copied.extension().map(|e| e.to_string_lossy()) {
-                            format!("{}{}.{}", stem, suffix, extension)
-                        } else {
-                            format!("{}{}", stem, suffix)
-                        };
-
-                    current_path.join(added_suffix)
-                } else {
-                    copied
-                }
-            };
+            let copied_path = conflict_fix(&current_path, file);
 
             if (metadata.is_file() || metadata.is_symlink())
-                && (!misc::exists_item(&copied_path) || overwrite_mode)
+                && (!misc::exists_item(&copied_path) || self.overwrite)
             {
                 if let Err(e) = std::fs::copy(file, &copied_path) {
                     crate::sys_log!("w", "Paste from clipboard failed: {}", e.kind());
@@ -129,7 +82,7 @@ impl Command for Paste {
 
                     let copied_path = copied_path.join(rel_path);
 
-                    if !misc::exists_item(&copied_path) || overwrite_mode {
+                    if !misc::exists_item(&copied_path) || self.overwrite {
                         let parent = misc::parent(&copied_path);
 
                         if !parent.exists() {
@@ -155,5 +108,65 @@ impl Command for Paste {
         crate::log!("{} files paste successful.", files.len());
 
         Ok(())
+    }
+}
+
+fn read_clipboard(native: bool) -> Option<Vec<std::path::PathBuf>> {
+    if native {
+        if !clipboard::is_cmd_installed() {
+            crate::sys_log!(
+                "w",
+                "File paste failed: native command not installed, and config the native-clip is enabled"
+            );
+            crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
+
+            return None;
+        }
+
+        match clipboard::read_clipboard_native("text/uri-list") {
+            Ok(text) => Some(
+                text.lines()
+                    .filter_map(|f| f.strip_prefix("file://"))
+                    .map(std::path::PathBuf::from)
+                    .filter(|f| misc::exists_item(f))
+                    .collect::<Vec<std::path::PathBuf>>(),
+            ),
+            Err(e) => {
+                crate::sys_log!("w", "Couldn't read a clipboard: {}", e.kind());
+                crate::log!("Paste failed: {}", e.kind());
+
+                None
+            }
+        }
+    } else {
+        Some(
+            clipboard::read_clipboard()
+                .split('\n')
+                .map(std::path::PathBuf::from)
+                .filter(|c| misc::exists_item(c))
+                .collect::<Vec<_>>(),
+        )
+    }
+}
+
+fn conflict_fix(current_path: &std::path::Path, file: &std::path::Path) -> std::path::PathBuf {
+    let copied = current_path.join(misc::file_name(file));
+
+    if copied == *file {
+        let stem = copied
+            .file_stem()
+            .map(|s| s.to_string_lossy())
+            .unwrap_or_default();
+        let suffix = config::load().paste.similar_file_suffix();
+        let added_suffix = if let Some(extension) = copied.extension().map(|e| e.to_string_lossy())
+        {
+            format!("{}{}.{}", stem, suffix, extension)
+        } else {
+            format!("{}{}", stem, suffix)
+        };
+
+        current_path.join(added_suffix)
+    } else {
+        copied
     }
 }

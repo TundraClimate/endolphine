@@ -136,7 +136,7 @@ fn handle_action(content: &str, act: String) {
         }
         .run(),
         "Paste" => command::Paste {
-            content: content.to_string(),
+            overwrite: content.eq_ignore_ascii_case("y"),
             native: config::load().native_clip,
         }
         .run(),
