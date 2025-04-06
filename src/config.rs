@@ -89,7 +89,7 @@ pub struct MenuConfig {
     pub items: Vec<MenuElement>,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
 pub struct KeyConfig {
     pub exit_app: Keymap,
     pub reset_view: Keymap,
@@ -227,11 +227,13 @@ impl Default for MenuConfig {
 }
 
 impl KeyConfig {
-    pub fn registerd() -> Vec<(Box<dyn command::Command>, Keymap)> {
+    // FIXME this called every key input
+    // do register in init
+    pub fn registerd(self) -> Vec<(Box<dyn command::Command>, Keymap)> {
         let delete_cmd: (Box<dyn command::Command>, Keymap) = if CONFIG.delete.ask {
             (
                 Box::new(command::AskDelete),
-                Keymap::from(format!("{}", CONFIG.key.delete).as_str()),
+                Keymap::from(format!("{}", self.delete).as_str()),
             )
         } else {
             (
@@ -239,52 +241,34 @@ impl KeyConfig {
                     use_tmp: CONFIG.delete.for_tmp,
                     yank_and_native: (CONFIG.delete.yank, CONFIG.native_clip),
                 }),
-                Keymap::from(format!("{0}{0}", CONFIG.key.delete).as_str()),
+                Keymap::from(format!("{0}{0}", self.delete).as_str()),
             )
         };
 
         vec![
-            (Box::new(command::ExitApp), CONFIG.key.exit_app.clone()),
-            (Box::new(command::ResetView), CONFIG.key.reset_view.clone()),
-            (Box::new(command::Move(-1)), CONFIG.key.move_up.clone()),
-            (Box::new(command::Move(-10)), CONFIG.key.move_up_ten.clone()),
-            (Box::new(command::Move(1)), CONFIG.key.move_down.clone()),
-            (
-                Box::new(command::Move(10)),
-                CONFIG.key.move_down_ten.clone(),
-            ),
-            (
-                Box::new(command::MoveParent),
-                CONFIG.key.move_parent.clone(),
-            ),
-            (
-                Box::new(command::EnterDirOrEdit),
-                CONFIG.key.enter_dir_or_edit.clone(),
-            ),
-            (
-                Box::new(command::VisualSelect),
-                CONFIG.key.visual_select.clone(),
-            ),
-            (
-                Box::new(command::MenuToggle),
-                CONFIG.key.menu_toggle.clone(),
-            ),
-            (Box::new(command::MenuMove), CONFIG.key.menu_move.clone()),
-            (Box::new(command::AskCreate), CONFIG.key.create_new.clone()),
+            (Box::new(command::ExitApp), self.exit_app),
+            (Box::new(command::ResetView), self.reset_view),
+            (Box::new(command::Move(-1)), self.move_up),
+            (Box::new(command::Move(-10)), self.move_up_ten),
+            (Box::new(command::Move(1)), self.move_down),
+            (Box::new(command::Move(10)), self.move_down_ten),
+            (Box::new(command::MoveParent), self.move_parent),
+            (Box::new(command::EnterDirOrEdit), self.enter_dir_or_edit),
+            (Box::new(command::VisualSelect), self.visual_select),
+            (Box::new(command::MenuToggle), self.menu_toggle),
+            (Box::new(command::MenuMove), self.menu_move),
+            (Box::new(command::AskCreate), self.create_new),
             delete_cmd,
-            (Box::new(command::AskRename), CONFIG.key.rename.clone()),
+            (Box::new(command::AskRename), self.rename),
             (
                 Box::new(command::Yank {
                     native: config::load().native_clip,
                 }),
-                CONFIG.key.yank.clone(),
+                self.yank,
             ),
-            (Box::new(command::AskPaste), CONFIG.key.paste.clone()),
-            (Box::new(command::Search), CONFIG.key.search.clone()),
-            (
-                Box::new(command::SearchNext),
-                CONFIG.key.search_next.clone(),
-            ),
+            (Box::new(command::AskPaste), self.paste),
+            (Box::new(command::Search), self.search),
+            (Box::new(command::SearchNext), self.search_next),
         ]
     }
 }
