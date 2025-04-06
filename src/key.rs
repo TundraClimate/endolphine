@@ -103,6 +103,25 @@ impl std::fmt::Debug for Key {
     }
 }
 
+impl<'de> serde::Deserialize<'de> for Key {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let s = String::deserialize(deserializer)?;
+        s.parse().map_err(serde::de::Error::custom)
+    }
+}
+
+impl serde::Serialize for Key {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        serializer.serialize_str(&self.to_string())
+    }
+}
+
 impl Key {
     pub fn from_keyevent(e: &crossterm::event::KeyEvent) -> Key {
         let code = match e.code {
@@ -225,6 +244,15 @@ impl Key {
 impl PartialEq for Key {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code && self.modifiers == other.modifiers
+    }
+}
+
+impl From<&str> for Key {
+    fn from(value: &str) -> Self {
+        value.parse().unwrap_or(Key {
+            code: KeyCode::None,
+            modifiers: KeyModifiers(KeyModifier::None),
+        })
     }
 }
 

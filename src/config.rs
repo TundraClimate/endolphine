@@ -1,6 +1,6 @@
 use crate::{
     builtin, command, config, global,
-    key::Keymap,
+    key::{Key, Keymap},
     menu::MenuElement,
     theme::{self, Scheme, Theme},
 };
@@ -103,7 +103,7 @@ pub struct KeyConfig {
     pub menu_toggle: Keymap,
     pub menu_move: Keymap,
     pub create_new: Keymap,
-    pub delete: Keymap,
+    pub delete: Key,
     pub rename: Keymap,
     pub yank: Keymap,
     pub paste: Keymap,
@@ -229,17 +229,17 @@ impl Default for MenuConfig {
 impl KeyConfig {
     pub fn registerd() -> Vec<(Box<dyn command::Command>, Keymap)> {
         let delete_cmd: (Box<dyn command::Command>, Keymap) = if CONFIG.delete.ask {
-            (Box::new(command::AskDelete), CONFIG.key.delete.clone())
+            (
+                Box::new(command::AskDelete),
+                Keymap::from(format!("{}", CONFIG.key.delete).as_str()),
+            )
         } else {
-            let map = format!("{0}{0}", CONFIG.key.delete)
-                .parse::<Keymap>()
-                .unwrap();
             (
                 Box::new(command::DeleteFileOrDir {
                     use_tmp: CONFIG.delete.for_tmp,
                     yank_and_native: (CONFIG.delete.yank, CONFIG.native_clip),
                 }),
-                map,
+                Keymap::from(format!("{0}{0}", CONFIG.key.delete).as_str()),
             )
         };
 
