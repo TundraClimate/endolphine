@@ -42,7 +42,7 @@ fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
     }
 
     for (name, map) in registerd.into_iter() {
-        if app::eq_buf(map) {
+        if app::eq_buf(&map) {
             name.run()?;
             app::clear_key_buf();
         }
@@ -70,12 +70,8 @@ pub fn handle_input_mode(input: &mut Input, key: KeyEvent) {
             input.buffer_insert(c);
 
             if let Some(act) = input.load_action() {
-                match act.as_str() {
-                    "Search" => app::sync_grep(input),
-                    "DeleteSelected" | "DeleteFileOrDir" if config::load().delete.no_enter => {
-                        handle_input_mode(input, KeyEvent::from(KeyCode::Enter));
-                    }
-                    _ => {}
+                if act.as_str() == "Search" {
+                    app::sync_grep(input)
                 }
             }
         }

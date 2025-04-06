@@ -10,6 +10,12 @@ impl Keymap {
     }
 }
 
+impl Clone for Keymap {
+    fn clone(&self) -> Self {
+        Self(self.0.clone())
+    }
+}
+
 impl From<&str> for Keymap {
     fn from(value: &str) -> Self {
         value.parse().unwrap_or(Keymap(vec![]))
@@ -81,6 +87,7 @@ impl serde::Serialize for Keymap {
     }
 }
 
+#[derive(Clone, Copy)]
 pub struct Key {
     code: KeyCode,
     modifiers: KeyModifiers,
@@ -445,6 +452,7 @@ impl PartialEq for KeyCode {
     }
 }
 
+#[derive(Clone, Copy)]
 struct KeyModifiers(KeyModifier);
 
 impl KeyModifiers {

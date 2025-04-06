@@ -72,7 +72,7 @@ pub struct Config {
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct DeleteConfig {
-    pub no_enter: bool,
+    pub ask: bool,
     pub yank: bool,
     pub for_tmp: bool,
 }
@@ -128,7 +128,7 @@ impl Default for Config {
             user_theme_path: None,
             native_clip: true,
             delete: DeleteConfig {
-                no_enter: true,
+                ask: true,
                 for_tmp: true,
                 yank: true,
             },
@@ -227,34 +227,64 @@ impl Default for MenuConfig {
 }
 
 impl KeyConfig {
-    pub fn registerd() -> Vec<(Box<dyn command::Command>, &'static Keymap)> {
+    pub fn registerd() -> Vec<(Box<dyn command::Command>, Keymap)> {
+        let delete_cmd: (Box<dyn command::Command>, Keymap) = if CONFIG.delete.ask {
+            (Box::new(command::AskDelete), CONFIG.key.delete.clone())
+        } else {
+            let map = format!("{0}{0}", CONFIG.key.delete)
+                .parse::<Keymap>()
+                .unwrap();
+            (
+                Box::new(command::DeleteFileOrDir {
+                    use_tmp: CONFIG.delete.for_tmp,
+                    yank_and_native: (CONFIG.delete.yank, CONFIG.native_clip),
+                }),
+                map,
+            )
+        };
+
         vec![
-            (Box::new(command::ExitApp), &CONFIG.key.exit_app),
-            (Box::new(command::ResetView), &CONFIG.key.reset_view),
-            (Box::new(command::Move(-1)), &CONFIG.key.move_up),
-            (Box::new(command::Move(-10)), &CONFIG.key.move_up_ten),
-            (Box::new(command::Move(1)), &CONFIG.key.move_down),
-            (Box::new(command::Move(10)), &CONFIG.key.move_down_ten),
-            (Box::new(command::MoveParent), &CONFIG.key.move_parent),
+            (Box::new(command::ExitApp), CONFIG.key.exit_app.clone()),
+            (Box::new(command::ResetView), CONFIG.key.reset_view.clone()),
+            (Box::new(command::Move(-1)), CONFIG.key.move_up.clone()),
+            (Box::new(command::Move(-10)), CONFIG.key.move_up_ten.clone()),
+            (Box::new(command::Move(1)), CONFIG.key.move_down.clone()),
+            (
+                Box::new(command::Move(10)),
+                CONFIG.key.move_down_ten.clone(),
+            ),
+            (
+                Box::new(command::MoveParent),
+                CONFIG.key.move_parent.clone(),
+            ),
             (
                 Box::new(command::EnterDirOrEdit),
-                &CONFIG.key.enter_dir_or_edit,
+                CONFIG.key.enter_dir_or_edit.clone(),
             ),
-            (Box::new(command::VisualSelect), &CONFIG.key.visual_select),
-            (Box::new(command::MenuToggle), &CONFIG.key.menu_toggle),
-            (Box::new(command::MenuMove), &CONFIG.key.menu_move),
-            (Box::new(command::AskCreate), &CONFIG.key.create_new),
-            (Box::new(command::AskDelete), &CONFIG.key.delete),
-            (Box::new(command::AskRename), &CONFIG.key.rename),
+            (
+                Box::new(command::VisualSelect),
+                CONFIG.key.visual_select.clone(),
+            ),
+            (
+                Box::new(command::MenuToggle),
+                CONFIG.key.menu_toggle.clone(),
+            ),
+            (Box::new(command::MenuMove), CONFIG.key.menu_move.clone()),
+            (Box::new(command::AskCreate), CONFIG.key.create_new.clone()),
+            delete_cmd,
+            (Box::new(command::AskRename), CONFIG.key.rename.clone()),
             (
                 Box::new(command::Yank {
                     native: config::load().native_clip,
                 }),
-                &CONFIG.key.yank,
+                CONFIG.key.yank.clone(),
             ),
-            (Box::new(command::AskPaste), &CONFIG.key.paste),
-            (Box::new(command::Search), &CONFIG.key.search),
-            (Box::new(command::SearchNext), &CONFIG.key.search_next),
+            (Box::new(command::AskPaste), CONFIG.key.paste.clone()),
+            (Box::new(command::Search), CONFIG.key.search.clone()),
+            (
+                Box::new(command::SearchNext),
+                CONFIG.key.search_next.clone(),
+            ),
         ]
     }
 }
