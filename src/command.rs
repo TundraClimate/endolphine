@@ -22,6 +22,6 @@ pub use search::{Search, SearchNext};
 pub use visual::VisualSelect;
 pub use yank_file::Yank;
 
-pub trait Command {
+pub trait Command: Send + Sync {
     fn run(&self) -> Result<(), crate::app::Error>;
 }

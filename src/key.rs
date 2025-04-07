@@ -1,12 +1,12 @@
 pub struct Keymap(Vec<Key>);
 
 impl Keymap {
-    pub fn nth(&self, index: usize) -> Option<&Key> {
-        self.0.get(index)
+    pub fn new(v: &[Key]) -> Self {
+        Keymap(v.to_owned())
     }
 
-    pub fn len(&self) -> usize {
-        self.0.len()
+    pub fn nth(&self, index: usize) -> Option<&Key> {
+        self.0.get(index)
     }
 }
 

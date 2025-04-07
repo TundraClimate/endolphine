@@ -195,7 +195,7 @@ impl Default for MenuConfig {
     }
 }
 
-#[derive(serde::Deserialize, serde::Serialize, Clone)]
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct KeyConfig {
     pub exit_app: Keymap,
     pub reset_view: Keymap,
@@ -215,53 +215,6 @@ pub struct KeyConfig {
     pub paste: Keymap,
     pub search: Keymap,
     pub search_next: Keymap,
-}
-
-impl KeyConfig {
-    // FIXME this called every key input
-    // do register in init
-    pub fn registerd(self) -> Vec<(Box<dyn command::Command>, Keymap)> {
-        let delete_cmd: (Box<dyn command::Command>, Keymap) = if CONFIG.delete.ask {
-            (
-                Box::new(command::AskDelete),
-                Keymap::from(format!("{}", self.delete).as_str()),
-            )
-        } else {
-            (
-                Box::new(command::DeleteFileOrDir {
-                    use_tmp: CONFIG.delete.for_tmp,
-                    yank_and_native: (CONFIG.delete.yank, CONFIG.native_clip),
-                }),
-                Keymap::from(format!("{0}{0}", self.delete).as_str()),
-            )
-        };
-
-        vec![
-            (Box::new(command::ExitApp), self.exit_app),
-            (Box::new(command::ResetView), self.reset_view),
-            (Box::new(command::Move(-1)), self.move_up),
-            (Box::new(command::Move(-10)), self.move_up_ten),
-            (Box::new(command::Move(1)), self.move_down),
-            (Box::new(command::Move(10)), self.move_down_ten),
-            (Box::new(command::MoveParent), self.move_parent),
-            (Box::new(command::EnterDirOrEdit), self.enter_dir_or_edit),
-            (Box::new(command::VisualSelect), self.visual_select),
-            (Box::new(command::MenuToggle), self.menu_toggle),
-            (Box::new(command::MenuMove), self.menu_move),
-            (Box::new(command::AskCreate), self.create_new),
-            delete_cmd,
-            (Box::new(command::AskRename), self.rename),
-            (
-                Box::new(command::Yank {
-                    native: config::load().native_clip,
-                }),
-                self.yank,
-            ),
-            (Box::new(command::AskPaste), self.paste),
-            (Box::new(command::Search), self.search),
-            (Box::new(command::SearchNext), self.search_next),
-        ]
-    }
 }
 
 impl Default for KeyConfig {
@@ -327,4 +280,41 @@ global! {
 
 pub fn theme() -> &'static Scheme {
     &THEME
+}
+
+global! {
+    static KEYMAP_REGISTRY: std::sync::RwLock<std::collections::HashMap<String, Box<dyn command::Command>>> =
+        std::sync::RwLock::new(std::collections::HashMap::new());
+}
+
+pub fn register_key<C: command::Command + 'static>(keymap: Keymap, cmd: C) {
+    let mut lock = KEYMAP_REGISTRY.write().unwrap();
+    lock.insert(keymap.to_string(), Box::new(cmd));
+}
+
+pub fn has_similar_map(buf: Vec<Key>) -> bool {
+    let lock = KEYMAP_REGISTRY.read().unwrap();
+
+    if buf.is_empty() {
+        return false;
+    }
+
+    lock.keys().any(|keymap| {
+        buf.len() <= keymap.len()
+            && buf
+                .iter()
+                .enumerate()
+                .all(|(i, k)| Keymap::from(keymap.as_str()).nth(i) == Some(k))
+    })
+}
+
+pub fn run_correspond<F: FnOnce()>(keymap: &[Key], fin: F) -> Result<(), crate::app::Error> {
+    let lock = KEYMAP_REGISTRY.read().unwrap();
+
+    if let Some(cmd) = lock.get(&Keymap::new(keymap).to_string()) {
+        cmd.run()?;
+        fin();
+    }
+
+    Ok(())
 }

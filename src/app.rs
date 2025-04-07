@@ -204,6 +204,8 @@ fn init(path: &Path) -> Result<(), Error> {
         }
     }
 
+    init_keymapping();
+
     let log_path = std::path::Path::new(option_env!("HOME").unwrap_or("/root"))
         .join(".local")
         .join("share")
@@ -248,6 +250,48 @@ pub fn config_init() -> Result<(), Error> {
     }
 
     Ok(())
+}
+
+fn init_keymapping() {
+    use crate::command;
+
+    let key_conf = &config::load().key;
+    config::register_key(key_conf.exit_app.clone(), command::ExitApp);
+    config::register_key(key_conf.reset_view.clone(), command::ResetView);
+    config::register_key(key_conf.move_up.clone(), command::Move(-1));
+    config::register_key(key_conf.move_up_ten.clone(), command::Move(-10));
+    config::register_key(key_conf.move_down.clone(), command::Move(1));
+    config::register_key(key_conf.move_down_ten.clone(), command::Move(10));
+    config::register_key(key_conf.move_parent.clone(), command::MoveParent);
+    config::register_key(key_conf.enter_dir_or_edit.clone(), command::EnterDirOrEdit);
+    config::register_key(key_conf.visual_select.clone(), command::VisualSelect);
+    config::register_key(key_conf.menu_toggle.clone(), command::MenuToggle);
+    config::register_key(key_conf.menu_move.clone(), command::MenuMove);
+    config::register_key(key_conf.create_new.clone(), command::AskCreate);
+    if config::load().delete.ask {
+        config::register_key(
+            crate::key::Keymap::new(&[key_conf.delete]),
+            command::AskDelete,
+        );
+    } else {
+        config::register_key(
+            crate::key::Keymap::from(format!("{0}{0}", key_conf.delete).as_str()),
+            command::DeleteFileOrDir {
+                use_tmp: config::load().delete.for_tmp,
+                yank_and_native: (config::load().delete.yank, config::load().native_clip),
+            },
+        );
+    }
+    config::register_key(key_conf.rename.clone(), command::AskRename);
+    config::register_key(
+        key_conf.yank.clone(),
+        command::Yank {
+            native: config::load().native_clip,
+        },
+    );
+    config::register_key(key_conf.paste.clone(), command::AskPaste);
+    config::register_key(key_conf.search.clone(), command::Search);
+    config::register_key(key_conf.search_next.clone(), command::SearchNext);
 }
 
 fn event_handler() {
@@ -377,28 +421,6 @@ pub fn clear_key_buf() {
     KEYBUF.write().unwrap().clear();
 }
 
-pub fn is_similar_buf(other: &crate::key::Keymap) -> bool {
-    let lock = KEYBUF.read().unwrap();
-    let buf_len = lock.len();
-    let other_len = other.len();
-
-    if other_len == 0 || buf_len > other_len {
-        return false;
-    }
-
-    lock.iter()
-        .enumerate()
-        .all(|(i, k)| other.nth(i) == Some(k))
-}
-
-pub fn eq_buf(other: &crate::key::Keymap) -> bool {
-    let lock = KEYBUF.read().unwrap();
-
-    if lock.len() != other.len() {
-        return false;
-    }
-
-    lock.iter()
-        .enumerate()
-        .all(|(i, k)| other.nth(i) == Some(k))
+pub fn load_buf() -> Vec<crate::key::Key> {
+    KEYBUF.read().unwrap().clone()
 }
