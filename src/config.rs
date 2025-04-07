@@ -283,24 +283,31 @@ pub fn theme() -> &'static Scheme {
 }
 
 global! {
-    static KEYMAP_REGISTRY: std::sync::RwLock<std::collections::HashMap<String, Box<dyn command::Command>>> =
+    static KEYMAP_REGISTRY: std::sync::RwLock<std::collections::HashMap<(u8, String), Box<dyn command::Command>>> =
         std::sync::RwLock::new(std::collections::HashMap::new());
 }
 
-pub fn register_key<C: command::Command + 'static>(keymap: Keymap, cmd: C) {
+pub fn register_key<C: command::Command + 'static>(
+    mode: crate::app::AppMode,
+    keymap: Keymap,
+    cmd: C,
+) {
     let mut lock = KEYMAP_REGISTRY.write().unwrap();
-    lock.insert(keymap.to_string(), Box::new(cmd));
+    lock.insert((mode as u8, keymap.to_string()), Box::new(cmd));
 }
 
-pub fn has_similar_map(buf: Vec<Key>) -> bool {
+pub fn has_similar_map(buf: Vec<Key>, mode: crate::app::AppMode) -> bool {
     let lock = KEYMAP_REGISTRY.read().unwrap();
 
     if buf.is_empty() {
         return false;
     }
 
-    lock.keys().any(|keymap| {
+    let mode = mode as u8;
+
+    lock.keys().any(|(rmode, keymap)| {
         buf.len() <= keymap.len()
+            && mode == *rmode
             && buf
                 .iter()
                 .enumerate()
@@ -308,10 +315,14 @@ pub fn has_similar_map(buf: Vec<Key>) -> bool {
     })
 }
 
-pub fn run_correspond<F: FnOnce()>(keymap: &[Key], fin: F) -> Result<(), crate::app::Error> {
+pub fn run_correspond<F: FnOnce()>(
+    mode: crate::app::AppMode,
+    keymap: &[Key],
+    fin: F,
+) -> Result<(), crate::app::Error> {
     let lock = KEYMAP_REGISTRY.read().unwrap();
 
-    if let Some(cmd) = lock.get(&Keymap::new(keymap).to_string()) {
+    if let Some(cmd) = lock.get(&(mode as u8, Keymap::new(keymap).to_string())) {
         cmd.run()?;
         fin();
     }

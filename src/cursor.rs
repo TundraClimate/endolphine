@@ -152,14 +152,17 @@ pub fn is_selection() -> bool {
 }
 
 pub fn disable_selection() {
+    crate::app::switch_mode(crate::app::AppMode::Normal);
     *SELECTION.write().unwrap() = None;
 }
 
 pub fn toggle_selection(init: usize) {
     let mut lock = SELECTION.write().unwrap();
     if lock.is_some() {
+        crate::app::switch_mode(crate::app::AppMode::Normal);
         *lock = None;
     } else {
+        crate::app::switch_mode(crate::app::AppMode::Visual);
         *lock = Some((init, init));
     }
 }

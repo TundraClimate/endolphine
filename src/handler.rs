@@ -31,26 +31,15 @@ fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
         let key = crate::key::Key::from_keyevent(&key);
 
         app::push_key_buf(key);
-
-        // FIXME Impl the visual mode
-        if key == config::load().key.delete && cursor::is_selection() && !config::load().delete.ask
-        {
-            crate::command::Command::run(&crate::command::DeleteSelected {
-                use_tmp: config::load().delete.for_tmp,
-                yank_and_native: (config::load().delete.yank, config::load().native_clip),
-            })?;
-
-            return Ok(());
-        }
     }
 
-    if !config::has_similar_map(app::load_buf()) {
+    if !config::has_similar_map(app::load_buf(), app::current_mode()) {
         app::clear_key_buf();
 
         return Ok(());
     }
 
-    config::run_correspond(&app::load_buf(), || {
+    config::run_correspond(app::current_mode(), &app::load_buf(), || {
         app::clear_key_buf();
     })?;
 

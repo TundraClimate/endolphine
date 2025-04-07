@@ -253,7 +253,6 @@ cargo uninstall endolphine
 
 - Impl for the realtime displaying system
 - Add a command mode
-- Add a visual mode
 - Improve the rendering system to nvim like
   - Make renderings independently as one "window" per grid
   - Allow widgets to be rendered to variable size

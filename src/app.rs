@@ -8,7 +8,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         RwLock,
-        atomic::{AtomicBool, AtomicU16, Ordering},
+        atomic::{AtomicBool, AtomicU8, AtomicU16, Ordering},
     },
 };
 use tokio::time::{self, Duration, Instant};
@@ -254,44 +254,97 @@ pub fn config_init() -> Result<(), Error> {
 
 fn init_keymapping() {
     use crate::command;
+    use AppMode::{Normal, Visual};
+    use config::register_key;
 
-    let key_conf = &config::load().key;
-    config::register_key(key_conf.exit_app.clone(), command::ExitApp);
-    config::register_key(key_conf.reset_view.clone(), command::ResetView);
-    config::register_key(key_conf.move_up.clone(), command::Move(-1));
-    config::register_key(key_conf.move_up_ten.clone(), command::Move(-10));
-    config::register_key(key_conf.move_down.clone(), command::Move(1));
-    config::register_key(key_conf.move_down_ten.clone(), command::Move(10));
-    config::register_key(key_conf.move_parent.clone(), command::MoveParent);
-    config::register_key(key_conf.enter_dir_or_edit.clone(), command::EnterDirOrEdit);
-    config::register_key(key_conf.visual_select.clone(), command::VisualSelect);
-    config::register_key(key_conf.menu_toggle.clone(), command::MenuToggle);
-    config::register_key(key_conf.menu_move.clone(), command::MenuMove);
-    config::register_key(key_conf.create_new.clone(), command::AskCreate);
+    let kcf = &config::load().key;
+    register_key(Normal, kcf.exit_app.clone(), command::ExitApp);
+    register_key(Normal, kcf.reset_view.clone(), command::ResetView);
+    register_key(Normal, kcf.move_up.clone(), command::Move(-1));
+    register_key(Normal, kcf.move_up_ten.clone(), command::Move(-10));
+    register_key(Normal, kcf.move_down.clone(), command::Move(1));
+    register_key(Normal, kcf.move_down_ten.clone(), command::Move(10));
+    register_key(Normal, kcf.move_parent.clone(), command::MoveParent);
+    register_key(
+        Normal,
+        kcf.enter_dir_or_edit.clone(),
+        command::EnterDirOrEdit,
+    );
+    register_key(Normal, kcf.visual_select.clone(), command::VisualSelect);
+    register_key(Normal, kcf.menu_toggle.clone(), command::MenuToggle);
+    register_key(Normal, kcf.menu_move.clone(), command::MenuMove);
+    register_key(Normal, kcf.create_new.clone(), command::AskCreate);
     if config::load().delete.ask {
-        config::register_key(
-            crate::key::Keymap::new(&[key_conf.delete]),
+        register_key(
+            Normal,
+            crate::key::Keymap::new(&[kcf.delete]),
             command::AskDelete,
         );
     } else {
-        config::register_key(
-            crate::key::Keymap::from(format!("{0}{0}", key_conf.delete).as_str()),
+        register_key(
+            Normal,
+            crate::key::Keymap::from(format!("{0}{0}", kcf.delete).as_str()),
             command::DeleteFileOrDir {
                 use_tmp: config::load().delete.for_tmp,
                 yank_and_native: (config::load().delete.yank, config::load().native_clip),
             },
         );
     }
-    config::register_key(key_conf.rename.clone(), command::AskRename);
-    config::register_key(
-        key_conf.yank.clone(),
+    register_key(Normal, kcf.rename.clone(), command::AskRename);
+    register_key(
+        Normal,
+        kcf.yank.clone(),
         command::Yank {
             native: config::load().native_clip,
         },
     );
-    config::register_key(key_conf.paste.clone(), command::AskPaste);
-    config::register_key(key_conf.search.clone(), command::Search);
-    config::register_key(key_conf.search_next.clone(), command::SearchNext);
+    register_key(Normal, kcf.paste.clone(), command::AskPaste);
+    register_key(Normal, kcf.search.clone(), command::Search);
+    register_key(Normal, kcf.search_next.clone(), command::SearchNext);
+
+    register_key(Visual, kcf.exit_app.clone(), command::ExitApp);
+    register_key(Visual, kcf.reset_view.clone(), command::ResetView);
+    register_key(Visual, kcf.move_up.clone(), command::Move(-1));
+    register_key(Visual, kcf.move_up_ten.clone(), command::Move(-10));
+    register_key(Visual, kcf.move_down.clone(), command::Move(1));
+    register_key(Visual, kcf.move_down_ten.clone(), command::Move(10));
+    register_key(Visual, kcf.move_parent.clone(), command::MoveParent);
+    register_key(
+        Visual,
+        kcf.enter_dir_or_edit.clone(),
+        command::EnterDirOrEdit,
+    );
+    register_key(Visual, kcf.visual_select.clone(), command::VisualSelect);
+    register_key(Visual, kcf.menu_toggle.clone(), command::MenuToggle);
+    register_key(Visual, kcf.menu_move.clone(), command::MenuMove);
+    register_key(Visual, kcf.create_new.clone(), command::AskCreate);
+    if config::load().delete.ask {
+        register_key(
+            Visual,
+            crate::key::Keymap::new(&[kcf.delete]),
+            command::AskDelete,
+        );
+    } else {
+        register_key(
+            Visual,
+            crate::key::Keymap::new(&[kcf.delete]),
+            command::DeleteSelected {
+                use_tmp: config::load().delete.for_tmp,
+                yank_and_native: (config::load().delete.yank, config::load().native_clip),
+            },
+        );
+    }
+    register_key(Visual, kcf.rename.clone(), command::AskRename);
+    register_key(
+        Visual,
+        kcf.yank.clone(),
+        command::Yank {
+            native: config::load().native_clip,
+        },
+    );
+    register_key(Visual, kcf.paste.clone(), command::AskPaste);
+    register_key(Visual, kcf.search.clone(), command::Search);
+    register_key(Visual, kcf.search_next.clone(), command::SearchNext);
 }
 
 fn event_handler() {
@@ -343,6 +396,35 @@ pub fn disable_render() {
 
 pub fn enable_render() {
     RENDER.swap(true, Ordering::Relaxed);
+}
+
+global! {
+    static MODE: AtomicU8 = AtomicU8::new(AppMode::Normal as u8);
+}
+
+#[repr(u8)]
+pub enum AppMode {
+    Normal = 0b0001,
+    Visual = 0b0010,
+    // TODO
+    // Command = 0b0100,
+}
+
+pub fn current_mode() -> AppMode {
+    let loaded = MODE.load(Ordering::Relaxed);
+
+    if loaded != AppMode::Normal as u8 && loaded != AppMode::Visual as u8
+    /* && loaded != AppMode::Command as u8 */
+    {
+        crate::sys_log!("e", "Unknown app mode: {}", loaded);
+        panic!("unknown mode");
+    }
+
+    unsafe { std::mem::transmute(loaded) }
+}
+
+pub fn switch_mode(mode: AppMode) {
+    MODE.swap(mode as u8, Ordering::Relaxed);
 }
 
 global! {
