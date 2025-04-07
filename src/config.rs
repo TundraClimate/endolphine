@@ -70,56 +70,6 @@ pub struct Config {
     pub opener: OpenConfig,
 }
 
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct DeleteConfig {
-    pub ask: bool,
-    pub yank: bool,
-    pub for_tmp: bool,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct PasteConfig {
-    copied_suffix: String,
-    pub force_mode: bool,
-    pub default_overwrite: bool,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct MenuConfig {
-    pub items: Vec<MenuElement>,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Clone)]
-pub struct KeyConfig {
-    pub exit_app: Keymap,
-    pub reset_view: Keymap,
-    pub move_up: Keymap,
-    pub move_up_ten: Keymap,
-    pub move_down: Keymap,
-    pub move_down_ten: Keymap,
-    pub move_parent: Keymap,
-    pub enter_dir_or_edit: Keymap,
-    pub visual_select: Keymap,
-    pub menu_toggle: Keymap,
-    pub menu_move: Keymap,
-    pub create_new: Keymap,
-    pub delete: Key,
-    pub rename: Keymap,
-    pub yank: Keymap,
-    pub paste: Keymap,
-    pub search: Keymap,
-    pub search_next: Keymap,
-}
-
-#[derive(serde::Deserialize, serde::Serialize, Clone)]
-pub struct OpenOpts {
-    pub cmd: Vec<String>,
-    pub in_term: Option<bool>,
-}
-
-#[derive(serde::Deserialize, serde::Serialize)]
-pub struct OpenConfig(Option<std::collections::BTreeMap<String, OpenOpts>>);
-
 impl Default for Config {
     fn default() -> Self {
         Config {
@@ -203,12 +153,31 @@ impl Config {
     }
 }
 
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct DeleteConfig {
+    pub ask: bool,
+    pub yank: bool,
+    pub for_tmp: bool,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct PasteConfig {
+    copied_suffix: String,
+    pub force_mode: bool,
+    pub default_overwrite: bool,
+}
+
 impl PasteConfig {
     pub fn similar_file_suffix(&self) -> String {
         let mut suf = self.copied_suffix.trim().to_string();
         suf.retain(|c| !c.is_whitespace());
         suf
     }
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct MenuConfig {
+    pub items: Vec<MenuElement>,
 }
 
 impl Default for MenuConfig {
@@ -224,6 +193,28 @@ impl Default for MenuConfig {
             ],
         }
     }
+}
+
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+pub struct KeyConfig {
+    pub exit_app: Keymap,
+    pub reset_view: Keymap,
+    pub move_up: Keymap,
+    pub move_up_ten: Keymap,
+    pub move_down: Keymap,
+    pub move_down_ten: Keymap,
+    pub move_parent: Keymap,
+    pub enter_dir_or_edit: Keymap,
+    pub visual_select: Keymap,
+    pub menu_toggle: Keymap,
+    pub menu_move: Keymap,
+    pub create_new: Keymap,
+    pub delete: Key,
+    pub rename: Keymap,
+    pub yank: Keymap,
+    pub paste: Keymap,
+    pub search: Keymap,
+    pub search_next: Keymap,
 }
 
 impl KeyConfig {
@@ -297,6 +288,15 @@ impl Default for KeyConfig {
         }
     }
 }
+
+#[derive(serde::Deserialize, serde::Serialize, Clone)]
+pub struct OpenOpts {
+    pub cmd: Vec<String>,
+    pub in_term: Option<bool>,
+}
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct OpenConfig(Option<std::collections::BTreeMap<String, OpenOpts>>);
 
 impl OpenConfig {
     pub fn corresponding_with(&self, extension: &str) -> Option<OpenOpts> {
