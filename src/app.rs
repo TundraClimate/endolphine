@@ -266,9 +266,17 @@ fn init_keymapping() {
     register_key(Normal, kcf.exit_app.clone(), command::ExitApp);
     register_key(Normal, kcf.reset_view.clone(), command::ResetView);
     register_key(Normal, Keymap::new(&[kcf.move_up]), command::MoveUp);
-    register_key(Normal, kcf.move_up_ten.clone(), command::MoveUp);
+    register_key(
+        Normal,
+        kcf.move_up_ten.clone(),
+        command::Remapping(Normal, Keymap::from(format!("10{}", kcf.move_up))),
+    );
     register_key(Normal, Keymap::new(&[kcf.move_down]), command::MoveDown);
-    register_key(Normal, kcf.move_down_ten.clone(), command::MoveDown);
+    register_key(
+        Normal,
+        kcf.move_down_ten.clone(),
+        command::Remapping(Normal, Keymap::from(format!("10{}", kcf.move_down))),
+    );
     register_key(Normal, kcf.move_parent.clone(), command::MoveParent);
     register_key(
         Normal,
@@ -288,7 +296,7 @@ fn init_keymapping() {
     } else {
         register_key(
             Normal,
-            crate::key::Keymap::from(format!("{0}{0}", kcf.delete).as_str()),
+            crate::key::Keymap::from(format!("{0}{0}", kcf.delete)),
             command::DeleteFileOrDir {
                 use_tmp: config::load().delete.for_tmp,
                 yank_and_native: (config::load().delete.yank, config::load().native_clip),
@@ -298,7 +306,7 @@ fn init_keymapping() {
     register_key(Normal, kcf.rename.clone(), command::AskRename);
     register_key(
         Normal,
-        Keymap::from(format!("{0}{0}", kcf.yank).as_str()),
+        Keymap::from(format!("{0}{0}", kcf.yank)),
         command::Yank {
             native: config::load().native_clip,
         },
@@ -310,9 +318,17 @@ fn init_keymapping() {
     register_key(Visual, kcf.exit_app.clone(), command::ExitApp);
     register_key(Visual, kcf.reset_view.clone(), command::ResetView);
     register_key(Visual, Keymap::new(&[kcf.move_up]), command::MoveUp);
-    register_key(Visual, kcf.move_up_ten.clone(), command::MoveUp);
+    register_key(
+        Visual,
+        kcf.move_up_ten.clone(),
+        command::Remapping(Visual, Keymap::from(format!("10{}", kcf.move_up))),
+    );
     register_key(Visual, Keymap::new(&[kcf.move_down]), command::MoveDown);
-    register_key(Visual, kcf.move_down_ten.clone(), command::MoveDown);
+    register_key(
+        Visual,
+        kcf.move_down_ten.clone(),
+        command::Remapping(Visual, Keymap::from(format!("10{}", kcf.move_down))),
+    );
     register_key(Visual, kcf.move_parent.clone(), command::MoveParent);
     register_key(
         Visual,
@@ -408,6 +424,7 @@ global! {
 }
 
 #[repr(u8)]
+#[derive(Clone, Copy)]
 pub enum AppMode {
     Normal = 0b0001,
     Visual = 0b0010,
@@ -502,6 +519,10 @@ global! {
 
 pub fn push_key_buf(key: crate::key::Key) {
     KEYBUF.write().unwrap().push(key);
+}
+
+pub fn sync_key_buf(other: crate::key::Keymap) {
+    *KEYBUF.write().unwrap() = other.into();
 }
 
 pub fn clear_key_buf() {

@@ -16,8 +16,20 @@ impl Clone for Keymap {
     }
 }
 
+impl From<Keymap> for Vec<Key> {
+    fn from(value: Keymap) -> Self {
+        value.0
+    }
+}
+
 impl From<&str> for Keymap {
     fn from(value: &str) -> Self {
+        value.parse().unwrap_or(Keymap(vec![]))
+    }
+}
+
+impl From<String> for Keymap {
+    fn from(value: String) -> Self {
         value.parse().unwrap_or(Keymap(vec![]))
     }
 }
