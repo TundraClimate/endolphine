@@ -39,9 +39,10 @@ fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
         return Ok(());
     }
 
-    config::run_correspond(app::current_mode(), &app::load_buf(), || {
+    if let Some(cmd_res) = config::eval_keymap(app::current_mode(), &app::load_buf()) {
         app::clear_key_buf();
-    })?;
+        cmd_res?
+    }
 
     Ok(())
 }

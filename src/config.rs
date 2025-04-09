@@ -318,17 +318,12 @@ pub fn has_similar_map(buf: Vec<Key>, mode: crate::app::AppMode) -> bool {
     })
 }
 
-pub fn run_correspond<F: FnOnce()>(
+pub fn eval_keymap(
     mode: crate::app::AppMode,
     keymap: &[Key],
-    fin: F,
-) -> Result<(), crate::app::Error> {
+) -> Option<Result<(), crate::app::Error>> {
     let lock = KEYMAP_REGISTRY.read().unwrap();
 
-    if let Some(cmd) = lock.get(&(mode as u8, Keymap::new(keymap).to_string())) {
-        cmd.run()?;
-        fin();
-    }
-
-    Ok(())
+    lock.get(&(mode as u8, Keymap::new(keymap).to_string()))
+        .map(|cmd| cmd.run())
 }
