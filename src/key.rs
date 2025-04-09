@@ -93,6 +93,16 @@ pub struct Key {
     modifiers: KeyModifiers,
 }
 
+impl Key {
+    pub fn is_digit(&self) -> bool {
+        matches!(self.code as u8, 48..=58)
+    }
+
+    pub fn as_num(&self) -> u8 {
+        self.code as u8
+    }
+}
+
 impl std::fmt::Debug for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(

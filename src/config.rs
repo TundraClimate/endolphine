@@ -306,6 +306,15 @@ pub fn has_similar_map(buf: Vec<Key>, mode: crate::app::AppMode) -> bool {
         return false;
     }
 
+    if buf.iter().all(Key::is_digit) {
+        return true;
+    }
+
+    let buf = buf
+        .into_iter()
+        .skip_while(|k| k.is_digit())
+        .collect::<Vec<_>>();
+
     let mode = mode as u8;
 
     lock.keys().any(|(rmode, keymap)| {
@@ -323,7 +332,12 @@ pub fn eval_keymap(
     keymap: &[Key],
 ) -> Option<Result<(), crate::app::Error>> {
     let lock = KEYMAP_REGISTRY.read().unwrap();
+    let keymap = keymap
+        .iter()
+        .skip_while(|k| k.is_digit())
+        .cloned()
+        .collect::<Vec<Key>>();
 
-    lock.get(&(mode as u8, Keymap::new(keymap).to_string()))
+    lock.get(&(mode as u8, Keymap::new(keymap.as_slice()).to_string()))
         .map(|cmd| cmd.run())
 }
