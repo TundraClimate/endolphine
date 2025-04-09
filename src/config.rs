@@ -261,7 +261,10 @@ global! {
     static CONFIG: Config = file_path()
         .and_then(|p| std::fs::read_to_string(p).ok())
         .and_then(|c| toml::from_str(&c).ok())
-        .unwrap_or_default();
+        .unwrap_or_else(|| {
+            crate::sys_log!("w", "load config.toml failed, use the default config");
+            Config::default()
+        });
 }
 
 fn try_load() -> Option<Result<Config, toml::de::Error>> {

@@ -171,6 +171,10 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
             .unwrap_or(path.to_string_lossy().to_string())
     );
 
+    if config::check().is_err() {
+        crate::log!("Failed load config.toml, use the Default config");
+    }
+
     let event_handle = tokio::spawn(async move { event_handler() });
 
     let ui_handle = tokio::spawn(async move { ui().await });
