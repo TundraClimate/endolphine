@@ -258,15 +258,16 @@ pub fn config_init() -> Result<(), Error> {
 
 fn init_keymapping() {
     use crate::command;
+    use crate::key::Keymap;
     use AppMode::{Normal, Visual};
     use config::register_key;
 
     let kcf = &config::load().key;
     register_key(Normal, kcf.exit_app.clone(), command::ExitApp);
     register_key(Normal, kcf.reset_view.clone(), command::ResetView);
-    register_key(Normal, kcf.move_up.clone(), command::Move(-1));
+    register_key(Normal, Keymap::new(&[kcf.move_up]), command::Move(-1));
     register_key(Normal, kcf.move_up_ten.clone(), command::Move(-10));
-    register_key(Normal, kcf.move_down.clone(), command::Move(1));
+    register_key(Normal, Keymap::new(&[kcf.move_down]), command::Move(1));
     register_key(Normal, kcf.move_down_ten.clone(), command::Move(10));
     register_key(Normal, kcf.move_parent.clone(), command::MoveParent);
     register_key(
@@ -297,7 +298,7 @@ fn init_keymapping() {
     register_key(Normal, kcf.rename.clone(), command::AskRename);
     register_key(
         Normal,
-        kcf.yank.clone(),
+        Keymap::from(format!("{0}{0}", kcf.yank).as_str()),
         command::Yank {
             native: config::load().native_clip,
         },
@@ -308,9 +309,9 @@ fn init_keymapping() {
 
     register_key(Visual, kcf.exit_app.clone(), command::ExitApp);
     register_key(Visual, kcf.reset_view.clone(), command::ResetView);
-    register_key(Visual, kcf.move_up.clone(), command::Move(-1));
+    register_key(Visual, Keymap::new(&[kcf.move_up]), command::Move(-1));
     register_key(Visual, kcf.move_up_ten.clone(), command::Move(-10));
-    register_key(Visual, kcf.move_down.clone(), command::Move(1));
+    register_key(Visual, Keymap::new(&[kcf.move_down]), command::Move(1));
     register_key(Visual, kcf.move_down_ten.clone(), command::Move(10));
     register_key(Visual, kcf.move_parent.clone(), command::MoveParent);
     register_key(
@@ -341,7 +342,7 @@ fn init_keymapping() {
     register_key(Visual, kcf.rename.clone(), command::AskRename);
     register_key(
         Visual,
-        kcf.yank.clone(),
+        Keymap::new(&[kcf.yank]),
         command::Yank {
             native: config::load().native_clip,
         },
