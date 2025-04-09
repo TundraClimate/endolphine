@@ -16,13 +16,69 @@ fn move_current_dir(path: &std::path::Path) {
     cursor.reset();
 }
 
-pub struct Move(pub isize);
+pub struct MoveDown;
 
-impl Command for Move {
+impl Command for MoveDown {
     fn run(&self) -> Result<(), app::Error> {
         let cursor = cursor::captured();
 
-        cursor.shift(self.0);
+        let prenum = app::load_buf()
+            .into_iter()
+            .take_while(crate::key::Key::is_digit)
+            .map(|k| k.as_num())
+            .collect::<Vec<u8>>()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(|(i, k)| {
+                if i > 3 {
+                    0
+                } else {
+                    (k - 48) * (10u8.pow(i as u32))
+                }
+            })
+            .sum::<u8>();
+        let mv_len: isize = if prenum == 0 { 1 } else { prenum.into() };
+
+        cursor.shift(mv_len);
+
+        if cursor::is_selection() && !menu::refs().is_enabled() {
+            cursor::select_area(cursor.current());
+        }
+
+        Ok(())
+    }
+}
+
+pub struct MoveUp;
+
+impl Command for MoveUp {
+    fn run(&self) -> Result<(), app::Error> {
+        let cursor = cursor::captured();
+
+        let prenum = app::load_buf()
+            .into_iter()
+            .take_while(crate::key::Key::is_digit)
+            .map(|k| k.as_num())
+            .collect::<Vec<u8>>()
+            .into_iter()
+            .rev()
+            .enumerate()
+            .map(|(i, k)| {
+                if i > 3 {
+                    0
+                } else {
+                    (k - 48) * (10u8.pow(i as u32))
+                }
+            })
+            .sum::<u8>();
+        let mv_len: isize = if prenum == 0 {
+            -1
+        } else {
+            isize::from(prenum).saturating_neg()
+        };
+
+        cursor.shift(mv_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor.current());

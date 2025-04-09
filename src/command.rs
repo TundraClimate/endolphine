@@ -14,7 +14,7 @@ pub use create_file::{AskCreate, CreateFileOrDir};
 pub use delete_file::{AskDelete, DeleteFileOrDir, DeleteSelected};
 pub use exit_app::ExitApp;
 pub use menuctl::{MenuMove, MenuToggle};
-pub use mv::{EnterDirOrEdit, Move, MoveParent};
+pub use mv::{EnterDirOrEdit, MoveDown, MoveParent, MoveUp};
 pub use paste_file::{AskPaste, Paste};
 pub use rename_file::{AskRename, Rename};
 pub use reset_view::ResetView;

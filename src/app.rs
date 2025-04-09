@@ -265,10 +265,10 @@ fn init_keymapping() {
     let kcf = &config::load().key;
     register_key(Normal, kcf.exit_app.clone(), command::ExitApp);
     register_key(Normal, kcf.reset_view.clone(), command::ResetView);
-    register_key(Normal, Keymap::new(&[kcf.move_up]), command::Move(-1));
-    register_key(Normal, kcf.move_up_ten.clone(), command::Move(-10));
-    register_key(Normal, Keymap::new(&[kcf.move_down]), command::Move(1));
-    register_key(Normal, kcf.move_down_ten.clone(), command::Move(10));
+    register_key(Normal, Keymap::new(&[kcf.move_up]), command::MoveUp);
+    register_key(Normal, kcf.move_up_ten.clone(), command::MoveUp);
+    register_key(Normal, Keymap::new(&[kcf.move_down]), command::MoveDown);
+    register_key(Normal, kcf.move_down_ten.clone(), command::MoveDown);
     register_key(Normal, kcf.move_parent.clone(), command::MoveParent);
     register_key(
         Normal,
@@ -309,10 +309,10 @@ fn init_keymapping() {
 
     register_key(Visual, kcf.exit_app.clone(), command::ExitApp);
     register_key(Visual, kcf.reset_view.clone(), command::ResetView);
-    register_key(Visual, Keymap::new(&[kcf.move_up]), command::Move(-1));
-    register_key(Visual, kcf.move_up_ten.clone(), command::Move(-10));
-    register_key(Visual, Keymap::new(&[kcf.move_down]), command::Move(1));
-    register_key(Visual, kcf.move_down_ten.clone(), command::Move(10));
+    register_key(Visual, Keymap::new(&[kcf.move_up]), command::MoveUp);
+    register_key(Visual, kcf.move_up_ten.clone(), command::MoveUp);
+    register_key(Visual, Keymap::new(&[kcf.move_down]), command::MoveDown);
+    register_key(Visual, kcf.move_down_ten.clone(), command::MoveDown);
     register_key(Visual, kcf.move_parent.clone(), command::MoveParent);
     register_key(
         Visual,
