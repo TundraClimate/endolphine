@@ -124,7 +124,7 @@ items = [
 
 ```toml
 # Exit application
-exit_app = "Q"
+exit_app = "ZZ"
 
 # Reset view in application
 reset_view = "<ESC>"

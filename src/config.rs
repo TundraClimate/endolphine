@@ -220,7 +220,7 @@ pub struct KeyConfig {
 impl Default for KeyConfig {
     fn default() -> Self {
         Self {
-            exit_app: "Q".into(),
+            exit_app: "ZZ".into(),
             reset_view: "<ESC>".into(),
             move_up: "k".into(),
             move_up_ten: "K".into(),
