@@ -106,7 +106,7 @@ items = [
 ]
 
 # Override the file open command by extension
-[opener]
+[open]
 # OPTIONAL
 
 # Format:

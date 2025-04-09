@@ -67,7 +67,7 @@ pub struct Config {
     pub paste: PasteConfig,
     pub menu: MenuConfig,
     pub key: KeyConfig,
-    pub opener: OpenConfig,
+    pub open: OpenConfig,
 }
 
 impl Default for Config {
@@ -90,7 +90,7 @@ impl Default for Config {
             menu: MenuConfig::default(),
             theme: Theme::Dark,
             key: KeyConfig::default(),
-            opener: OpenConfig(None),
+            open: OpenConfig(None),
         }
     }
 }
