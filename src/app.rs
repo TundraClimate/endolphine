@@ -265,9 +265,7 @@ fn init_keymapping() {
     register_key(Normal, "ZZ".into(), command::ExitApp);
     register_key(Normal, "<ESC>".into(), command::ResetView);
     register_key(Normal, "k".into(), command::MoveUp);
-    register_key(Normal, "K".into(), command::Remapping(Keymap::from("10k")));
     register_key(Normal, "j".into(), command::MoveDown);
-    register_key(Normal, "J".into(), command::Remapping(Keymap::from("10j")));
     register_key(Normal, "h".into(), command::MoveParent);
     register_key(Normal, "l".into(), command::EnterDirOrEdit);
     register_key(Normal, "V".into(), command::VisualSelect);
@@ -333,6 +331,20 @@ fn init_keymapping() {
     register_key(Visual, "p".into(), command::AskPaste);
     register_key(Visual, "/".into(), command::Search);
     register_key(Visual, "n".into(), command::SearchNext);
+
+    if let Some(ref define) = config::load().keymap {
+        if let Some(normal) = define.normal_key_map() {
+            normal
+                .into_iter()
+                .for_each(|(from, to)| register_key(Normal, from, to))
+        }
+
+        if let Some(visual) = define.visual_key_map() {
+            visual
+                .into_iter()
+                .for_each(|(from, to)| register_key(Visual, from, to))
+        }
+    }
 }
 
 fn event_handler() {

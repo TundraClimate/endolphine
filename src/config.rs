@@ -196,34 +196,39 @@ impl Default for MenuConfig {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct KeymapOverride {
-    exit_app: Option<Keymap>,
-    reset_view: Option<Keymap>,
-    move_up: Option<Key>,
-    move_up_ten: Option<Keymap>,
-    move_down: Option<Key>,
-    move_down_ten: Option<Keymap>,
-    move_parent: Option<Keymap>,
-    enter_dir_or_edit: Option<Keymap>,
-    visual_select: Option<Keymap>,
-    menu_toggle: Option<Keymap>,
-    menu_move: Option<Keymap>,
-    create_new: Option<Keymap>,
-    delete: Option<Key>,
-    rename: Option<Keymap>,
-    yank: Option<Key>,
-    paste: Option<Keymap>,
-    search: Option<Keymap>,
-    search_next: Option<Keymap>,
-}
+pub struct KeymapNormal(std::collections::BTreeMap<String, String>);
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct KeymapUserDefine(std::collections::BTreeMap<String, String>);
+pub struct KeymapVisual(std::collections::BTreeMap<String, String>);
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub struct KeymapConfig {
-    ovride: Option<KeymapOverride>,
-    define: Option<KeymapUserDefine>,
+    normal: Option<KeymapNormal>,
+    visual: Option<KeymapVisual>,
+}
+
+impl KeymapConfig {
+    pub fn normal_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
+        self.normal.as_ref().map(|normal| {
+            normal
+                .0
+                .keys()
+                .zip(normal.0.values())
+                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
+                .collect()
+        })
+    }
+
+    pub fn visual_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
+        self.visual.as_ref().map(|visual| {
+            visual
+                .0
+                .keys()
+                .zip(visual.0.values())
+                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
+                .collect()
+        })
+    }
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
