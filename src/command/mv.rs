@@ -194,7 +194,11 @@ fn enter_file(target_path: &std::path::Path) -> Result<(), app::Error> {
     let mut in_term = true;
 
     if let Some(extension) = target_path.extension().map(|e| e.to_string_lossy()) {
-        if let Some(opts) = config::load().open.corresponding_with(&extension) {
+        if let Some(opts) = config::load()
+            .open
+            .as_ref()
+            .and_then(|o| o.corresponding_with(&extension))
+        {
             cmd = opts.cmd;
             in_term = opts.in_term.unwrap_or(true);
 

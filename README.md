@@ -106,8 +106,8 @@ items = [
 ]
 
 # Override the file open command by extension
-[open]
 # OPTIONAL
+[open]
 
 # Format:
 # EXTENSION = { cmd = ["command"], in_term = bool }

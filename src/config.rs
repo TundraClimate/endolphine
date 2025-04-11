@@ -67,7 +67,7 @@ pub struct Config {
     pub paste: PasteConfig,
     pub menu: MenuConfig,
     pub key: KeyConfig,
-    pub open: OpenConfig,
+    pub open: Option<OpenConfig>,
 }
 
 impl Default for Config {
@@ -90,7 +90,7 @@ impl Default for Config {
             menu: MenuConfig::default(),
             theme: Theme::Dark,
             key: KeyConfig::default(),
-            open: OpenConfig(None),
+            open: None,
         }
     }
 }
@@ -249,11 +249,11 @@ pub struct OpenOpts {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct OpenConfig(Option<std::collections::BTreeMap<String, OpenOpts>>);
+pub struct OpenConfig(std::collections::BTreeMap<String, OpenOpts>);
 
 impl OpenConfig {
     pub fn corresponding_with(&self, extension: &str) -> Option<OpenOpts> {
-        self.0.as_ref()?.get(extension).cloned()
+        self.0.get(extension).cloned()
     }
 }
 
