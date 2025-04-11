@@ -262,110 +262,94 @@ fn init_keymapping() {
     use AppMode::{Normal, Visual};
     use config::register_key;
 
-    let kcf = &config::load().key;
-    register_key(Normal, kcf.exit_app.clone(), command::ExitApp);
-    register_key(Normal, kcf.reset_view.clone(), command::ResetView);
-    register_key(Normal, Keymap::new(&[kcf.move_up]), command::MoveUp);
+    register_key(Normal, "ZZ".into(), command::ExitApp);
+    register_key(Normal, "<ESC>".into(), command::ResetView);
+    register_key(Normal, "k".into(), command::MoveUp);
     register_key(
         Normal,
-        kcf.move_up_ten.clone(),
-        command::Remapping(Normal, Keymap::from(format!("10{}", kcf.move_up))),
+        "K".into(),
+        command::Remapping(Normal, Keymap::from("10k")),
     );
-    register_key(Normal, Keymap::new(&[kcf.move_down]), command::MoveDown);
+    register_key(Normal, "j".into(), command::MoveDown);
     register_key(
         Normal,
-        kcf.move_down_ten.clone(),
-        command::Remapping(Normal, Keymap::from(format!("10{}", kcf.move_down))),
+        "J".into(),
+        command::Remapping(Normal, Keymap::from("10j")),
     );
-    register_key(Normal, kcf.move_parent.clone(), command::MoveParent);
-    register_key(
-        Normal,
-        kcf.enter_dir_or_edit.clone(),
-        command::EnterDirOrEdit,
-    );
-    register_key(Normal, kcf.visual_select.clone(), command::VisualSelect);
-    register_key(Normal, kcf.menu_toggle.clone(), command::MenuToggle);
-    register_key(Normal, kcf.menu_move.clone(), command::MenuMove);
-    register_key(Normal, kcf.create_new.clone(), command::AskCreate);
+    register_key(Normal, "h".into(), command::MoveParent);
+    register_key(Normal, "l".into(), command::EnterDirOrEdit);
+    register_key(Normal, "V".into(), command::VisualSelect);
+    register_key(Normal, "M".into(), command::MenuToggle);
+    register_key(Normal, "m".into(), command::MenuMove);
+    register_key(Normal, "a".into(), command::AskCreate);
     if config::load().delete.ask {
-        register_key(
-            Normal,
-            crate::key::Keymap::new(&[kcf.delete]),
-            command::AskDelete,
-        );
+        register_key(Normal, "d".into(), command::AskDelete);
     } else {
         register_key(
             Normal,
-            crate::key::Keymap::from(format!("{0}{0}", kcf.delete)),
+            "dd".into(),
             command::DeleteFileOrDir {
                 use_tmp: config::load().delete.for_tmp,
                 yank_and_native: (config::load().delete.yank, config::load().native_clip),
             },
         );
     }
-    register_key(Normal, kcf.rename.clone(), command::AskRename);
+    register_key(Normal, "r".into(), command::AskRename);
     register_key(
         Normal,
-        Keymap::from(format!("{0}{0}", kcf.yank)),
+        "yy".into(),
         command::Yank {
             native: config::load().native_clip,
         },
     );
-    register_key(Normal, kcf.paste.clone(), command::AskPaste);
-    register_key(Normal, kcf.search.clone(), command::Search);
-    register_key(Normal, kcf.search_next.clone(), command::SearchNext);
+    register_key(Normal, "p".into(), command::AskPaste);
+    register_key(Normal, "/".into(), command::Search);
+    register_key(Normal, "n".into(), command::SearchNext);
 
-    register_key(Visual, kcf.exit_app.clone(), command::ExitApp);
-    register_key(Visual, kcf.reset_view.clone(), command::ResetView);
-    register_key(Visual, Keymap::new(&[kcf.move_up]), command::MoveUp);
+    register_key(Visual, "ZZ".into(), command::ExitApp);
+    register_key(Visual, "<ESC>".into(), command::ResetView);
+    register_key(Visual, "k".into(), command::MoveUp);
     register_key(
         Visual,
-        kcf.move_up_ten.clone(),
-        command::Remapping(Visual, Keymap::from(format!("10{}", kcf.move_up))),
+        "K".into(),
+        command::Remapping(Visual, Keymap::from("10k")),
     );
-    register_key(Visual, Keymap::new(&[kcf.move_down]), command::MoveDown);
+    register_key(Visual, "j".into(), command::MoveDown);
     register_key(
         Visual,
-        kcf.move_down_ten.clone(),
-        command::Remapping(Visual, Keymap::from(format!("10{}", kcf.move_down))),
+        "J".into(),
+        command::Remapping(Visual, Keymap::from("10j")),
     );
-    register_key(Visual, kcf.move_parent.clone(), command::MoveParent);
-    register_key(
-        Visual,
-        kcf.enter_dir_or_edit.clone(),
-        command::EnterDirOrEdit,
-    );
-    register_key(Visual, kcf.visual_select.clone(), command::VisualSelect);
-    register_key(Visual, kcf.menu_toggle.clone(), command::MenuToggle);
-    register_key(Visual, kcf.menu_move.clone(), command::MenuMove);
-    register_key(Visual, kcf.create_new.clone(), command::AskCreate);
+    register_key(Visual, "h".into(), command::MoveParent);
+    register_key(Visual, "l".into(), command::EnterDirOrEdit);
+    register_key(Visual, "V".into(), command::VisualSelect);
+    register_key(Visual, "M".into(), command::MenuToggle);
+    register_key(Visual, "m".into(), command::MenuMove);
+    register_key(Visual, "a".into(), command::AskCreate);
     if config::load().delete.ask {
-        register_key(
-            Visual,
-            crate::key::Keymap::new(&[kcf.delete]),
-            command::AskDelete,
-        );
+        register_key(Visual, "d".into(), command::AskDelete);
     } else {
         register_key(
             Visual,
-            crate::key::Keymap::new(&[kcf.delete]),
+            "d".into(),
             command::DeleteSelected {
                 use_tmp: config::load().delete.for_tmp,
                 yank_and_native: (config::load().delete.yank, config::load().native_clip),
             },
         );
     }
-    register_key(Visual, kcf.rename.clone(), command::AskRename);
+
+    register_key(Visual, "r".into(), command::AskRename);
     register_key(
         Visual,
-        Keymap::new(&[kcf.yank]),
+        "y".into(),
         command::Yank {
             native: config::load().native_clip,
         },
     );
-    register_key(Visual, kcf.paste.clone(), command::AskPaste);
-    register_key(Visual, kcf.search.clone(), command::Search);
-    register_key(Visual, kcf.search_next.clone(), command::SearchNext);
+    register_key(Visual, "p".into(), command::AskPaste);
+    register_key(Visual, "/".into(), command::Search);
+    register_key(Visual, "n".into(), command::SearchNext);
 }
 
 fn event_handler() {

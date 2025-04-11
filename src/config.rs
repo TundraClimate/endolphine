@@ -66,7 +66,7 @@ pub struct Config {
     pub delete: DeleteConfig,
     pub paste: PasteConfig,
     pub menu: MenuConfig,
-    pub key: KeyConfig,
+    pub keymap: Option<KeymapConfig>,
     pub open: Option<OpenConfig>,
 }
 
@@ -89,7 +89,7 @@ impl Default for Config {
             },
             menu: MenuConfig::default(),
             theme: Theme::Dark,
-            key: KeyConfig::default(),
+            keymap: None,
             open: None,
         }
     }
@@ -196,50 +196,34 @@ impl Default for MenuConfig {
 }
 
 #[derive(serde::Deserialize, serde::Serialize)]
-pub struct KeyConfig {
-    pub exit_app: Keymap,
-    pub reset_view: Keymap,
-    pub move_up: Key,
-    pub move_up_ten: Keymap,
-    pub move_down: Key,
-    pub move_down_ten: Keymap,
-    pub move_parent: Keymap,
-    pub enter_dir_or_edit: Keymap,
-    pub visual_select: Keymap,
-    pub menu_toggle: Keymap,
-    pub menu_move: Keymap,
-    pub create_new: Keymap,
-    pub delete: Key,
-    pub rename: Keymap,
-    pub yank: Key,
-    pub paste: Keymap,
-    pub search: Keymap,
-    pub search_next: Keymap,
+pub struct KeymapOverride {
+    exit_app: Option<Keymap>,
+    reset_view: Option<Keymap>,
+    move_up: Option<Key>,
+    move_up_ten: Option<Keymap>,
+    move_down: Option<Key>,
+    move_down_ten: Option<Keymap>,
+    move_parent: Option<Keymap>,
+    enter_dir_or_edit: Option<Keymap>,
+    visual_select: Option<Keymap>,
+    menu_toggle: Option<Keymap>,
+    menu_move: Option<Keymap>,
+    create_new: Option<Keymap>,
+    delete: Option<Key>,
+    rename: Option<Keymap>,
+    yank: Option<Key>,
+    paste: Option<Keymap>,
+    search: Option<Keymap>,
+    search_next: Option<Keymap>,
 }
 
-impl Default for KeyConfig {
-    fn default() -> Self {
-        Self {
-            exit_app: "ZZ".into(),
-            reset_view: "<ESC>".into(),
-            move_up: "k".into(),
-            move_up_ten: "K".into(),
-            move_down: "j".into(),
-            move_down_ten: "J".into(),
-            move_parent: "h".into(),
-            enter_dir_or_edit: "l".into(),
-            visual_select: "V".into(),
-            menu_toggle: "M".into(),
-            menu_move: "m".into(),
-            create_new: "a".into(),
-            delete: "d".into(),
-            rename: "r".into(),
-            yank: "y".into(),
-            paste: "p".into(),
-            search: "/".into(),
-            search_next: "n".into(),
-        }
-    }
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct KeymapUserDefine(std::collections::BTreeMap<String, String>);
+
+#[derive(serde::Deserialize, serde::Serialize)]
+pub struct KeymapConfig {
+    ovride: Option<KeymapOverride>,
+    define: Option<KeymapUserDefine>,
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]
