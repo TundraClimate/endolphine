@@ -265,17 +265,9 @@ fn init_keymapping() {
     register_key(Normal, "ZZ".into(), command::ExitApp);
     register_key(Normal, "<ESC>".into(), command::ResetView);
     register_key(Normal, "k".into(), command::MoveUp);
-    register_key(
-        Normal,
-        "K".into(),
-        command::Remapping(Normal, Keymap::from("10k")),
-    );
+    register_key(Normal, "K".into(), command::Remapping(Keymap::from("10k")));
     register_key(Normal, "j".into(), command::MoveDown);
-    register_key(
-        Normal,
-        "J".into(),
-        command::Remapping(Normal, Keymap::from("10j")),
-    );
+    register_key(Normal, "J".into(), command::Remapping(Keymap::from("10j")));
     register_key(Normal, "h".into(), command::MoveParent);
     register_key(Normal, "l".into(), command::EnterDirOrEdit);
     register_key(Normal, "V".into(), command::VisualSelect);
@@ -309,17 +301,9 @@ fn init_keymapping() {
     register_key(Visual, "ZZ".into(), command::ExitApp);
     register_key(Visual, "<ESC>".into(), command::ResetView);
     register_key(Visual, "k".into(), command::MoveUp);
-    register_key(
-        Visual,
-        "K".into(),
-        command::Remapping(Visual, Keymap::from("10k")),
-    );
+    register_key(Visual, "K".into(), command::Remapping(Keymap::from("10k")));
     register_key(Visual, "j".into(), command::MoveDown);
-    register_key(
-        Visual,
-        "J".into(),
-        command::Remapping(Visual, Keymap::from("10j")),
-    );
+    register_key(Visual, "J".into(), command::Remapping(Keymap::from("10j")));
     register_key(Visual, "h".into(), command::MoveParent);
     register_key(Visual, "l".into(), command::EnterDirOrEdit);
     register_key(Visual, "V".into(), command::VisualSelect);
@@ -338,7 +322,6 @@ fn init_keymapping() {
             },
         );
     }
-
     register_key(Visual, "r".into(), command::AskRename);
     register_key(
         Visual,
