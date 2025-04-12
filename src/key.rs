@@ -117,7 +117,7 @@ impl std::fmt::Debug for Key {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
-            "Key {{ code: {}, modifiers: KeyModifiers({}) }}",
+            "Key {{ code: {}, modifiers: {:#05b} }}",
             self.code as u8, self.modifiers.0 as u8
         )
     }
