@@ -70,9 +70,9 @@ sort_by_priority = [
     3,
 ]
 
-[rm]
-# Is ENTER required by question about the rm command
-no_enter = true
+[delete]
+# Whether to ask again when you enter the delete key
+ask = true
 
 # Will yank the file if the rm command runs
 # This config disabled when "for_tmp" is disabled
