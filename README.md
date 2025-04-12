@@ -153,6 +153,8 @@ items = [
 | Normal         | `j`     | Move cursor down                                                           |
 | Visual         | `j`     | Move cursor down and select item                                           |
 | Normal, Visual | `h`     | Open parent directory and change to normal mode                            |
+| Normal, Visual | `gg`    | Move cursor to top                                                         |
+| Normal, Visual | `G`     | Move cursor to bottom                                                      |
 | Normal, Visual | `l`     | Open under cursor item                                                     |
 | Normal, Visual | `V`     | Toggle Normal and Visual mode                                              |
 | Normal, Visual | `M`     | Toggle Menu widget                                                         |
