@@ -112,10 +112,19 @@ items = [
 # OPTIONAL
 [keymap.normal]
 
+# Examples
+# K = "10k"
+# J = "10j"
+# Q = "ZZ"
+# "<c-e>" = "ZZ"
+
 # In visual mode mapping
 # Visual mode is area-selecting mode, move cursor to change selected area
 # OPTIONAL
 [keymap.visual]
+
+# Example
+# "<c-v>" = "100k100j"
 
 # Override the file open command by extension
 # OPTIONAL
