@@ -105,6 +105,18 @@ items = [
     "Desktop:/home/${USER}/Desktop",
 ]
 
+# User-defined keymapping
+
+# In normal mode mapping
+# Normal mode is default mode, the basic operation is available
+# OPTIONAL
+[keymap.normal]
+
+# In visual mode mapping
+# Visual mode is area-selecting mode, move cursor to change selected area
+# OPTIONAL
+[keymap.visual]
+
 # Override the file open command by extension
 # OPTIONAL
 [open]
@@ -122,55 +134,31 @@ items = [
 
 ### Keymapping
 
-```toml
-# Exit application
-exit_app = "ZZ"
-
-# Reset view in application
-reset_view = "<ESC>"
-
-# Cursor moving
-# *_ten is skip to 10 items, so FAST
-move_up = "k"
-move_up_ten = "K"
-move_down = "j"
-move_down_ten = "J"
-
-# Back to a parent directory
-move_parent = "h"
-
-# If the target item is a file, it open with $EDITOR
-# Enter it if that's a directory
-enter_dir_or_edit = "l"
-
-# Toggle the visual-selection mode
-visual_select = "V"
-
-# Toggle the MENU widget
-menu_toggle = "M"
-
-# Switch the MENU and BODY
-menu_move = "m"
-
-# Create a new file or directory
-create_new = "a"
-
-# Delete an item
-delete = "d"
-
-# Rename an item
-rename = "r"
-
-# Yank with the native-command (ex: xclip, wl-*)
-yank = "y"
-
-# Paste with the native-command (ex: xclip, wl-*)
-paste = "p"
-
-# Search an item in current directory
-search = "/"
-search_next = "n"
-```
+| Mode           | Keymap  | Desc                                                                       |
+| -------------- | ------- | -------------------------------------------------------------------------- |
+| Normal, Visual | `ZZ`    | Exit application                                                           |
+| Normal         | `<ESC>` | Some reset                                                                 |
+| Visual         | `<ESC>` | Change to normal mode                                                      |
+| Normal         | `k`     | Move cursor up                                                             |
+| Visual         | `k`     | Move cursor up and select item                                             |
+| Normal         | `j`     | Move cursor down                                                           |
+| Visual         | `j`     | Move cursor down and select item                                           |
+| Normal, Visual | `h`     | Open parent directory and change to normal mode                            |
+| Normal, Visual | `l`     | Open under cursor item                                                     |
+| Normal, Visual | `V`     | Toggle Normal and Visual mode                                              |
+| Normal, Visual | `M`     | Toggle Menu widget                                                         |
+| Normal         | `m`     | Focus Menu                                                                 |
+| Visual         | `m`     | Unfocus Menu                                                               |
+| Normal, Visual | `a`     | Ask create item and change to normal mode                                  |
+| Normal, Visual | `d`     | (if config delete.ask = true) Ask delete file(s) and change to normal mode |
+| Normal         | `dd`    | Delete under cursor item                                                   |
+| Visual         | `d`     | Delete selected items                                                      |
+| Normal, Visual | `r`     | Ask rename item and change to normal mode                                  |
+| Normal         | `yy`    | Yank under cursor item                                                     |
+| Visual         | `y`     | Yank selected items                                                        |
+| Normal, Visual | `p`     | Paste from clipboard                                                       |
+| Normal, Visual | `/`     | Open search input and change to normal mode                                |
+| Normal, Visual | `n`     | Move cursor to next by search                                              |
 
 ### Available themes
 
