@@ -88,6 +88,35 @@ impl Command for MoveUp {
     }
 }
 
+pub struct MoveTop;
+
+impl Command for MoveTop {
+    fn run(&self) -> Result<(), crate::app::Error> {
+        cursor::captured().reset();
+
+        if cursor::is_selection() && !menu::refs().is_enabled() {
+            cursor::select_area(cursor::load().current());
+        }
+
+        Ok(())
+    }
+}
+
+pub struct MoveBottom;
+
+impl Command for MoveBottom {
+    fn run(&self) -> Result<(), crate::app::Error> {
+        let len = misc::child_files_len(&app::get_path());
+        cursor::captured().shift(len as isize);
+
+        if cursor::is_selection() && !menu::refs().is_enabled() {
+            cursor::select_area(cursor::load().current());
+        }
+
+        Ok(())
+    }
+}
+
 pub struct MoveParent;
 
 impl Command for MoveParent {
