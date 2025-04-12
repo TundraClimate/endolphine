@@ -288,7 +288,7 @@ pub fn register_key<C: command::Command + 'static>(
     lock.insert((mode as u8, keymap.to_string()), Box::new(cmd));
 }
 
-pub fn has_similar_map(buf: Vec<Key>, mode: crate::app::AppMode) -> bool {
+pub fn has_similar_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
     let lock = KEYMAP_REGISTRY.read().unwrap();
 
     if buf.is_empty() {
@@ -299,15 +299,33 @@ pub fn has_similar_map(buf: Vec<Key>, mode: crate::app::AppMode) -> bool {
         return true;
     }
 
-    let buf = buf
-        .into_iter()
-        .skip_while(|k| k.is_digit())
-        .collect::<Vec<_>>();
+    let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
 
     let mode = mode as u8;
 
     lock.keys().any(|(rmode, keymap)| {
         buf.len() <= keymap.len()
+            && mode == *rmode
+            && buf
+                .iter()
+                .enumerate()
+                .all(|(i, k)| Keymap::from(keymap.as_str()).nth(i) == Some(k))
+    })
+}
+
+pub fn has_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
+    let lock = KEYMAP_REGISTRY.read().unwrap();
+
+    if buf.is_empty() || buf.iter().all(Key::is_digit) {
+        return false;
+    }
+
+    let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
+
+    let mode = mode as u8;
+
+    lock.keys().any(|(rmode, keymap)| {
+        buf.len() == keymap.len()
             && mode == *rmode
             && buf
                 .iter()

@@ -8,11 +8,9 @@ impl Keymap {
     pub fn nth(&self, index: usize) -> Option<&Key> {
         self.0.get(index)
     }
-}
 
-impl Clone for Keymap {
-    fn clone(&self) -> Self {
-        Self(self.0.clone())
+    pub fn as_vec(&self) -> &Vec<Key> {
+        &self.0
     }
 }
 

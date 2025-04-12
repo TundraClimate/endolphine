@@ -33,7 +33,7 @@ fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
         app::push_key_buf(key);
     }
 
-    if !config::has_similar_map(app::load_buf(), app::current_mode()) {
+    if !config::has_similar_map(&app::load_buf(), app::current_mode()) {
         app::clear_key_buf();
 
         return Ok(());
