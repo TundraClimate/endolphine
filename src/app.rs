@@ -267,6 +267,8 @@ fn init_keymapping() {
     register_key(Normal, "j".into(), command::MoveDown);
     register_key(Normal, "gg".into(), command::MoveTop);
     register_key(Normal, "G".into(), command::MoveBottom);
+    register_key(Normal, "gk".into(), command::PageUp);
+    register_key(Normal, "gj".into(), command::PageDown);
     register_key(Normal, "h".into(), command::MoveParent);
     register_key(Normal, "l".into(), command::EnterDirOrEdit);
     register_key(Normal, "V".into(), command::VisualSelect);
@@ -303,6 +305,8 @@ fn init_keymapping() {
     register_key(Visual, "j".into(), command::MoveDown);
     register_key(Visual, "gg".into(), command::MoveTop);
     register_key(Visual, "G".into(), command::MoveBottom);
+    register_key(Visual, "gk".into(), command::PageUp);
+    register_key(Visual, "gj".into(), command::PageDown);
     register_key(Visual, "h".into(), command::MoveParent);
     register_key(Visual, "l".into(), command::EnterDirOrEdit);
     register_key(Visual, "V".into(), command::VisualSelect);
