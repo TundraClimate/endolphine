@@ -21,24 +21,7 @@ pub struct MoveDown;
 impl Command for MoveDown {
     fn run(&self) -> Result<(), app::Error> {
         let cursor = cursor::captured();
-
-        let prenum = app::load_buf()
-            .into_iter()
-            .take_while(crate::key::Key::is_digit)
-            .map(|k| k.as_num())
-            .collect::<Vec<u8>>()
-            .into_iter()
-            .rev()
-            .enumerate()
-            .map(|(i, k)| {
-                if i > 3 {
-                    0
-                } else {
-                    (k - 48) * (10u8.pow(i as u32))
-                }
-            })
-            .sum::<u8>();
-        let mv_len = if prenum == 0 { 1 } else { prenum.into() };
+        let mv_len = super::parse_prenum().unwrap_or(1);
 
         cursor.shift_p(mv_len);
 
@@ -55,24 +38,7 @@ pub struct MoveUp;
 impl Command for MoveUp {
     fn run(&self) -> Result<(), app::Error> {
         let cursor = cursor::captured();
-
-        let prenum = app::load_buf()
-            .into_iter()
-            .take_while(crate::key::Key::is_digit)
-            .map(|k| k.as_num())
-            .collect::<Vec<u8>>()
-            .into_iter()
-            .rev()
-            .enumerate()
-            .map(|(i, k)| {
-                if i > 3 {
-                    0
-                } else {
-                    (k - 48) * (10u8.pow(i as u32))
-                }
-            })
-            .sum::<u8>();
-        let mv_len = if prenum == 0 { 1 } else { prenum.into() };
+        let mv_len = super::parse_prenum().unwrap_or(1);
 
         cursor.shift_n(mv_len);
 
@@ -117,26 +83,10 @@ pub struct PageDown;
 
 impl Command for PageDown {
     fn run(&self) -> Result<(), crate::app::Error> {
-        let prenum = app::load_buf()
-            .into_iter()
-            .take_while(crate::key::Key::is_digit)
-            .map(|k| k.as_num())
-            .collect::<Vec<u8>>()
-            .into_iter()
-            .rev()
-            .enumerate()
-            .map(|(i, k)| {
-                if i > 3 {
-                    0
-                } else {
-                    (k - 48) * (10u8.pow(i as u32))
-                }
-            })
-            .sum::<u8>();
-        let page = if prenum == 0 { 1 } else { prenum };
+        let page = super::parse_prenum().unwrap_or(1);
         let page_len = misc::body_height() as usize;
 
-        cursor::captured().shift_p(page as usize * page_len);
+        cursor::captured().shift_p(page * page_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor::load().current());
@@ -150,23 +100,7 @@ pub struct PageUp;
 
 impl Command for PageUp {
     fn run(&self) -> Result<(), crate::app::Error> {
-        let prenum = app::load_buf()
-            .into_iter()
-            .take_while(crate::key::Key::is_digit)
-            .map(|k| k.as_num())
-            .collect::<Vec<u8>>()
-            .into_iter()
-            .rev()
-            .enumerate()
-            .map(|(i, k)| {
-                if i > 3 {
-                    0
-                } else {
-                    (k - 48) * (10u8.pow(i as u32))
-                }
-            })
-            .sum::<u8>();
-        let page = if prenum == 0 { 1 } else { prenum.into() };
+        let page = super::parse_prenum().unwrap_or(1);
         let page_len = misc::body_height() as usize;
 
         cursor::captured().shift_n(page * page_len);
