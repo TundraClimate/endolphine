@@ -124,7 +124,7 @@ items = [
 [keymap.visual]
 
 # Example
-# "<c-v>" = "100k100j"
+# "<c-v>" = "ggVG"
 
 # Override the file open command by extension
 # OPTIONAL
