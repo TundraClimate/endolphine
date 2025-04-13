@@ -38,9 +38,9 @@ impl Command for MoveDown {
                 }
             })
             .sum::<u8>();
-        let mv_len: isize = if prenum == 0 { 1 } else { prenum.into() };
+        let mv_len = if prenum == 0 { 1 } else { prenum.into() };
 
-        cursor.shift(mv_len);
+        cursor.shift_p(mv_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor.current());
@@ -72,13 +72,9 @@ impl Command for MoveUp {
                 }
             })
             .sum::<u8>();
-        let mv_len: isize = if prenum == 0 {
-            -1
-        } else {
-            isize::from(prenum).saturating_neg()
-        };
+        let mv_len = if prenum == 0 { 1 } else { prenum.into() };
 
-        cursor.shift(mv_len);
+        cursor.shift_n(mv_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor.current());
@@ -107,7 +103,7 @@ pub struct MoveBottom;
 impl Command for MoveBottom {
     fn run(&self) -> Result<(), crate::app::Error> {
         let len = misc::child_files_len(&app::get_path());
-        cursor::captured().shift(len as isize);
+        cursor::captured().shift_p(len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor::load().current());
@@ -138,9 +134,9 @@ impl Command for PageDown {
             })
             .sum::<u8>();
         let page = if prenum == 0 { 1 } else { prenum };
-        let page_len = misc::body_height();
+        let page_len = misc::body_height() as usize;
 
-        cursor::captured().shift(page as isize * page_len as isize);
+        cursor::captured().shift_p(page as usize * page_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor::load().current());
@@ -170,14 +166,10 @@ impl Command for PageUp {
                 }
             })
             .sum::<u8>();
-        let page = if prenum == 0 {
-            -1
-        } else {
-            isize::from(prenum).saturating_neg()
-        };
-        let page_len = misc::body_height();
+        let page = if prenum == 0 { 1 } else { prenum.into() };
+        let page_len = misc::body_height() as usize;
 
-        cursor::captured().shift(page * page_len as isize);
+        cursor::captured().shift_n(page * page_len);
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
             cursor::select_area(cursor::load().current());
@@ -215,7 +207,7 @@ impl Command for MoveParent {
         let child_files = misc::sorted_child_files(&parent);
 
         if let Some(pos) = child_files.into_iter().position(|p| p == path) {
-            cursor.shift(pos as isize);
+            cursor.shift_p(pos);
         }
 
         Ok(())
@@ -281,7 +273,7 @@ fn enter_dir(target_path: &std::path::Path, cursor: &cursor::Cursor) {
     let mut cache = cursor.cache.write().unwrap();
 
     if let Some(pos) = child_files.iter().position(|e| cache.inner_equal(e)) {
-        cursor.shift(pos as isize);
+        cursor.shift_p(pos);
         cache.unwrap_surface();
     } else {
         cache.reset();

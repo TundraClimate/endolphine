@@ -18,7 +18,7 @@ impl Input {
         self.buffer = Some(String::from(initial));
         self.action = action;
         self.cursor.resize(initial.len() + 1);
-        self.cursor.shift(initial.len() as isize);
+        self.cursor.shift_p(initial.len());
     }
 
     pub fn disable(&mut self) {

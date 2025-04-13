@@ -31,7 +31,7 @@ impl Command for SearchNext {
             .map(|pos| pos + 1)
             .unwrap_or(0);
 
-        cursor.shift_loop(first_match_pos as isize);
+        cursor.shift_loop_p(first_match_pos);
         crate::log!("/{}", app::read_grep());
 
         Ok(())

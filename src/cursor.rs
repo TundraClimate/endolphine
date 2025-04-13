@@ -61,23 +61,19 @@ impl Cursor {
         self.swap_id(self.current().saturating_sub(1));
     }
 
-    pub fn shift(&self, val: isize) {
-        if val.is_positive() {
-            self.swap_id(self.current() + val as usize);
-        } else {
-            self.swap_id(self.current().saturating_sub(-val as usize));
-        }
+    pub fn shift_p(&self, val: usize) {
+        self.swap_id(self.current() + val);
     }
 
-    pub fn shift_loop(&self, val: isize) {
-        if val.is_positive() {
-            if val as usize + self.current() < self.size.load(Ordering::Relaxed) {
-                self.shift(val);
-            } else {
-                self.swap_id((self.current() + val as usize) - self.size.load(Ordering::Relaxed));
-            }
+    pub fn shift_n(&self, val: usize) {
+        self.swap_id(self.current().saturating_sub(val));
+    }
+
+    pub fn shift_loop_p(&self, val: usize) {
+        if val + self.current() < self.size.load(Ordering::Relaxed) {
+            self.shift_p(val);
         } else {
-            self.shift(val);
+            self.swap_id((self.current() + val) - self.size.load(Ordering::Relaxed));
         }
     }
 
