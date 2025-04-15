@@ -16,10 +16,10 @@ impl Command for Remapping {
 
             let keymap = &keymap[begin..end];
 
-            if crate::config::has_map(keymap, crate::app::current_mode()) {
+            if crate::config::has_map(keymap, crate::app::current_mode()?) {
                 crate::app::sync_key_buf(crate::key::Keymap::new(keymap));
                 if let Some(cmd_res) =
-                    crate::config::eval_keymap(crate::app::current_mode(), keymap)
+                    crate::config::eval_keymap(crate::app::current_mode()?, keymap)
                 {
                     cmd_res?;
                 }

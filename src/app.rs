@@ -49,6 +49,9 @@ pub enum Error {
 
     #[error("out log failed: {0}")]
     OutLogToFileFailed(String),
+
+    #[error("found incorrect program code: {0}:{1}")]
+    IncorrectProgram(String, String),
 }
 
 impl Error {
@@ -75,6 +78,25 @@ impl Error {
                 crate::sys_log!("e", "The stdout can't flush");
 
                 panic!("{}", self);
+            }
+            Self::IncorrectProgram(loc, info) => {
+                crate::sys_log!("e", "Found incorrect program");
+
+                disable_tui().ok();
+
+                eprintln!(
+                    "{}{}",
+                    crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
+                    crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
+                );
+                eprintln!("{:-^41}", "FOUND INCORRECT PROGRAM");
+                let issue_url = "https://github.com/TundraClimate/endolphine/issues";
+                eprintln!(" Please report here: {}", issue_url);
+                eprintln!(" The error was found: {}", loc);
+                eprintln!(" Error infomation: {}", info);
+                eprintln!("{}", "-".repeat(41));
+
+                std::process::exit(1)
             }
             _ => panic!("{}", self),
         }
@@ -416,17 +438,20 @@ pub enum AppMode {
     // Command = 0b0100,
 }
 
-pub fn current_mode() -> AppMode {
+pub fn current_mode() -> Result<AppMode, Error> {
     let loaded = MODE.load(Ordering::Relaxed);
 
     if loaded != AppMode::Normal as u8 && loaded != AppMode::Visual as u8
     /* && loaded != AppMode::Command as u8 */
     {
         crate::sys_log!("e", "Unknown app mode: {}", loaded);
-        panic!("unknown mode");
+        return Err(Error::IncorrectProgram(
+            String::from("app::current_mode"),
+            String::from("Loaded invalid mode"),
+        ));
     }
 
-    unsafe { std::mem::transmute(loaded) }
+    Ok(unsafe { std::mem::transmute::<u8, AppMode>(loaded) })
 }
 
 pub fn switch_mode(mode: AppMode) {
