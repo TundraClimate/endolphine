@@ -309,7 +309,7 @@ pub fn has_similar_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
             && buf
                 .iter()
                 .enumerate()
-                .all(|(i, k)| Keymap::from(keymap.as_str()).nth(i) == Some(k))
+                .all(|(i, k)| Keymap::from(keymap.as_str()).as_vec().get(i) == Some(k))
     })
 }
 
@@ -330,7 +330,7 @@ pub fn has_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
             && buf
                 .iter()
                 .enumerate()
-                .all(|(i, k)| Keymap::from(keymap.as_str()).nth(i) == Some(k))
+                .all(|(i, k)| Keymap::from(keymap.as_str()).as_vec().get(i) == Some(k))
     })
 }
 

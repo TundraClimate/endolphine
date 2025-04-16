@@ -531,7 +531,7 @@ pub fn push_key_buf(key: crate::key::Key) {
 }
 
 pub fn sync_key_buf(other: crate::key::Keymap) {
-    *KEYBUF.write().unwrap() = other.into();
+    *KEYBUF.write().unwrap() = other.as_vec().to_owned();
 }
 
 pub fn clear_key_buf() {

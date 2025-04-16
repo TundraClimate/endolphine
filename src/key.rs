@@ -5,29 +5,13 @@ impl Keymap {
         Keymap(v.to_owned())
     }
 
-    pub fn nth(&self, index: usize) -> Option<&Key> {
-        self.0.get(index)
-    }
-
     pub fn as_vec(&self) -> &Vec<Key> {
         &self.0
     }
 }
 
-impl From<Keymap> for Vec<Key> {
-    fn from(value: Keymap) -> Self {
-        value.0
-    }
-}
-
 impl From<&str> for Keymap {
     fn from(value: &str) -> Self {
-        value.parse().unwrap_or(Keymap(vec![]))
-    }
-}
-
-impl From<String> for Keymap {
-    fn from(value: String) -> Self {
         value.parse().unwrap_or(Keymap(vec![]))
     }
 }
@@ -264,15 +248,6 @@ impl Key {
 impl PartialEq for Key {
     fn eq(&self, other: &Self) -> bool {
         self.code == other.code && self.modifiers == other.modifiers
-    }
-}
-
-impl From<&str> for Key {
-    fn from(value: &str) -> Self {
-        value.parse().unwrap_or(Key {
-            code: KeyCode::None,
-            modifiers: KeyModifiers(KeyModifier::None),
-        })
     }
 }
 
