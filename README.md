@@ -55,7 +55,7 @@ theme = "Dark"
 # OPTIONAL
 # file path of user-defined theme
 # Can't use variables
-# if need the theme syntax, look the `example_theme.toml`
+# if need the theme syntax, look the "#Example user theme"
 user_theme_path = "foo/bar/anyname.toml"
 
 # Item sort priority
@@ -239,6 +239,38 @@ items = [
 #### Collapse
 
 ![Collapse](screen/collapse.png)
+
+</details>
+
+<details><summary>Example user theme</summary>
+
+```toml
+fg_focused = "#FFFFFF"
+fg_unfocused = "#FFFFFF"
+bg_focused = "#505050"
+bg_unfocused = "#3C3C3C"
+label = "#646464"
+bar = "#AF2020"
+bar_dark = "#8F0000"
+unnecessary_text = "#8F4040"
+bar_text = "#282828"
+bar_text_light = "#3F3F3F"
+perm_ty = "#FFFFFF"
+perm_r = "#60EF06"
+perm_w = "#EF4040"
+perm_e = "#FFFFFF"
+row_file = "#FF2010"
+row_dir = "#FFFFFF"
+row_symlink = "#C828C8"
+row_broken = "#200000"
+row_cursor = "#888888"
+row_bsize = "#FFFFFF"
+row_mod_time = "#40FF60"
+select = "#F2F2F2"
+input = "Reset"
+menu_tag = "#60F050"
+search_surround = "#60F050"
+```
 
 </details>
 
