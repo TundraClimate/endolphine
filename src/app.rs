@@ -280,7 +280,7 @@ pub fn config_init() -> Result<(), Error> {
 
 fn init_keymapping() {
     use crate::command;
-    use AppMode::{Normal, Visual};
+    use AppMode::{Input, Normal, Visual};
     use config::register_key;
 
     register_key(Normal, "ZZ".into(), command::ExitApp);
@@ -358,6 +358,99 @@ fn init_keymapping() {
     register_key(Visual, "p".into(), command::AskPaste);
     register_key(Visual, "/".into(), command::Search);
     register_key(Visual, "n".into(), command::SearchNext);
+
+    register_key(Input, "<ESC>".into(), command::DisableInput);
+    register_key(Input, "<CR>".into(), command::CompleteInput);
+    register_key(Input, "<c-h>".into(), command::InputCursorPrev);
+    register_key(Input, "<c-l>".into(), command::InputCursorNext);
+    register_key(Input, "<BS>".into(), command::InputDeleteCurrent);
+    register_key(Input, "<s-BS>".into(), command::InputDeleteNext);
+    register_key(Input, " ".into(), command::InputInsert(' '));
+    register_key(Input, "\"".into(), command::InputInsert('"'));
+    register_key(Input, "#".into(), command::InputInsert('#'));
+    register_key(Input, "$".into(), command::InputInsert('$'));
+    register_key(Input, "%".into(), command::InputInsert('%'));
+    register_key(Input, "(".into(), command::InputInsert('('));
+    register_key(Input, ")".into(), command::InputInsert(')'));
+    register_key(Input, "*".into(), command::InputInsert('*'));
+    register_key(Input, "+".into(), command::InputInsert('+'));
+    register_key(Input, ",".into(), command::InputInsert(','));
+    register_key(Input, "-".into(), command::InputInsert('-'));
+    register_key(Input, ".".into(), command::InputInsert('.'));
+    register_key(Input, "/".into(), command::InputInsert('/'));
+    register_key(Input, "0".into(), command::InputInsert('0'));
+    register_key(Input, "1".into(), command::InputInsert('1'));
+    register_key(Input, "2".into(), command::InputInsert('2'));
+    register_key(Input, "3".into(), command::InputInsert('3'));
+    register_key(Input, "4".into(), command::InputInsert('4'));
+    register_key(Input, "5".into(), command::InputInsert('5'));
+    register_key(Input, "6".into(), command::InputInsert('6'));
+    register_key(Input, "7".into(), command::InputInsert('7'));
+    register_key(Input, "8".into(), command::InputInsert('8'));
+    register_key(Input, "9".into(), command::InputInsert('9'));
+    register_key(Input, ":".into(), command::InputInsert(':'));
+    register_key(Input, ";".into(), command::InputInsert(';'));
+    register_key(Input, "?".into(), command::InputInsert('?'));
+    register_key(Input, "@".into(), command::InputInsert('@'));
+    register_key(Input, "a".into(), command::InputInsert('a'));
+    register_key(Input, "b".into(), command::InputInsert('b'));
+    register_key(Input, "c".into(), command::InputInsert('c'));
+    register_key(Input, "d".into(), command::InputInsert('d'));
+    register_key(Input, "e".into(), command::InputInsert('e'));
+    register_key(Input, "f".into(), command::InputInsert('f'));
+    register_key(Input, "g".into(), command::InputInsert('g'));
+    register_key(Input, "h".into(), command::InputInsert('h'));
+    register_key(Input, "i".into(), command::InputInsert('i'));
+    register_key(Input, "j".into(), command::InputInsert('j'));
+    register_key(Input, "k".into(), command::InputInsert('k'));
+    register_key(Input, "l".into(), command::InputInsert('l'));
+    register_key(Input, "m".into(), command::InputInsert('m'));
+    register_key(Input, "n".into(), command::InputInsert('n'));
+    register_key(Input, "o".into(), command::InputInsert('o'));
+    register_key(Input, "p".into(), command::InputInsert('p'));
+    register_key(Input, "q".into(), command::InputInsert('q'));
+    register_key(Input, "r".into(), command::InputInsert('r'));
+    register_key(Input, "s".into(), command::InputInsert('s'));
+    register_key(Input, "t".into(), command::InputInsert('t'));
+    register_key(Input, "u".into(), command::InputInsert('u'));
+    register_key(Input, "v".into(), command::InputInsert('v'));
+    register_key(Input, "w".into(), command::InputInsert('w'));
+    register_key(Input, "x".into(), command::InputInsert('x'));
+    register_key(Input, "y".into(), command::InputInsert('y'));
+    register_key(Input, "z".into(), command::InputInsert('z'));
+    register_key(Input, "A".into(), command::InputInsert('A'));
+    register_key(Input, "B".into(), command::InputInsert('B'));
+    register_key(Input, "C".into(), command::InputInsert('C'));
+    register_key(Input, "D".into(), command::InputInsert('D'));
+    register_key(Input, "E".into(), command::InputInsert('E'));
+    register_key(Input, "F".into(), command::InputInsert('F'));
+    register_key(Input, "G".into(), command::InputInsert('G'));
+    register_key(Input, "H".into(), command::InputInsert('H'));
+    register_key(Input, "I".into(), command::InputInsert('I'));
+    register_key(Input, "J".into(), command::InputInsert('J'));
+    register_key(Input, "K".into(), command::InputInsert('K'));
+    register_key(Input, "L".into(), command::InputInsert('L'));
+    register_key(Input, "M".into(), command::InputInsert('M'));
+    register_key(Input, "N".into(), command::InputInsert('N'));
+    register_key(Input, "O".into(), command::InputInsert('O'));
+    register_key(Input, "P".into(), command::InputInsert('P'));
+    register_key(Input, "Q".into(), command::InputInsert('Q'));
+    register_key(Input, "R".into(), command::InputInsert('R'));
+    register_key(Input, "S".into(), command::InputInsert('S'));
+    register_key(Input, "T".into(), command::InputInsert('T'));
+    register_key(Input, "U".into(), command::InputInsert('U'));
+    register_key(Input, "V".into(), command::InputInsert('V'));
+    register_key(Input, "W".into(), command::InputInsert('W'));
+    register_key(Input, "X".into(), command::InputInsert('X'));
+    register_key(Input, "Y".into(), command::InputInsert('Y'));
+    register_key(Input, "Z".into(), command::InputInsert('Z'));
+    register_key(Input, "[".into(), command::InputInsert('['));
+    register_key(Input, "\\".into(), command::InputInsert('\\'));
+    register_key(Input, "]".into(), command::InputInsert(']'));
+    register_key(Input, "^".into(), command::InputInsert('^'));
+    register_key(Input, "_".into(), command::InputInsert('_'));
+    register_key(Input, "{".into(), command::InputInsert('{'));
+    register_key(Input, "}".into(), command::InputInsert('}'));
 
     if let Some(ref define) = config::load().keymap {
         if let Some(normal) = define.normal_key_map() {
@@ -506,12 +599,11 @@ pub fn regex_range(buf: &str) -> Option<(usize, usize)> {
     regex.find(buf).map(|m| (m.start(), m.end()))
 }
 
-pub fn sync_grep(input: &mut crate::input::Input) {
+pub fn sync_grep(input: &str) {
     crate::app::grep_update(|f| {
         *f = input
-            .buffer_load()
-            .clone()
-            .and_then(|b| b.strip_prefix("/").map(|b| b.to_string()))
+            .strip_prefix("/")
+            .map(|b| b.to_string())
             .unwrap_or(" ".to_string())
     });
 }

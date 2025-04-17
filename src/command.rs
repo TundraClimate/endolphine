@@ -1,6 +1,7 @@
 mod create_file;
 mod delete_file;
 mod exit_app;
+mod input_handle;
 mod mapping;
 mod menuctl;
 mod mv;
@@ -14,6 +15,10 @@ mod yank_file;
 pub use create_file::{AskCreate, CreateFileOrDir};
 pub use delete_file::{AskDelete, DeleteFileOrDir, DeleteSelected};
 pub use exit_app::ExitApp;
+pub use input_handle::{
+    CompleteInput, DisableInput, InputCursorNext, InputCursorPrev, InputDeleteCurrent,
+    InputDeleteNext, InputInsert,
+};
 pub use mapping::Remapping;
 pub use menuctl::{MenuMove, MenuToggle};
 pub use mv::{EnterDirOrEdit, MoveBottom, MoveDown, MoveParent, MoveTop, MoveUp, PageDown, PageUp};

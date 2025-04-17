@@ -117,6 +117,10 @@ pub fn cursor_pos() -> usize {
     get_ref().cursor_current()
 }
 
+pub fn action_is(act: &str) -> bool {
+    get_ref().load_action().as_deref() == Some(act)
+}
+
 fn get_mut() -> std::sync::RwLockWriteGuard<'static, Input> {
     INPUT.write().unwrap()
 }
@@ -125,7 +129,38 @@ pub fn enable(initial: &str, action: Option<String>) {
     get_mut().enable(initial, action);
 }
 
-pub fn use_f_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {
-    let mut lock = INPUT.write().unwrap();
-    f(&mut lock)
+pub fn disable() {
+    get_mut().disable()
+}
+
+pub fn cursor_next() {
+    get_mut().cursor_right();
+}
+
+pub fn cursor_prev() {
+    get_mut().cursor_left();
+}
+
+pub fn insert(c: char) {
+    get_mut().buffer_insert(c);
+}
+
+pub fn delete_cursor_next() {
+    get_mut().buffer_pick_next();
+}
+
+pub fn delete_cursor_pos() {
+    get_mut().buffer_pick();
+}
+
+pub fn complete_input() {
+    get_mut().complete_input();
+}
+
+pub fn take_action() -> Option<String> {
+    get_mut().drain_action()
+}
+
+pub fn take_storage() -> Option<String> {
+    get_mut().drain_storage()
 }
