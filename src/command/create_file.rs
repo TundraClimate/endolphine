@@ -10,7 +10,7 @@ impl Command for AskCreate {
         }
 
         cursor::disable_selection();
-        input::use_f_mut(|i| i.enable("", Some("CreateFileOrDir".into())));
+        input::enable("", Some("CreateFileOrDir".into()));
         crate::sys_log!("i", "Called command: CreateFileOrDir");
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
 

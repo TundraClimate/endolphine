@@ -21,17 +21,15 @@ impl Command for AskPaste {
             return Ok(());
         };
 
-        input::use_f_mut(|i| {
-            let default_paste_input = if config.paste.default_overwrite {
-                "y"
-            } else {
-                ""
-            };
+        let default_paste_input = if config.paste.default_overwrite {
+            "y"
+        } else {
+            ""
+        };
 
-            i.enable(default_paste_input, Some("Paste".into()));
+        input::enable(default_paste_input, Some("Paste".into()));
 
-            crate::log!("overwrite the same files? (y/Y)");
-        });
+        crate::log!("overwrite the same files? (y/Y)");
 
         Ok(())
     }

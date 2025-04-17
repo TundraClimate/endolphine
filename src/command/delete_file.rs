@@ -34,13 +34,13 @@ fn ask_rm_selected() {
         .filter_map(|(i, f)| cursor::is_selected(i).then_some(f))
         .collect::<Vec<_>>();
 
-    input::use_f_mut(|i| i.enable("", Some("DeleteSelected".into())));
+    input::enable("", Some("DeleteSelected".into()));
     crate::sys_log!("i", "Called command: DeleteSelected");
     crate::log!("Delete {} items ? (y/Y)", selected_files.len());
 }
 
 fn ask_rm_target(under_cursor_file: &std::path::Path) {
-    input::use_f_mut(|i| i.enable("", Some("DeleteFileOrDir".into())));
+    input::enable("", Some("DeleteFileOrDir".into()));
     crate::sys_log!("i", "Called command: DeleteFileOrDir");
     crate::log!("Delete \"{}\" ? (y/Y)", misc::file_name(under_cursor_file));
 }

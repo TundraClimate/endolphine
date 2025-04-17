@@ -27,7 +27,7 @@ fn pagenate(full: &[PathBuf], page_size: u16, current_page: usize) -> Vec<PathBu
 }
 
 fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), app::Error> {
-    let Some(buf) = input::use_f(|i| i.buffer_load().clone()) else {
+    let Some(buf) = input::buffer() else {
         return Ok(());
     };
 
@@ -37,7 +37,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), 
             .chars()
             .skip(size.saturating_sub(width as usize))
             .collect::<String>();
-        buf.insert(input::use_f(|i| i.cursor_current()), '▏');
+        buf.insert(input::cursor_pos(), '▏');
         buf
     };
 
@@ -76,8 +76,8 @@ fn render_file_line(
     is_selected: bool,
 ) -> Result<(), app::Error> {
     let body_row = BodyRow::new(file, is_cursor_pos, is_selected);
-    let input_enabled = input::use_f(input::Input::is_enable);
-    let input_buf = input::use_f(|i| i.buffer_len());
+    let input_enabled = input::is_enable();
+    let input_buf = input::buffer_len();
     let input_key = format!("{}{}", input_enabled, input_buf);
 
     Body::cached_render_row(
@@ -303,7 +303,7 @@ impl Widget for Body {
                 render_empty_line(rel_i)?;
             }
 
-            if is_cursor_pos && input::use_f(|i| i.is_enable()) {
+            if is_cursor_pos && input::is_enable() {
                 render_input_line(rel_i)?;
             }
         }

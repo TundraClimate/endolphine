@@ -21,7 +21,7 @@ pub fn handle_event() -> Result<(), app::Error> {
 }
 
 fn handle_key_event(key: KeyEvent) -> Result<(), app::Error> {
-    if input::use_f(|i| i.is_enable()) {
+    if input::is_enable() {
         input::use_f_mut(|i| handle_input_mode(i, key));
 
         return Ok(());

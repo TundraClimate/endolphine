@@ -26,7 +26,7 @@ impl Command for AskRename {
 fn ask_rename(under_cursor_file: &std::path::Path) {
     let name = misc::file_name(under_cursor_file);
 
-    input::use_f_mut(|i| i.enable(name, Some("Rename".into())));
+    input::enable(name, Some("Rename".into()));
     crate::sys_log!("i", "Called command: Rename");
     crate::log!("Enter new name for \"{}\"", name);
 }

@@ -94,9 +94,32 @@ global! {
     static INPUT: RwLock<Input> = RwLock::new(Input::default());
 }
 
-pub fn use_f<F: FnOnce(&Input) -> R, R>(f: F) -> R {
-    let lock = INPUT.read().unwrap();
-    f(&lock)
+fn get_ref() -> std::sync::RwLockReadGuard<'static, Input> {
+    INPUT.read().unwrap()
+}
+
+pub fn is_enable() -> bool {
+    get_ref().is_enable()
+}
+
+pub fn buffer() -> Option<String> {
+    get_ref().buffer_load().clone()
+}
+
+pub fn buffer_len() -> usize {
+    get_ref().buffer_len()
+}
+
+pub fn cursor_pos() -> usize {
+    get_ref().cursor_current()
+}
+
+fn get_mut() -> std::sync::RwLockWriteGuard<'static, Input> {
+    INPUT.write().unwrap()
+}
+
+pub fn enable(initial: &str, action: Option<String>) {
+    get_mut().enable(initial, action);
 }
 
 pub fn use_f_mut<F: FnOnce(&mut Input) -> R, R>(f: F) -> R {

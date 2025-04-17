@@ -11,7 +11,7 @@ impl Command for Search {
 
         cursor::disable_selection();
         app::grep_update(|m| m.clear());
-        input::use_f_mut(|i| i.enable("/", Some("Search".to_string())));
+        input::enable("/", Some("Search".into()));
 
         Ok(())
     }
