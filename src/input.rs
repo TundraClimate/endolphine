@@ -19,10 +19,12 @@ impl Input {
         self.action = action;
         self.cursor.resize(initial.len() + 1);
         self.cursor.shift_p(initial.len());
+        crate::app::switch_mode(crate::app::AppMode::Input);
     }
 
     pub fn disable(&mut self) {
         self.buffer = None;
+        crate::app::switch_mode(crate::app::AppMode::Normal);
     }
 
     pub fn buffer_insert(&mut self, c: char) {
@@ -75,6 +77,7 @@ impl Input {
     pub fn complete_input(&mut self) {
         self.storage = self.buffer.take();
         self.cursor = Cursor::default();
+        crate::app::switch_mode(crate::app::AppMode::Normal);
     }
 
     pub fn drain_storage(&mut self) -> Option<String> {

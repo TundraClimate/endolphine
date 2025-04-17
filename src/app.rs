@@ -434,6 +434,7 @@ global! {
 pub enum AppMode {
     Normal,
     Visual,
+    Input,
     // TODO
     // Command,
 }
@@ -441,7 +442,9 @@ pub enum AppMode {
 pub fn current_mode() -> Result<AppMode, Error> {
     let loaded = MODE.load(Ordering::Relaxed);
 
-    if loaded != AppMode::Normal as u8 && loaded != AppMode::Visual as u8
+    if loaded != AppMode::Normal as u8
+        && loaded != AppMode::Visual as u8
+        && loaded != AppMode::Input as u8
     /* && loaded != AppMode::Command as u8 */
     {
         crate::sys_log!("e", "Unknown app mode: {}", loaded);
@@ -454,6 +457,7 @@ pub fn current_mode() -> Result<AppMode, Error> {
     let converted = match loaded {
         0 => AppMode::Normal,
         1 => AppMode::Visual,
+        2 => AppMode::Input,
         _ => unreachable!(),
     };
 
