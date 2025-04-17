@@ -432,10 +432,10 @@ global! {
 #[repr(u8)]
 #[derive(Clone, Copy)]
 pub enum AppMode {
-    Normal = 0b0001,
-    Visual = 0b0010,
+    Normal,
+    Visual,
     // TODO
-    // Command = 0b0100,
+    // Command,
 }
 
 pub fn current_mode() -> Result<AppMode, Error> {
@@ -451,7 +451,13 @@ pub fn current_mode() -> Result<AppMode, Error> {
         ));
     }
 
-    Ok(unsafe { std::mem::transmute::<u8, AppMode>(loaded) })
+    let converted = match loaded {
+        0 => AppMode::Normal,
+        1 => AppMode::Visual,
+        _ => unreachable!(),
+    };
+
+    Ok(converted)
 }
 
 pub fn switch_mode(mode: AppMode) {
