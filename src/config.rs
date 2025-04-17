@@ -202,9 +202,13 @@ pub struct KeymapNormal(std::collections::BTreeMap<String, String>);
 pub struct KeymapVisual(std::collections::BTreeMap<String, String>);
 
 #[derive(serde::Deserialize, serde::Serialize)]
+pub struct KeymapInput(std::collections::BTreeMap<String, String>);
+
+#[derive(serde::Deserialize, serde::Serialize)]
 pub struct KeymapConfig {
     normal: Option<KeymapNormal>,
     visual: Option<KeymapVisual>,
+    input: Option<KeymapInput>,
 }
 
 impl KeymapConfig {
@@ -225,6 +229,17 @@ impl KeymapConfig {
                 .0
                 .keys()
                 .zip(visual.0.values())
+                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
+                .collect()
+        })
+    }
+
+    pub fn input_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
+        self.input.as_ref().map(|input| {
+            input
+                .0
+                .keys()
+                .zip(input.0.values())
                 .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
                 .collect()
         })
