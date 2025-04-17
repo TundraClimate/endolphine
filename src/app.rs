@@ -1,7 +1,7 @@
 use crate::{
     canvas,
     config::{self, Config},
-    global, handler, misc,
+    global, misc,
 };
 use crossterm::{cursor, terminal};
 use std::{
@@ -469,10 +469,46 @@ fn init_keymapping() {
 
 fn event_handler() {
     loop {
-        if let Err(e) = handler::handle_event() {
+        if let Err(e) = handle_event() {
             e.handle();
         }
     }
+}
+
+pub fn handle_event() -> Result<(), Error> {
+    if let Ok(event) = crossterm::event::read() {
+        match event {
+            crossterm::event::Event::Key(key) => handle_key_event(key)?,
+            crossterm::event::Event::Resize(_, _) => {
+                crate::cursor::load().resize(misc::child_files_len(&get_path()));
+                canvas::cache_clear();
+            }
+            _ => {}
+        }
+    }
+
+    Ok(())
+}
+
+fn handle_key_event(key: crossterm::event::KeyEvent) -> Result<(), Error> {
+    {
+        let key = crate::key::Key::from_keyevent(&key);
+
+        push_key_buf(key);
+    }
+
+    if !config::has_similar_map(&load_buf(), current_mode()?) {
+        clear_key_buf();
+
+        return Ok(());
+    }
+
+    if let Some(cmd_res) = config::eval_keymap(current_mode()?, &load_buf()) {
+        clear_key_buf();
+        cmd_res?
+    }
+
+    Ok(())
 }
 
 async fn ui() {

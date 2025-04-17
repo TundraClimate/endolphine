@@ -8,7 +8,6 @@ mod clipboard;
 mod command;
 mod config;
 mod cursor;
-mod handler;
 mod input;
 mod key;
 mod menu;
