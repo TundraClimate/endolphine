@@ -491,43 +491,37 @@ fn event_handler() {
 }
 
 pub fn handle_event() -> Result<(), Error> {
-    if let Ok(event) = crossterm::event::read() {
-        match event {
-            crossterm::event::Event::Key(key) => handle_key_event(key)?,
-            crossterm::event::Event::Resize(_, _) => {
-                crate::cursor::load().resize(misc::child_files_len(&get_path()));
-                canvas::cache_clear();
+    match crossterm::event::read() {
+        Ok(crossterm::event::Event::Key(key)) => {
+            {
+                let key = crate::key::Key::from_keyevent(&key);
+
+                push_key_buf(key);
             }
-            _ => {}
+
+            if matches!(current_mode()?, AppMode::Input) {
+                if let Some(cmd_res) = config::eval_input_keymap(&load_buf()) {
+                    clear_key_buf();
+                    cmd_res?
+                }
+            }
+
+            if !config::has_similar_map(&load_buf(), current_mode()?) {
+                clear_key_buf();
+
+                return Ok(());
+            }
+
+            if let Some(cmd_res) = config::eval_keymap(current_mode()?, &load_buf()) {
+                clear_key_buf();
+                cmd_res?
+            }
         }
-    }
-
-    Ok(())
-}
-
-fn handle_key_event(key: crossterm::event::KeyEvent) -> Result<(), Error> {
-    {
-        let key = crate::key::Key::from_keyevent(&key);
-
-        push_key_buf(key);
-    }
-
-    if matches!(current_mode()?, AppMode::Input) {
-        if let Some(cmd_res) = config::eval_input_keymap(&load_buf()) {
-            clear_key_buf();
-            cmd_res?
+        Ok(crossterm::event::Event::Resize(_, _)) => {
+            crate::cursor::load().resize(misc::child_files_len(&get_path()));
+            canvas::cache_clear();
         }
-    }
-
-    if !config::has_similar_map(&load_buf(), current_mode()?) {
-        clear_key_buf();
-
-        return Ok(());
-    }
-
-    if let Some(cmd_res) = config::eval_keymap(current_mode()?, &load_buf()) {
-        clear_key_buf();
-        cmd_res?
+        _ => {}
     }
 
     Ok(())
