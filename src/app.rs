@@ -365,11 +365,14 @@ fn init_keymapping() {
     register_key(Input, "<c-l>".into(), command::InputCursorNext);
     register_key(Input, "<BS>".into(), command::InputDeleteCurrent);
     register_key(Input, "<s-BS>".into(), command::InputDeleteNext);
-    register_key(Input, " ".into(), command::InputInsert(' '));
+    register_key(Input, "<SPACE>".into(), command::InputInsert(' '));
+    register_key(Input, "!".into(), command::InputInsert('!'));
     register_key(Input, "\"".into(), command::InputInsert('"'));
     register_key(Input, "#".into(), command::InputInsert('#'));
     register_key(Input, "$".into(), command::InputInsert('$'));
     register_key(Input, "%".into(), command::InputInsert('%'));
+    register_key(Input, "&".into(), command::InputInsert('&'));
+    register_key(Input, "'".into(), command::InputInsert('\''));
     register_key(Input, "(".into(), command::InputInsert('('));
     register_key(Input, ")".into(), command::InputInsert(')'));
     register_key(Input, "*".into(), command::InputInsert('*'));
@@ -390,6 +393,9 @@ fn init_keymapping() {
     register_key(Input, "9".into(), command::InputInsert('9'));
     register_key(Input, ":".into(), command::InputInsert(':'));
     register_key(Input, ";".into(), command::InputInsert(';'));
+    register_key(Input, "<lt>".into(), command::InputInsert('<'));
+    register_key(Input, "=".into(), command::InputInsert('='));
+    register_key(Input, ">".into(), command::InputInsert('>'));
     register_key(Input, "?".into(), command::InputInsert('?'));
     register_key(Input, "@".into(), command::InputInsert('@'));
     register_key(Input, "a".into(), command::InputInsert('a'));
@@ -449,8 +455,11 @@ fn init_keymapping() {
     register_key(Input, "]".into(), command::InputInsert(']'));
     register_key(Input, "^".into(), command::InputInsert('^'));
     register_key(Input, "_".into(), command::InputInsert('_'));
+    register_key(Input, "`".into(), command::InputInsert('`'));
     register_key(Input, "{".into(), command::InputInsert('{'));
+    register_key(Input, "|".into(), command::InputInsert('|'));
     register_key(Input, "}".into(), command::InputInsert('}'));
+    register_key(Input, "~".into(), command::InputInsert('~'));
 
     if let Some(ref define) = config::load().keymap {
         if let Some(normal) = define.normal_key_map() {
@@ -501,6 +510,13 @@ fn handle_key_event(key: crossterm::event::KeyEvent) -> Result<(), Error> {
         let key = crate::key::Key::from_keyevent(&key);
 
         push_key_buf(key);
+    }
+
+    if matches!(current_mode()?, AppMode::Input) {
+        if let Some(cmd_res) = config::eval_input_keymap(&load_buf()) {
+            clear_key_buf();
+            cmd_res?
+        }
     }
 
     if !config::has_similar_map(&load_buf(), current_mode()?) {

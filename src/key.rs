@@ -35,7 +35,7 @@ impl std::str::FromStr for Keymap {
                 keys.push(c.to_string().parse()?)
             }
 
-            if c == '>' {
+            if c == '>' && in_tag {
                 in_tag = false;
                 keys.push(buf.parse()?);
                 buf.clear();
@@ -89,7 +89,7 @@ pub struct Key {
 
 impl Key {
     pub fn is_digit(&self) -> bool {
-        matches!(self.code as u8, 48..=58)
+        matches!(self.code as u8, 48..58)
     }
 
     pub fn as_num(&self) -> u8 {
@@ -134,10 +134,13 @@ impl Key {
             crossterm::event::KeyCode::Enter => KeyCode::Enter,
             crossterm::event::KeyCode::Esc => KeyCode::Esc,
             crossterm::event::KeyCode::Char(' ') => KeyCode::Space,
+            crossterm::event::KeyCode::Char('!') => KeyCode::ExclamationMark,
             crossterm::event::KeyCode::Char('"') => KeyCode::QuotationMark,
             crossterm::event::KeyCode::Char('#') => KeyCode::NumberSign,
             crossterm::event::KeyCode::Char('$') => KeyCode::DollarSign,
             crossterm::event::KeyCode::Char('%') => KeyCode::PercentSign,
+            crossterm::event::KeyCode::Char('&') => KeyCode::Ampersand,
+            crossterm::event::KeyCode::Char('\'') => KeyCode::Apostrophe,
             crossterm::event::KeyCode::Char('(') => KeyCode::LeftParenthesis,
             crossterm::event::KeyCode::Char(')') => KeyCode::RightParenthesis,
             crossterm::event::KeyCode::Char('*') => KeyCode::Asterisk,
@@ -158,6 +161,9 @@ impl Key {
             crossterm::event::KeyCode::Char('9') => KeyCode::Digit9,
             crossterm::event::KeyCode::Char(':') => KeyCode::Colon,
             crossterm::event::KeyCode::Char(';') => KeyCode::Semicolon,
+            crossterm::event::KeyCode::Char('<') => KeyCode::LessThanSign,
+            crossterm::event::KeyCode::Char('=') => KeyCode::EqualSign,
+            crossterm::event::KeyCode::Char('>') => KeyCode::GreaterThanSign,
             crossterm::event::KeyCode::Char('?') => KeyCode::QuestionMark,
             crossterm::event::KeyCode::Char('@') => KeyCode::CommercialAt,
             crossterm::event::KeyCode::Char('a') => KeyCode::A,
@@ -217,8 +223,12 @@ impl Key {
             crossterm::event::KeyCode::Char(']') => KeyCode::RightSquareBracket,
             crossterm::event::KeyCode::Char('^') => KeyCode::CircumflexAccent,
             crossterm::event::KeyCode::Char('_') => KeyCode::LowLine,
+            crossterm::event::KeyCode::Char('`') => KeyCode::GraveAccent,
             crossterm::event::KeyCode::Char('{') => KeyCode::LeftCurlyBracket,
+            crossterm::event::KeyCode::Char('|') => KeyCode::VirticalLine,
             crossterm::event::KeyCode::Char('}') => KeyCode::RightCurlyBracket,
+            crossterm::event::KeyCode::Char('~') => KeyCode::Tilde,
+            crossterm::event::KeyCode::Delete => KeyCode::Delete,
             _ => KeyCode::None,
         };
 
@@ -278,10 +288,9 @@ impl std::str::FromStr for Key {
 
             let code = match tag {
                 'A'..='Z' => KeyCode::from_ascii(tag as u8),
-                '"' | '#' | '$' | '%' | '(' | ')' | '*' | '+' | '?' | '_' | '{' | '}' | '-'
-                | '[' | ']' | ',' | '.' | '/' | ':' | ';' | '@' | '\\' | '^' => {
-                    KeyCode::from_ascii(tag as u8)
-                }
+                '!' | '"' | '#' | '$' | '%' | '&' | '\'' | '(' | ')' | '*' | '+' | '?' | '_'
+                | '`' | '|' | '~' | '{' | '}' | '-' | '[' | ']' | ',' | '.' | '/' | ':' | ';'
+                | '>' | '=' | '@' | '\\' | '^' => KeyCode::from_ascii(tag as u8),
 
                 tag if tag.is_ascii_digit() => KeyCode::from_ascii(tag as u8),
 
@@ -331,6 +340,8 @@ impl std::str::FromStr for Key {
             "esc" => KeyCode::Esc,
             "leader" | "space" => KeyCode::Space,
             "bs" => KeyCode::Backspace,
+            "del" => KeyCode::Delete,
+            "lt" => KeyCode::LessThanSign,
             _ => return Err(String::from("unsupported key format")),
         };
 
@@ -350,7 +361,13 @@ impl std::fmt::Display for Key {
 
             let is_special = matches!(
                 self.code,
-                KeyCode::Enter | KeyCode::Tab | KeyCode::Esc | KeyCode::Space | KeyCode::Backspace
+                KeyCode::Enter
+                    | KeyCode::Tab
+                    | KeyCode::Esc
+                    | KeyCode::Space
+                    | KeyCode::Backspace
+                    | KeyCode::Delete
+                    | KeyCode::LessThanSign,
             );
             let is_modded = self.modifiers.is_alt() || self.modifiers.is_ctrl();
             let is_shift = self.modifiers.is_shift();
@@ -362,6 +379,8 @@ impl std::fmt::Display for Key {
                 KeyCode::Esc => "ESC",
                 KeyCode::Space => "SPACE",
                 KeyCode::Backspace => "BS",
+                KeyCode::Delete => "DEL",
+                KeyCode::LessThanSign => "LT",
 
                 keycode if !is_shift && is_alpha => {
                     &format!("{}", keycode.as_ascii().to_ascii_lowercase())
@@ -397,10 +416,13 @@ enum KeyCode {
     Enter = 13,
     Esc = 27,
     Space = 32,
+    ExclamationMark = 33,
     QuotationMark = 34,
     NumberSign = 35,
     DollarSign = 36,
     PercentSign = 37,
+    Ampersand = 38,
+    Apostrophe = 39,
     LeftParenthesis = 40,
     RightParenthesis = 41,
     Asterisk = 42,
@@ -421,6 +443,9 @@ enum KeyCode {
     Digit9 = 57,
     Colon = 58,
     Semicolon = 59,
+    LessThanSign = 60,
+    EqualSign = 61,
+    GreaterThanSign = 62,
     QuestionMark = 63,
     CommercialAt = 64,
     A = 65,
@@ -454,8 +479,12 @@ enum KeyCode {
     RightSquareBracket = 93,
     CircumflexAccent = 94,
     LowLine = 95,
+    GraveAccent = 96,
     LeftCurlyBracket = 123,
+    VirticalLine = 124,
     RightCurlyBracket = 125,
+    Tilde = 126,
+    Delete = 127,
     None = 0,
 }
 
