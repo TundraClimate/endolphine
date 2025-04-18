@@ -311,6 +311,7 @@ cargo uninstall endolphine
   - Add component rendering
 - Impl the layout system and logic (ratatui?)
 - Improve sys_log
+- Impl the plugin-system
 
 ## LICENSE
 
