@@ -1,5 +1,5 @@
 use super::Widget;
-use crate::{app, menu, misc, theme};
+use crate::{menu, misc, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Print, ResetColor, SetBackgroundColor, SetForegroundColor},

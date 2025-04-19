@@ -1,5 +1,5 @@
 use super::Command;
-use crate::{app, canvas, menu};
+use crate::{canvas, menu};
 
 pub struct MenuToggle;
 
