@@ -4,7 +4,7 @@ use crate::input;
 pub struct DisableInput;
 
 impl Command for DisableInput {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::disable();
 
         Ok(())
@@ -14,7 +14,7 @@ impl Command for DisableInput {
 pub struct InputCursorNext;
 
 impl Command for InputCursorNext {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::cursor_next();
 
         Ok(())
@@ -24,7 +24,7 @@ impl Command for InputCursorNext {
 pub struct InputCursorPrev;
 
 impl Command for InputCursorPrev {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::cursor_prev();
 
         Ok(())
@@ -34,7 +34,7 @@ impl Command for InputCursorPrev {
 pub struct InputInsert(pub char);
 
 impl Command for InputInsert {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::insert(self.0);
 
         if input::action_is("Search") {
@@ -50,7 +50,7 @@ impl Command for InputInsert {
 pub struct InputDeleteNext;
 
 impl Command for InputDeleteNext {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::delete_cursor_next();
 
         if input::action_is("Search") {
@@ -66,7 +66,7 @@ impl Command for InputDeleteNext {
 pub struct InputDeleteCurrent;
 
 impl Command for InputDeleteCurrent {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::delete_cursor_pos();
 
         if input::action_is("Search") {
@@ -82,7 +82,7 @@ impl Command for InputDeleteCurrent {
 pub struct CompleteInput;
 
 impl Command for CompleteInput {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         input::complete_input();
 
         let action = input::take_action();

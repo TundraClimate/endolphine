@@ -4,7 +4,7 @@ use crate::{app, canvas, menu};
 pub struct MenuToggle;
 
 impl Command for MenuToggle {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if !menu::is_opened() || menu::refs().is_enabled() {
             menu::refs().toggle_enable();
         }
@@ -19,7 +19,7 @@ impl Command for MenuToggle {
 pub struct MenuMove;
 
 impl Command for MenuMove {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if !menu::is_opened() {
             menu::toggle_open();
         }

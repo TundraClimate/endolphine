@@ -6,7 +6,7 @@ pub struct Yank {
 }
 
 impl Command for Yank {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }

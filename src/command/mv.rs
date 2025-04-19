@@ -19,7 +19,7 @@ fn move_current_dir(path: &std::path::Path) {
 pub struct MoveDown;
 
 impl Command for MoveDown {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let cursor = cursor::captured();
         let mv_len = super::parse_prenum().unwrap_or(1);
 
@@ -36,7 +36,7 @@ impl Command for MoveDown {
 pub struct MoveUp;
 
 impl Command for MoveUp {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let cursor = cursor::captured();
         let mv_len = super::parse_prenum().unwrap_or(1);
 
@@ -53,7 +53,7 @@ impl Command for MoveUp {
 pub struct MoveTop;
 
 impl Command for MoveTop {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         cursor::captured().reset();
 
         if cursor::is_selection() && !menu::refs().is_enabled() {
@@ -67,7 +67,7 @@ impl Command for MoveTop {
 pub struct MoveBottom;
 
 impl Command for MoveBottom {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let len = misc::child_files_len(&app::get_path());
         cursor::captured().shift_p(len);
 
@@ -82,7 +82,7 @@ impl Command for MoveBottom {
 pub struct PageDown;
 
 impl Command for PageDown {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let page = super::parse_prenum().unwrap_or(1);
         let page_len = misc::body_height() as usize;
 
@@ -99,7 +99,7 @@ impl Command for PageDown {
 pub struct PageUp;
 
 impl Command for PageUp {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let page = super::parse_prenum().unwrap_or(1);
         let page_len = misc::body_height() as usize;
 
@@ -116,7 +116,7 @@ impl Command for PageUp {
 pub struct MoveParent;
 
 impl Command for MoveParent {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -151,7 +151,7 @@ impl Command for MoveParent {
 pub struct EnterDirOrEdit;
 
 impl Command for EnterDirOrEdit {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let cursor = cursor::captured();
         let menu = menu::refs();
 
@@ -214,7 +214,7 @@ fn enter_dir(target_path: &std::path::Path, cursor: &cursor::Cursor) {
     }
 }
 
-fn enter_file(target_path: &std::path::Path) -> Result<(), app::Error> {
+fn enter_file(target_path: &std::path::Path) -> Result<(), crate::Error> {
     let mut cmd = config::load().editor.clone();
     let mut in_term = true;
 
@@ -253,7 +253,7 @@ fn enter_file(target_path: &std::path::Path) -> Result<(), app::Error> {
         .args(args)
         .arg(target_path)
         .status()
-        .map_err(|e| app::Error::CommandExecutionFailed(cmd.to_owned(), e.kind().to_string()))?;
+        .map_err(|e| crate::Error::CommandExecutionFailed(cmd.to_owned(), e.kind().to_string()))?;
 
     if in_term {
         app::enable_tui()?;

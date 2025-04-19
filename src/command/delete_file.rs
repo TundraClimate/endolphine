@@ -4,7 +4,7 @@ use crate::{app, clipboard, cursor, input, menu, misc};
 pub struct AskDelete;
 
 impl Command for AskDelete {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -85,7 +85,7 @@ pub struct DeleteFileOrDir {
 }
 
 impl Command for DeleteFileOrDir {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let files = misc::sorted_child_files(&app::get_path());
         let Some(under_cursor_file) = files.get(cursor::load().current()) else {
             crate::sys_log!(
@@ -156,7 +156,7 @@ pub struct DeleteSelected {
 }
 
 impl Command for DeleteSelected {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let selected = misc::sorted_child_files(&app::get_path())
             .into_iter()
             .enumerate()

@@ -4,7 +4,7 @@ use crate::{app, cursor, input, menu, misc};
 pub struct Search;
 
 impl Command for Search {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -20,7 +20,7 @@ impl Command for Search {
 pub struct SearchNext;
 
 impl Command for SearchNext {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let cursor = cursor::load();
 
         let child_files = misc::sorted_child_files(&app::get_path());

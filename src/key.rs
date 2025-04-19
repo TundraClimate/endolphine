@@ -491,7 +491,7 @@ enum KeyCode {
 impl KeyCode {
     fn from_ascii(ascii: u8) -> KeyCode {
         if !matches!(ascii, 0..128) {
-            crate::app::Error::IncorrectProgram(
+            crate::Error::IncorrectProgram(
                 String::from("key::KeyCode::from_ascii"),
                 String::from("Trying convert a non ascii code to a key"),
             )

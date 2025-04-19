@@ -1,108 +1,3 @@
-use crate::{
-    canvas,
-    config::{self, Config},
-    global, misc,
-};
-use crossterm::{cursor, terminal};
-use std::{
-    path::{Path, PathBuf},
-    sync::{
-        RwLock,
-        atomic::{AtomicBool, AtomicU8, AtomicU16, Ordering},
-    },
-};
-use tokio::time::{self, Duration, Instant};
-
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Unable to change the screen mode")]
-    ScreenModeChangeFailed,
-
-    #[error("filesystem error: {0}")]
-    #[allow(clippy::enum_variant_names)]
-    FilesystemError(String),
-
-    #[error("The struct parsing failed: {0}")]
-    TomlParseFailed(String),
-
-    #[error("invalid argument: {0}")]
-    InvalidArgument(String),
-
-    #[error("Found error in running \"{0}\": {1}")]
-    CommandExecutionFailed(String, String),
-
-    #[error("Display the log failed")]
-    LogDisplayFailed,
-
-    #[error("The row rendering failed")]
-    RowRenderingFailed,
-
-    #[error("The input-area rendering failed")]
-    InputRenderingFailed,
-
-    #[error("Found platform error: {0}")]
-    #[allow(clippy::enum_variant_names)]
-    PlatformError(String),
-
-    #[error("Screen flush failed: {0}")]
-    ScreenFlushFailed(String),
-
-    #[error("out log failed: {0}")]
-    OutLogToFileFailed(String),
-
-    #[error("found incorrect program code: {0}:{1}")]
-    IncorrectProgram(String, String),
-}
-
-impl Error {
-    pub fn handle(self) {
-        match self {
-            Self::CommandExecutionFailed(cmd, kind) => {
-                crate::sys_log!("w", "Can't be execute \"{}\": {}", cmd, kind);
-                crate::log!("Failed to run \"{}\": {}", cmd, kind);
-            }
-            Self::ScreenModeChangeFailed => {
-                crate::sys_log!(
-                    "e",
-                    "Couldn't change the screen mode: disabled the mode in terminal or operation system"
-                );
-
-                panic!("{}", self);
-            }
-            Self::LogDisplayFailed | Self::RowRenderingFailed | Self::InputRenderingFailed => {
-                crate::sys_log!("e", "Rendering failed");
-
-                panic!("{}", self);
-            }
-            Self::ScreenFlushFailed(_) => {
-                crate::sys_log!("e", "The stdout can't flush");
-
-                panic!("{}", self);
-            }
-            Self::IncorrectProgram(loc, info) => {
-                crate::sys_log!("e", "Found incorrect program");
-
-                disable_tui().ok();
-
-                eprintln!(
-                    "{}{}",
-                    crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
-                    crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-                );
-                eprintln!("{:-^41}", "FOUND INCORRECT PROGRAM");
-                let issue_url = "https://github.com/TundraClimate/endolphine/issues";
-                eprintln!(" Please report here: {}", issue_url);
-                eprintln!(" The error was found: {}", loc);
-                eprintln!(" Error infomation: {}", info);
-                eprintln!("{}", "-".repeat(41));
-
-                std::process::exit(1)
-            }
-            _ => panic!("{}", self),
-        }
-    }
-}
-
 #[macro_export]
 macro_rules! global {
     (static $name:ident : $type:ty = $init:expr;) => {
@@ -135,48 +30,48 @@ macro_rules! sys_log {
             .append(true)
             .create(true)
             .open(output_path)
-            .map_err(|e| $crate::app::Error::OutLogToFileFailed(e.kind().to_string()))
+            .map_err(|e| $crate::Error::OutLogToFileFailed(e.kind().to_string()))
             .unwrap();
         output_file
             .write_all(fmt_txt.as_bytes())
-            .map_err(|e| $crate::app::Error::OutLogToFileFailed(e.kind().to_string()))
+            .map_err(|e| $crate::Error::OutLogToFileFailed(e.kind().to_string()))
             .unwrap();
     }};
 }
 
-pub fn enable_tui() -> Result<(), Error> {
-    terminal::enable_raw_mode()
+pub fn enable_tui() -> Result<(), crate::Error> {
+    crossterm::terminal::enable_raw_mode()
         .and_then(|_| {
             enable_render();
             crossterm::execute!(
                 std::io::stdout(),
-                terminal::EnterAlternateScreen,
-                cursor::Hide,
-                terminal::DisableLineWrap,
+                crossterm::terminal::EnterAlternateScreen,
+                crossterm::cursor::Hide,
+                crossterm::terminal::DisableLineWrap,
             )
         })
-        .map_err(|_| Error::ScreenModeChangeFailed)
+        .map_err(|_| crate::Error::ScreenModeChangeFailed)
 }
 
-pub fn disable_tui() -> Result<(), Error> {
-    terminal::disable_raw_mode()
+pub fn disable_tui() -> Result<(), crate::Error> {
+    crossterm::terminal::disable_raw_mode()
         .and_then(|_| {
             disable_render();
             crossterm::execute!(
                 std::io::stdout(),
-                terminal::LeaveAlternateScreen,
-                cursor::Show,
-                terminal::EnableLineWrap,
+                crossterm::terminal::LeaveAlternateScreen,
+                crossterm::cursor::Show,
+                crossterm::terminal::EnableLineWrap,
             )
         })
-        .map_err(|_| Error::ScreenModeChangeFailed)
+        .map_err(|_| crate::Error::ScreenModeChangeFailed)
 }
 
-pub async fn launch(path: &Path) -> Result<(), Error> {
-    if !misc::exists_item(path) || path.is_file() {
+pub async fn launch(path: &std::path::Path) -> Result<(), crate::Error> {
+    if !crate::misc::exists_item(path) || path.is_file() {
         sys_log!("e", "Invalid input detected");
 
-        return Err(Error::InvalidArgument(format!(
+        return Err(crate::Error::InvalidArgument(format!(
             "invalid path (-> {})",
             path.to_string_lossy()
         )));
@@ -193,7 +88,7 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
             .unwrap_or(path.to_string_lossy().to_string())
     );
 
-    if config::check().is_err() {
+    if crate::config::check().is_err() {
         crate::log!("Failed load config.toml, use the Default config");
     }
 
@@ -209,23 +104,23 @@ pub async fn launch(path: &Path) -> Result<(), Error> {
     Ok(())
 }
 
-fn init(path: &Path) -> Result<(), Error> {
+fn init(path: &std::path::Path) -> Result<(), crate::Error> {
     let path = path.canonicalize().map_err(|e| {
         crate::sys_log!("e", "Couldn't get the canonicalized path");
-        Error::FilesystemError(e.kind().to_string())
+        crate::Error::FilesystemError(e.kind().to_string())
     })?;
 
     set_path(&path);
 
-    let c = misc::child_files_len(&path);
+    let c = crate::misc::child_files_len(&path);
     crate::cursor::load().resize(c);
 
-    if config::load().delete.for_tmp {
-        let tmp_path = Path::new("/tmp").join("endolphine");
+    if crate::config::load().delete.for_tmp {
+        let tmp_path = std::path::Path::new("/tmp").join("endolphine");
         if !tmp_path.exists() {
             std::fs::create_dir_all(tmp_path).map_err(|e| {
                 crate::sys_log!("e", "Couldn't create the \"/tmp/\"");
-                Error::FilesystemError(e.kind().to_string())
+                crate::Error::FilesystemError(e.kind().to_string())
             })?;
         }
     }
@@ -241,35 +136,36 @@ fn init(path: &Path) -> Result<(), Error> {
     if !log_path.exists() {
         std::fs::create_dir_all(log_path).map_err(|e| {
             crate::sys_log!("e", "Couldn't create the log directory");
-            Error::FilesystemError(e.kind().to_string())
+            crate::Error::FilesystemError(e.kind().to_string())
         })?;
     }
 
     Ok(())
 }
 
-pub fn config_init() -> Result<(), Error> {
-    let conf_path = config::file_path();
+pub fn config_init() -> Result<(), crate::Error> {
+    let conf_path = crate::config::file_path();
     if let Some(conf_path) = conf_path {
         if !conf_path.exists() {
-            let parent = misc::parent(&conf_path);
+            let parent = crate::misc::parent(&conf_path);
 
             if !parent.exists() {
                 std::fs::create_dir_all(parent).map_err(|e| {
                     crate::sys_log!("e", "Couldn't create the configration dir");
-                    Error::FilesystemError(e.kind().to_string())
+                    crate::Error::FilesystemError(e.kind().to_string())
                 })?;
             }
 
-            let config_default = toml::to_string_pretty(&Config::default()).map_err(|e| {
-                crate::sys_log!("e", "Couldn't generate the default configration");
-                Error::TomlParseFailed(e.to_string())
-            })?;
+            let config_default = toml::to_string_pretty(&crate::config::Config::default())
+                .map_err(|e| {
+                    crate::sys_log!("e", "Couldn't generate the default configration");
+                    crate::Error::TomlParseFailed(e.to_string())
+                })?;
 
             if !conf_path.exists() {
                 std::fs::write(&conf_path, config_default).map_err(|e| {
                     crate::sys_log!("e", "Couldn't create the configration file");
-                    Error::FilesystemError(e.kind().to_string())
+                    crate::Error::FilesystemError(e.kind().to_string())
                 })?;
             }
         }
@@ -280,8 +176,8 @@ pub fn config_init() -> Result<(), Error> {
 
 fn init_keymapping() {
     use crate::command;
+    use crate::config::register_key;
     use AppMode::{Input, Normal, Visual};
-    use config::register_key;
 
     register_key(Normal, "ZZ".into(), command::ExitApp);
     register_key(Normal, "<ESC>".into(), command::ResetView);
@@ -297,15 +193,18 @@ fn init_keymapping() {
     register_key(Normal, "M".into(), command::MenuToggle);
     register_key(Normal, "m".into(), command::MenuMove);
     register_key(Normal, "a".into(), command::AskCreate);
-    if config::load().delete.ask {
+    if crate::config::load().delete.ask {
         register_key(Normal, "d".into(), command::AskDelete);
     } else {
         register_key(
             Normal,
             "dd".into(),
             command::DeleteFileOrDir {
-                use_tmp: config::load().delete.for_tmp,
-                yank_and_native: (config::load().delete.yank, config::load().native_clip),
+                use_tmp: crate::config::load().delete.for_tmp,
+                yank_and_native: (
+                    crate::config::load().delete.yank,
+                    crate::config::load().native_clip,
+                ),
             },
         );
     }
@@ -314,7 +213,7 @@ fn init_keymapping() {
         Normal,
         "yy".into(),
         command::Yank {
-            native: config::load().native_clip,
+            native: crate::config::load().native_clip,
         },
     );
     register_key(Normal, "p".into(), command::AskPaste);
@@ -335,15 +234,18 @@ fn init_keymapping() {
     register_key(Visual, "M".into(), command::MenuToggle);
     register_key(Visual, "m".into(), command::MenuMove);
     register_key(Visual, "a".into(), command::AskCreate);
-    if config::load().delete.ask {
+    if crate::config::load().delete.ask {
         register_key(Visual, "d".into(), command::AskDelete);
     } else {
         register_key(
             Visual,
             "d".into(),
             command::DeleteSelected {
-                use_tmp: config::load().delete.for_tmp,
-                yank_and_native: (config::load().delete.yank, config::load().native_clip),
+                use_tmp: crate::config::load().delete.for_tmp,
+                yank_and_native: (
+                    crate::config::load().delete.yank,
+                    crate::config::load().native_clip,
+                ),
             },
         );
     }
@@ -352,7 +254,7 @@ fn init_keymapping() {
         Visual,
         "y".into(),
         command::Yank {
-            native: config::load().native_clip,
+            native: crate::config::load().native_clip,
         },
     );
     register_key(Visual, "p".into(), command::AskPaste);
@@ -461,7 +363,7 @@ fn init_keymapping() {
     register_key(Input, "}".into(), command::InputInsert('}'));
     register_key(Input, "~".into(), command::InputInsert('~'));
 
-    if let Some(ref define) = config::load().keymap {
+    if let Some(ref define) = crate::config::load().keymap {
         if let Some(normal) = define.normal_key_map() {
             normal
                 .into_iter()
@@ -490,7 +392,7 @@ fn event_handler() {
     }
 }
 
-pub fn handle_event() -> Result<(), Error> {
+pub fn handle_event() -> Result<(), crate::Error> {
     match crossterm::event::read() {
         Ok(crossterm::event::Event::Key(key)) => {
             {
@@ -500,26 +402,26 @@ pub fn handle_event() -> Result<(), Error> {
             }
 
             if matches!(current_mode()?, AppMode::Input) {
-                if let Some(cmd_res) = config::eval_input_keymap(&load_buf()) {
+                if let Some(cmd_res) = crate::config::eval_input_keymap(&load_buf()) {
                     clear_key_buf();
                     cmd_res?
                 }
             }
 
-            if !config::has_similar_map(&load_buf(), current_mode()?) {
+            if !crate::config::has_similar_map(&load_buf(), current_mode()?) {
                 clear_key_buf();
 
                 return Ok(());
             }
 
-            if let Some(cmd_res) = config::eval_keymap(current_mode()?, &load_buf()) {
+            if let Some(cmd_res) = crate::config::eval_keymap(current_mode()?, &load_buf()) {
                 clear_key_buf();
                 cmd_res?
             }
         }
         Ok(crossterm::event::Event::Resize(_, _)) => {
-            crate::cursor::load().resize(misc::child_files_len(&get_path()));
-            canvas::cache_clear();
+            crate::cursor::load().resize(crate::misc::child_files_len(&get_path()));
+            crate::canvas::cache_clear();
         }
         _ => {}
     }
@@ -529,49 +431,49 @@ pub fn handle_event() -> Result<(), Error> {
 
 async fn ui() {
     loop {
-        let start = Instant::now();
+        let start = tokio::time::Instant::now();
 
-        if RENDER.load(Ordering::Relaxed) {
-            if let Err(e) = canvas::render() {
+        if RENDER.load(std::sync::atomic::Ordering::Relaxed) {
+            if let Err(e) = crate::canvas::render() {
                 e.handle();
             }
         }
 
         let elapsed = start.elapsed();
         let tick = 70;
-        if elapsed < Duration::from_millis(tick) {
-            time::sleep(Duration::from_millis(tick) - elapsed).await;
+        if elapsed < tokio::time::Duration::from_millis(tick) {
+            tokio::time::sleep(tokio::time::Duration::from_millis(tick) - elapsed).await;
         }
     }
 }
 
 global! {
-    static PATH: RwLock<PathBuf> = RwLock::new(PathBuf::new());
+    static PATH: std::sync::RwLock<std::path::PathBuf> = std::sync::RwLock::new(std::path::PathBuf::new());
 }
 
-pub fn get_path() -> PathBuf {
+pub fn get_path() -> std::path::PathBuf {
     (*PATH.read().unwrap()).clone()
 }
 
-pub fn set_path(new_path: &Path) {
+pub fn set_path(new_path: &std::path::Path) {
     let mut lock = PATH.write().unwrap();
     *lock = new_path.to_path_buf();
 }
 
 global! {
-    static RENDER: AtomicBool = AtomicBool::new(false);
+    static RENDER: std::sync::atomic::AtomicBool = std::sync::atomic::AtomicBool::new(false);
 }
 
 pub fn disable_render() {
-    RENDER.swap(false, Ordering::Relaxed);
+    RENDER.swap(false, std::sync::atomic::Ordering::Relaxed);
 }
 
 pub fn enable_render() {
-    RENDER.swap(true, Ordering::Relaxed);
+    RENDER.swap(true, std::sync::atomic::Ordering::Relaxed);
 }
 
 global! {
-    static MODE: AtomicU8 = AtomicU8::new(AppMode::Normal as u8);
+    static MODE: std::sync::atomic::AtomicU8 = std::sync::atomic::AtomicU8::new(AppMode::Normal as u8);
 }
 
 #[repr(u8)]
@@ -584,8 +486,8 @@ pub enum AppMode {
     // Command,
 }
 
-pub fn current_mode() -> Result<AppMode, Error> {
-    let loaded = MODE.load(Ordering::Relaxed);
+pub fn current_mode() -> Result<AppMode, crate::Error> {
+    let loaded = MODE.load(std::sync::atomic::Ordering::Relaxed);
 
     if loaded != AppMode::Normal as u8
         && loaded != AppMode::Visual as u8
@@ -593,7 +495,7 @@ pub fn current_mode() -> Result<AppMode, Error> {
     /* && loaded != AppMode::Command as u8 */
     {
         crate::sys_log!("e", "Unknown app mode: {}", loaded);
-        return Err(Error::IncorrectProgram(
+        return Err(crate::Error::IncorrectProgram(
             String::from("app::current_mode"),
             String::from("Loaded invalid mode"),
         ));
@@ -610,11 +512,11 @@ pub fn current_mode() -> Result<AppMode, Error> {
 }
 
 pub fn switch_mode(mode: AppMode) {
-    MODE.swap(mode as u8, Ordering::Relaxed);
+    MODE.swap(mode as u8, std::sync::atomic::Ordering::Relaxed);
 }
 
 global! {
-    static GREP: RwLock<String> =  RwLock::new(String::new());
+    static GREP: std::sync::RwLock<String> =  std::sync::RwLock::new(String::new());
 }
 
 pub fn read_grep() -> String {
@@ -661,23 +563,29 @@ pub fn sync_grep(input: &str) {
 }
 
 global! {
-    static PROCS_COUNT: AtomicU16 = AtomicU16::new(0);
+    static PROCS_COUNT: std::sync::atomic::AtomicU16 = std::sync::atomic::AtomicU16::new(0);
 }
 
 pub fn proc_count_up() {
-    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) + 1, Ordering::Relaxed);
+    PROCS_COUNT.store(
+        PROCS_COUNT.load(std::sync::atomic::Ordering::Relaxed) + 1,
+        std::sync::atomic::Ordering::Relaxed,
+    );
 }
 
 pub fn proc_count_down() {
-    PROCS_COUNT.store(PROCS_COUNT.load(Ordering::Relaxed) - 1, Ordering::Relaxed);
+    PROCS_COUNT.store(
+        PROCS_COUNT.load(std::sync::atomic::Ordering::Relaxed) - 1,
+        std::sync::atomic::Ordering::Relaxed,
+    );
 }
 
 pub fn procs() -> u16 {
-    PROCS_COUNT.load(Ordering::Relaxed)
+    PROCS_COUNT.load(std::sync::atomic::Ordering::Relaxed)
 }
 
 global! {
-    static KEYBUF: RwLock<Vec<crate::key::Key>> = RwLock::new(vec![]);
+    static KEYBUF: std::sync::RwLock<Vec<crate::key::Key>> = std::sync::RwLock::new(vec![]);
 }
 
 pub fn push_key_buf(key: crate::key::Key) {

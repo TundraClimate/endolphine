@@ -4,7 +4,7 @@ use crate::{app, cursor, input, menu, misc};
 pub struct AskRename;
 
 impl Command for AskRename {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -36,7 +36,7 @@ pub struct Rename {
 }
 
 impl Command for Rename {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let path = app::get_path();
 
         if let Some(under_cursor_file) =

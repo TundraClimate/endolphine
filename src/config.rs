@@ -349,17 +349,14 @@ pub fn has_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
     })
 }
 
-pub fn eval_input_keymap(keymap: &[Key]) -> Option<Result<(), crate::app::Error>> {
+pub fn eval_input_keymap(keymap: &[Key]) -> Option<Result<(), crate::Error>> {
     let lock = KEYMAP_REGISTRY.read().unwrap();
     let mode = crate::app::AppMode::Input as u8;
     lock.get(&(mode, Keymap::new(keymap).to_string()))
         .map(|cmd| cmd.run())
 }
 
-pub fn eval_keymap(
-    mode: crate::app::AppMode,
-    keymap: &[Key],
-) -> Option<Result<(), crate::app::Error>> {
+pub fn eval_keymap(mode: crate::app::AppMode, keymap: &[Key]) -> Option<Result<(), crate::Error>> {
     let lock = KEYMAP_REGISTRY.read().unwrap();
     let keymap = keymap
         .iter()

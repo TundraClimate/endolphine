@@ -1,4 +1,4 @@
-use crate::{app, global, theme};
+use crate::{global, theme};
 use crossterm::{
     cursor::MoveTo,
     style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
@@ -34,7 +34,7 @@ macro_rules! log {
             terminal::Clear(ClearType::UntilNewLine)
         )
         .unwrap_or_else(|_| {
-            $crate::app::Error::LogDisplayFailed.handle();
+            $crate::Error::LogDisplayFailed.handle();
         });
     }};
 
@@ -68,19 +68,19 @@ trait Widget {
         tag: &str,
         row: u16,
         cmds: D,
-    ) -> Result<(), app::Error> {
+    ) -> Result<(), crate::Error> {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
             Self::render_row(row, cmds.to_string()).map_err(|_| {
                 crate::sys_log!("e", "The widget rendering failed: ID={}", Self::ID);
-                app::Error::RowRenderingFailed
+                crate::Error::RowRenderingFailed
             })
         } else {
             Ok(())
         }
     }
 
-    fn render(size: (u16, u16)) -> Result<(), app::Error>;
+    fn render(size: (u16, u16)) -> Result<(), crate::Error>;
 
     fn render_row(row: u16, cmds: String) -> std::io::Result<()> {
         crossterm::queue!(
@@ -95,10 +95,10 @@ trait Widget {
     }
 }
 
-pub fn render() -> Result<(), app::Error> {
+pub fn render() -> Result<(), crate::Error> {
     let (width, height) = crossterm::terminal::size().map_err(|e| {
         crate::sys_log!("e", "Couldn't get the terminal size");
-        app::Error::PlatformError(e.kind().to_string())
+        crate::Error::PlatformError(e.kind().to_string())
     })?;
 
     if height <= 4 {
@@ -121,7 +121,7 @@ pub fn render() -> Result<(), app::Error> {
 
     std::io::stdout()
         .flush()
-        .map_err(|e| app::Error::ScreenFlushFailed(e.kind().to_string()))?;
+        .map_err(|e| crate::Error::ScreenFlushFailed(e.kind().to_string()))?;
 
     Ok(())
 }

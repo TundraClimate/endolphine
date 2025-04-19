@@ -4,7 +4,7 @@ use crate::{app, clipboard, config, cursor, input, menu, misc};
 pub struct AskPaste;
 
 impl Command for AskPaste {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -41,7 +41,7 @@ pub struct Paste {
 }
 
 impl Command for Paste {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let Some(files) = read_clipboard(self.native) else {
             return Ok(());
         };

@@ -3,7 +3,7 @@ use super::Command;
 pub struct VisualSelect;
 
 impl Command for VisualSelect {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if crate::menu::refs().is_enabled() {
             return Ok(());
         }

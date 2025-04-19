@@ -3,7 +3,7 @@ use super::Command;
 pub struct Remapping(pub crate::key::Keymap);
 
 impl Command for Remapping {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let keymap = self.0.as_vec();
         let (mut begin, mut end) = (0usize, 0usize);
 

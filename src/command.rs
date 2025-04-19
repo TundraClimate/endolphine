@@ -30,7 +30,7 @@ pub use visual::VisualSelect;
 pub use yank_file::Yank;
 
 pub trait Command: Send + Sync {
-    fn run(&self) -> Result<(), crate::app::Error>;
+    fn run(&self) -> Result<(), crate::Error>;
 }
 
 fn parse_prenum() -> Option<usize> {

@@ -4,7 +4,7 @@ use crate::{app, cursor, input, menu, misc};
 pub struct AskCreate;
 
 impl Command for AskCreate {
-    fn run(&self) -> Result<(), app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         if menu::refs().is_enabled() {
             return Ok(());
         }
@@ -24,7 +24,7 @@ pub struct CreateFileOrDir {
 }
 
 impl Command for CreateFileOrDir {
-    fn run(&self) -> Result<(), crate::app::Error> {
+    fn run(&self) -> Result<(), crate::Error> {
         let path = app::get_path().join(&self.content);
 
         if path.exists() {

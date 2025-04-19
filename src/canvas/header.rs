@@ -10,7 +10,7 @@ pub struct Header;
 impl Widget for Header {
     const ID: u8 = 0;
 
-    fn render(size: (u16, u16)) -> Result<(), app::Error> {
+    fn render(size: (u16, u16)) -> Result<(), crate::Error> {
         let current_path = app::get_path();
         let filename = format!("{}/", misc::file_name(&current_path));
 
