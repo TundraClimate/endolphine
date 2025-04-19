@@ -477,7 +477,7 @@ fn init_keymapping() {
         if let Some(input) = define.input_key_map() {
             input
                 .into_iter()
-                .for_each(|(from, to)| register_key(Visual, from, to))
+                .for_each(|(from, to)| register_key(Input, from, to))
         }
     }
 }
