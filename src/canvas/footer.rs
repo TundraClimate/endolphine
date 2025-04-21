@@ -1,4 +1,4 @@
-use super::Widget;
+use super::View;
 use crate::{app, theme};
 use crossterm::{
     cursor::MoveTo,
@@ -7,7 +7,7 @@ use crossterm::{
 
 pub struct Footer;
 
-impl Widget for Footer {
+impl View for Footer {
     const ID: u8 = 2;
 
     fn render(size: (u16, u16)) -> Result<(), crate::Error> {

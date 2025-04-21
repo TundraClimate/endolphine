@@ -1,4 +1,4 @@
-use super::Widget;
+use super::View;
 use crate::{menu, misc, theme};
 use crossterm::{
     cursor::MoveTo,
@@ -34,7 +34,7 @@ fn render_menu_line(
     Ok(())
 }
 
-impl Widget for Menu {
+impl View for Menu {
     const ID: u8 = 3;
 
     fn render(_size: (u16, u16)) -> Result<(), crate::Error> {

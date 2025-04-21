@@ -1,4 +1,4 @@
-use super::Widget;
+use super::View;
 use crate::{app, cursor, misc, theme};
 use crossterm::{
     cursor::MoveTo,
@@ -7,7 +7,7 @@ use crossterm::{
 
 pub struct Header;
 
-impl Widget for Header {
+impl View for Header {
     const ID: u8 = 0;
 
     fn render(size: (u16, u16)) -> Result<(), crate::Error> {

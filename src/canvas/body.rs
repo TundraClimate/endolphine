@@ -1,4 +1,4 @@
-use super::Widget;
+use super::View;
 use crate::{app, cursor, input, misc, theme};
 use chrono::{DateTime, Local};
 use crossterm::{
@@ -53,7 +53,7 @@ fn render_input(pos: (u16, u16), width: u16, padding: (u16, u16)) -> Result<(), 
     .map_err(|_| {
         crate::sys_log!(
             "e",
-            "The widget rendering failed: ID={}, from input",
+            "The view rendering failed: ID={}, from input",
             Body::ID
         );
         crate::Error::InputRenderingFailed
@@ -284,7 +284,7 @@ impl std::fmt::Display for BodyRow {
     }
 }
 
-impl Widget for Body {
+impl View for Body {
     const ID: u8 = 1;
 
     fn render(_size: (u16, u16)) -> Result<(), crate::Error> {

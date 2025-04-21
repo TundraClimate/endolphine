@@ -61,7 +61,7 @@ macro_rules! dbg_log {
     }};
 }
 
-trait Widget {
+trait View {
     const ID: u8;
 
     fn cached_render_row<D: std::fmt::Display>(
@@ -72,7 +72,7 @@ trait Widget {
         if !cache_match((row, Self::ID), tag) {
             cache_insert((row, Self::ID), tag.to_string());
             Self::render_row(row, cmds.to_string()).map_err(|_| {
-                crate::sys_log!("e", "The widget rendering failed: ID={}", Self::ID);
+                crate::sys_log!("e", "The view rendering failed: ID={}", Self::ID);
                 crate::Error::RowRenderingFailed
             })
         } else {
