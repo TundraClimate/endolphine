@@ -5,6 +5,7 @@ mod clipboard;
 mod command;
 mod config;
 mod cursor;
+mod initialize;
 mod input;
 mod key;
 mod menu;
@@ -76,7 +77,7 @@ async fn start() -> Result<(), Error> {
         std::process::exit(1);
     }));
 
-    app::config_init()?;
+    initialize::config()?;
 
     let args = Args::parse();
 
