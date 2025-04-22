@@ -213,35 +213,62 @@ pub struct KeymapConfig {
 
 impl KeymapConfig {
     pub fn normal_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.normal.as_ref().map(|normal| {
+        self.normal.as_ref().and_then(|normal| {
             normal
                 .0
                 .keys()
                 .zip(normal.0.values())
-                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
-                .collect()
+                .try_fold(
+                    Vec::<(Keymap, command::Remapping)>::new(),
+                    |mut acc, (key, val)| {
+                        acc.push((
+                            key.as_str().parse()?,
+                            command::Remapping(val.as_str().parse()?),
+                        ));
+                        Ok::<_, crate::Error>(acc)
+                    },
+                )
+                .ok()
         })
     }
 
     pub fn visual_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.visual.as_ref().map(|visual| {
+        self.visual.as_ref().and_then(|visual| {
             visual
                 .0
                 .keys()
                 .zip(visual.0.values())
-                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
-                .collect()
+                .try_fold(
+                    Vec::<(Keymap, command::Remapping)>::new(),
+                    |mut acc, (key, val)| {
+                        acc.push((
+                            key.as_str().parse()?,
+                            command::Remapping(val.as_str().parse()?),
+                        ));
+                        Ok::<_, crate::Error>(acc)
+                    },
+                )
+                .ok()
         })
     }
 
     pub fn input_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.input.as_ref().map(|input| {
+        self.input.as_ref().and_then(|input| {
             input
                 .0
                 .keys()
                 .zip(input.0.values())
-                .map(|(key, val)| (key.as_str().into(), command::Remapping(val.as_str().into())))
-                .collect()
+                .try_fold(
+                    Vec::<(Keymap, command::Remapping)>::new(),
+                    |mut acc, (key, val)| {
+                        acc.push((
+                            key.as_str().parse()?,
+                            command::Remapping(val.as_str().parse()?),
+                        ));
+                        Ok::<_, crate::Error>(acc)
+                    },
+                )
+                .ok()
         })
     }
 }
@@ -321,10 +348,12 @@ pub fn has_similar_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
     lock.keys().any(|(rmode, keymap)| {
         buf.len() <= keymap.len()
             && mode == *rmode
-            && buf
-                .iter()
-                .enumerate()
-                .all(|(i, k)| Keymap::from(keymap.as_str()).as_vec().get(i) == Some(k))
+            && buf.iter().enumerate().all(|(i, k)| {
+                keymap
+                    .as_str()
+                    .parse::<Keymap>()
+                    .is_ok_and(|key| key.as_vec().get(i) == Some(k))
+            })
     })
 }
 
@@ -342,10 +371,12 @@ pub fn has_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
     lock.keys().any(|(rmode, keymap)| {
         buf.len() == keymap.len()
             && mode == *rmode
-            && buf
-                .iter()
-                .enumerate()
-                .all(|(i, k)| Keymap::from(keymap.as_str()).as_vec().get(i) == Some(k))
+            && buf.iter().enumerate().all(|(i, k)| {
+                keymap
+                    .as_str()
+                    .parse::<Keymap>()
+                    .is_ok_and(|key| key.as_vec().get(i) == Some(k))
+            })
     })
 }
 

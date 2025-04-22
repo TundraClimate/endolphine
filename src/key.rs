@@ -10,14 +10,8 @@ impl Keymap {
     }
 }
 
-impl From<&str> for Keymap {
-    fn from(value: &str) -> Self {
-        value.parse().unwrap_or(Keymap(vec![]))
-    }
-}
-
 impl std::str::FromStr for Keymap {
-    type Err = String;
+    type Err = crate::Error;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         let mut in_tag = false;
@@ -43,7 +37,7 @@ impl std::str::FromStr for Keymap {
         }
 
         if in_tag {
-            return Err(String::from("invalid format"));
+            return Err(crate::Error::ParseKeyFailed(String::from("invalid format")));
         }
 
         Ok(Keymap(keys))
@@ -262,20 +256,22 @@ impl PartialEq for Key {
 }
 
 impl std::str::FromStr for Key {
-    type Err = String;
+    type Err = crate::Error;
 
     fn from_str(tag: &str) -> Result<Self, Self::Err> {
+        use crate::Error::ParseKeyFailed;
+
         if !tag.is_ascii() {
-            return Err(String::from("unsupported key format"));
+            return Err(ParseKeyFailed(String::from("unsupported key format")));
         }
 
         if tag.is_empty() {
-            return Err(String::from("format is empty"));
+            return Err(ParseKeyFailed(String::from("format is empty")));
         }
 
         if tag.len() == 1 {
             let Ok(tag) = char::from_str(tag) else {
-                return Err(String::from("unsupported key format"));
+                return Err(ParseKeyFailed(String::from("unsupported key format")));
             };
 
             let modifier = if tag.is_ascii_uppercase() {
@@ -294,7 +290,7 @@ impl std::str::FromStr for Key {
 
                 tag if tag.is_ascii_digit() => KeyCode::from_ascii(tag as u8),
 
-                _ => return Err(String::from("unsupported key format")),
+                _ => return Err(ParseKeyFailed(String::from("unsupported key format"))),
             };
 
             return Ok(Key {
@@ -306,7 +302,7 @@ impl std::str::FromStr for Key {
         let is_special = tag.starts_with("<") && tag.ends_with(">");
 
         if !is_special || tag.len() == 2 {
-            return Err(String::from("unsupported key format"));
+            return Err(ParseKeyFailed(String::from("unsupported key format")));
         }
 
         let is_modded = tag.chars().nth(2).is_some_and(|c| c == '-');
@@ -342,7 +338,7 @@ impl std::str::FromStr for Key {
             "bs" => KeyCode::Backspace,
             "del" => KeyCode::Delete,
             "lt" => KeyCode::LessThanSign,
-            _ => return Err(String::from("unsupported key format")),
+            _ => return Err(ParseKeyFailed(String::from("unsupported key format"))),
         };
 
         Ok(Key {

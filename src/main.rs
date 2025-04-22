@@ -130,6 +130,9 @@ pub enum Error {
 
     #[error("found incorrect program code: {0}:{1}")]
     IncorrectProgram(String, String),
+
+    #[error("parse keys from string failed")]
+    ParseKeyFailed(String),
 }
 
 impl Error {
