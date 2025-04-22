@@ -173,13 +173,48 @@ impl Component for App {
     }
 }
 
+#[derive(Default)]
+struct BodyState {
+    cursor: crate::cursor::Cursor,
+}
+
+struct Body {
+    state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    inner: Vec<Box<dyn Component>>,
+}
+
+impl Body {
+    fn with_state<
+        F: FnOnce(std::sync::Arc<std::sync::RwLock<BodyState>>) -> Vec<Box<dyn Component>>,
+    >(
+        app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+        f: F,
+    ) -> Self {
+        let body_state = std::sync::Arc::new(std::sync::RwLock::new(BodyState::default()));
+
+        Self {
+            state: body_state.clone(),
+            app_state,
+            inner: f(body_state.clone()),
+        }
+    }
+}
+
+impl Component for Body {}
+
 pub fn components() -> Box<dyn Component> {
     Box::new(Root::with_state(|root_state| {
         vec![
             Box::new(KeyReader {
                 root_state: root_state.clone(),
             }),
-            Box::new(App::with_state(|_app_state| vec![])),
+            Box::new(App::with_state(|app_state| {
+                vec![Box::new(Body::with_state(
+                    app_state.clone(),
+                    |_body_state| vec![],
+                ))]
+            })),
         ]
     }))
 }
