@@ -3,6 +3,7 @@ mod builtin;
 mod canvas;
 mod clipboard;
 mod command;
+mod component;
 mod config;
 mod cursor;
 mod initialize;

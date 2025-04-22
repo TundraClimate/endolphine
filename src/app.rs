@@ -95,14 +95,43 @@ pub async fn launch(path: &std::path::Path) -> Result<(), crate::Error> {
 
     let event_handle = tokio::spawn(async move { event_handler() });
 
-    let ui_handle = tokio::spawn(async move { ui().await });
+    /* let ui_handle = tokio::spawn(async move { ui().await }); */
+
+    let cp_handle = tokio::spawn(async move { components().await });
 
     event_handle.await.unwrap();
-    ui_handle.await.unwrap();
+    /* ui_handle.await.unwrap(); */
+    cp_handle.await.unwrap();
 
     disable_tui()?;
 
     Ok(())
+}
+
+async fn components() {
+    let components = crate::component::components();
+
+    if let Err(e) = components.on_init() {
+        e.handle();
+    }
+
+    if let Err(e) = on_tick(&*components).await {
+        e.handle();
+    }
+}
+
+async fn on_tick(components: &dyn crate::component::Component) -> Result<(), crate::Error> {
+    loop {
+        let start = tokio::time::Instant::now();
+
+        components.on_tick()?;
+
+        let elapsed = start.elapsed();
+        let tick = 70;
+        if elapsed < tokio::time::Duration::from_millis(tick) {
+            tokio::time::sleep(tokio::time::Duration::from_millis(tick) - elapsed).await;
+        }
+    }
 }
 
 fn event_handler() {
