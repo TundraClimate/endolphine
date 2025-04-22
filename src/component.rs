@@ -72,9 +72,106 @@ impl Component for KeyReader {
     }
 }
 
-struct App(Vec<Box<dyn Component>>);
+struct CurrentPath {
+    inner: std::path::PathBuf,
+}
 
-impl Component for App {}
+impl CurrentPath {
+    fn swap(&mut self, path: &std::path::Path) -> Result<(), crate::Error> {
+        if !path.is_dir() {
+            return Err(crate::Error::InvalidArgument(
+                path.to_string_lossy().to_string(),
+            ));
+        }
+
+        self.inner = path.to_path_buf();
+
+        Ok(())
+    }
+
+    fn get(&self) -> &std::path::PathBuf {
+        &self.inner
+    }
+}
+
+impl Default for CurrentPath {
+    fn default() -> Self {
+        use clap::Parser;
+
+        Self {
+            inner: crate::Args::parse().path,
+        }
+    }
+}
+
+enum Mode {
+    Normal,
+    Visual,
+    Input,
+}
+
+impl Default for Mode {
+    fn default() -> Self {
+        Self::Normal
+    }
+}
+
+#[derive(Default)]
+struct ProcessCounter(usize);
+
+impl ProcessCounter {
+    fn up(&mut self) {
+        self.0 = self.0.saturating_add(1);
+    }
+
+    fn down(&mut self) {
+        self.0 = self.0.saturating_sub(1);
+    }
+
+    fn now(&self) -> usize {
+        self.0
+    }
+}
+
+#[derive(Default)]
+struct AppState {
+    path: CurrentPath,
+    pub is_render: bool,
+    pub mode: Mode,
+    process_counter: ProcessCounter,
+}
+
+struct App {
+    state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    inner: Vec<Box<dyn Component>>,
+}
+
+impl App {
+    fn with_state<
+        F: FnOnce(std::sync::Arc<std::sync::RwLock<AppState>>) -> Vec<Box<dyn Component>>,
+    >(
+        f: F,
+    ) -> Self {
+        use std::sync::{Arc, RwLock};
+
+        let app_state = Arc::new(RwLock::new(AppState::default()));
+
+        Self {
+            state: app_state.clone(),
+            inner: f(app_state.clone()),
+        }
+    }
+}
+
+impl Component for App {
+    fn on_init(&self) -> Result<(), crate::Error> {
+        self.inner.iter().try_for_each(|inner| inner.on_init())
+    }
+
+    fn on_tick(&self) -> Result<(), crate::Error> {
+        self.inner.iter().try_for_each(|inner| inner.on_tick())
+    }
+}
 
 pub fn components() -> Box<dyn Component> {
     Box::new(Root::with_state(|root_state| {
@@ -82,7 +179,7 @@ pub fn components() -> Box<dyn Component> {
             Box::new(KeyReader {
                 root_state: root_state.clone(),
             }),
-            Box::new(App(vec![])),
+            Box::new(App::with_state(|_app_state| vec![])),
         ]
     }))
 }
