@@ -93,13 +93,13 @@ pub async fn launch(path: &std::path::Path) -> Result<(), crate::Error> {
         crate::log!("Failed load config.toml, use the Default config");
     }
 
-    let event_handle = tokio::spawn(async move { event_handler() });
+    /* let event_handle = tokio::spawn(async move { event_handler() }); */
 
     /* let ui_handle = tokio::spawn(async move { ui().await }); */
 
     let cp_handle = tokio::spawn(async move { components().await });
 
-    event_handle.await.unwrap();
+    /* event_handle.await.unwrap(); */
     /* ui_handle.await.unwrap(); */
     cp_handle.await.unwrap();
 

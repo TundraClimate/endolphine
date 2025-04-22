@@ -17,11 +17,77 @@ impl KeyBuffer {
     fn push(&mut self, key: crate::key::Key) {
         self.inner.push(key);
     }
+
+    fn clear(&mut self) {
+        self.inner.clear();
+    }
+}
+
+#[derive(Default)]
+struct MappingRegistry {
+    inner: std::collections::HashMap<(u8, String), Box<dyn crate::command::Command>>,
+}
+
+impl MappingRegistry {
+    fn register_key<C: crate::command::Command + 'static>(
+        &mut self,
+        mode: Mode,
+        keymap: crate::key::Keymap,
+        cmd: C,
+    ) {
+        self.inner
+            .insert((mode as u8, keymap.to_string()), Box::new(cmd));
+    }
+
+    fn has_similar_map(&self, buf: &[crate::key::Key], mode: Mode) -> bool {
+        if buf.is_empty() {
+            return false;
+        }
+
+        if buf.iter().all(crate::key::Key::is_digit) {
+            return true;
+        }
+
+        let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
+
+        let mode = mode as u8;
+
+        self.inner.keys().any(|(rmode, keymap)| {
+            buf.len() <= keymap.len()
+                && mode == *rmode
+                && buf.iter().enumerate().all(|(i, k)| {
+                    keymap
+                        .as_str()
+                        .parse::<crate::key::Keymap>()
+                        .is_ok_and(|key| key.as_vec().get(i) == Some(k))
+                })
+        })
+    }
+
+    fn eval_keymap(
+        &self,
+        mode: Mode,
+        keymap: &[crate::key::Key],
+    ) -> Option<Result<(), crate::Error>> {
+        let keymap = keymap
+            .iter()
+            .skip_while(|k| k.is_digit())
+            .cloned()
+            .collect::<Vec<crate::key::Key>>();
+
+        self.inner
+            .get(&(
+                mode as u8,
+                crate::key::Keymap::new(keymap.as_slice()).to_string(),
+            ))
+            .map(|cmd| cmd.run())
+    }
 }
 
 #[derive(Default)]
 struct RootState {
     key_buffer: KeyBuffer,
+    mapping_registry: MappingRegistry,
 }
 
 struct Root(Vec<Box<dyn Component>>);
@@ -104,6 +170,8 @@ impl Default for CurrentPath {
     }
 }
 
+#[repr(u8)]
+#[derive(Clone, Copy)]
 enum Mode {
     Normal,
     Visual,
@@ -173,6 +241,37 @@ impl Component for App {
     }
 }
 
+struct KeyHandler {
+    root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Component for KeyHandler {
+    fn on_tick(&self) -> Result<(), crate::Error> {
+        let mut root = self.root_state.write().unwrap();
+        let app = self.app_state.read().unwrap();
+
+        if !root
+            .mapping_registry
+            .has_similar_map(&root.key_buffer.inner, app.mode)
+        {
+            root.key_buffer.clear();
+
+            return Ok(());
+        }
+
+        if let Some(cmd_res) = root
+            .mapping_registry
+            .eval_keymap(app.mode, &root.key_buffer.inner)
+        {
+            root.key_buffer.clear();
+            cmd_res?;
+        }
+
+        Ok(())
+    }
+}
+
 #[derive(Default)]
 struct BodyState {
     cursor: crate::cursor::Cursor,
@@ -181,6 +280,7 @@ struct BodyState {
 struct Body {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
     inner: Vec<Box<dyn Component>>,
 }
 
@@ -189,6 +289,7 @@ impl Body {
         F: FnOnce(std::sync::Arc<std::sync::RwLock<BodyState>>) -> Vec<Box<dyn Component>>,
     >(
         app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+        root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
         f: F,
     ) -> Self {
         let body_state = std::sync::Arc::new(std::sync::RwLock::new(BodyState::default()));
@@ -196,12 +297,26 @@ impl Body {
         Self {
             state: body_state.clone(),
             app_state,
+            root_state,
             inner: f(body_state.clone()),
         }
     }
 }
 
-impl Component for Body {}
+impl Component for Body {
+    fn on_init(&self) -> Result<(), crate::Error> {
+        {
+            let mut lock = self.root_state.write().unwrap();
+            lock.mapping_registry.register_key(
+                Mode::Normal,
+                "ZZ".parse()?,
+                crate::command::ExitApp,
+            );
+        }
+
+        Ok(())
+    }
+}
 
 pub fn components() -> Box<dyn Component> {
     Box::new(Root::with_state(|root_state| {
@@ -210,10 +325,17 @@ pub fn components() -> Box<dyn Component> {
                 root_state: root_state.clone(),
             }),
             Box::new(App::with_state(|app_state| {
-                vec![Box::new(Body::with_state(
-                    app_state.clone(),
-                    |_body_state| vec![],
-                ))]
+                vec![
+                    Box::new(KeyHandler {
+                        root_state: root_state.clone(),
+                        app_state: app_state.clone(),
+                    }),
+                    Box::new(Body::with_state(
+                        app_state.clone(),
+                        root_state.clone(),
+                        |_body_state| vec![],
+                    )),
+                ]
             })),
         ]
     }))
