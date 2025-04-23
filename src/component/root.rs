@@ -15,6 +15,21 @@ impl KeyBuffer {
     pub fn clear(&mut self) {
         self.inner.clear();
     }
+
+    pub fn prenum(&self) -> Option<usize> {
+        let prenum = crate::app::load_buf()
+            .into_iter()
+            .take_while(crate::key::Key::is_digit)
+            .map(|k| k.as_num())
+            .collect::<Vec<_>>();
+        let mut sum = 0usize;
+
+        for (i, k) in prenum.into_iter().rev().enumerate() {
+            sum += (k - 48) as usize * (10usize.pow(i as u32));
+        }
+
+        if sum == 0 { None } else { Some(sum) }
+    }
 }
 
 #[derive(Default)]
