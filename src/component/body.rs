@@ -18,6 +18,12 @@ impl Selection {
             self.inner = Some((base, other));
         }
     }
+
+    fn select_if_active(&mut self, pos: usize) {
+        if self.is_active() {
+            self.select_area(pos);
+        }
+    }
 }
 
 #[derive(Default)]
@@ -63,10 +69,8 @@ impl Command for MoveDown {
 
         state.cursor.shift_p(self.prenum);
 
-        if state.selection.is_active() {
-            let cursor_pos = state.cursor.current();
-            state.selection.select_area(cursor_pos);
-        }
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
 
         Ok(())
     }
@@ -83,10 +87,43 @@ impl Command for MoveUp {
 
         state.cursor.shift_n(self.prenum);
 
-        if state.selection.is_active() {
-            let cursor_pos = state.cursor.current();
-            state.selection.select_area(cursor_pos);
-        }
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
+
+        Ok(())
+    }
+}
+
+struct MoveTop {
+    state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+}
+
+impl Command for MoveTop {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut state = self.state.write().unwrap();
+
+        state.cursor.reset();
+
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
+
+        Ok(())
+    }
+}
+
+struct MoveBottom {
+    state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+}
+
+impl Command for MoveBottom {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut state = self.state.write().unwrap();
+        let len = state.cursor.len();
+
+        state.cursor.shift_p(len);
+
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
 
         Ok(())
     }
@@ -115,6 +152,20 @@ impl Component for Body {
                 MoveUp {
                     state: self.state.clone(),
                     prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "gg".parse()?,
+                MoveTop {
+                    state: self.state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "G".parse()?,
+                MoveBottom {
+                    state: self.state.clone(),
                 },
             );
         }

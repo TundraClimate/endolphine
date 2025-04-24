@@ -53,6 +53,10 @@ impl Cursor {
         self.index.swap(val, Ordering::Relaxed);
     }
 
+    pub fn len(&self) -> usize {
+        self.size.load(Ordering::Relaxed)
+    }
+
     pub fn next(&self) {
         self.swap_id(self.current() + 1);
     }
