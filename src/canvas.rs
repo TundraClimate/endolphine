@@ -42,7 +42,7 @@ macro_rules! log {
 
 #[macro_export]
 macro_rules! dbg_log {
-    ($($args:expr),+, $is_dbg:expr) => {{
+    ($($args:expr),+) => {{
         use crossterm::cursor;
         use crossterm::style;
         use crossterm::terminal;
@@ -56,7 +56,7 @@ macro_rules! dbg_log {
             style::Print(format!("{} {}", ts, format_args!($($args),+))),
             terminal::Clear(ClearType::UntilNewLine),
         ) {
-            $crate::error::EpError::Display.handle()
+            $crate::Error::LogDisplayFailed.handle()
         };
     }};
 }
