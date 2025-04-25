@@ -129,6 +129,44 @@ impl Command for MoveBottom {
     }
 }
 
+struct PageDown {
+    state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    prenum: usize,
+}
+
+impl Command for PageDown {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut state = self.state.write().unwrap();
+        let page_len = crate::misc::body_height() as usize;
+
+        state.cursor.shift_p(self.prenum * page_len);
+
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
+
+        Ok(())
+    }
+}
+
+struct PageUp {
+    state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    prenum: usize,
+}
+
+impl Command for PageUp {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut state = self.state.write().unwrap();
+        let page_len = crate::misc::body_height() as usize;
+
+        state.cursor.shift_n(self.prenum * page_len);
+
+        let cursor_pos = state.cursor.current();
+        state.selection.select_if_active(cursor_pos);
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -166,6 +204,22 @@ impl Component for Body {
                 "G".parse()?,
                 MoveBottom {
                     state: self.state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "gj".parse()?,
+                PageDown {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "gk".parse()?,
+                PageUp {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
                 },
             );
         }
