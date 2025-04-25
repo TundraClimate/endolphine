@@ -13,6 +13,10 @@ impl Selection {
         self.inner.is_some()
     }
 
+    fn disable(&mut self) {
+        self.inner = None;
+    }
+
     fn select_area(&mut self, other: usize) {
         if let Some((base, _)) = self.inner {
             self.inner = Some((base, other));
@@ -167,6 +171,61 @@ impl Command for PageUp {
     }
 }
 
+fn move_current_dir(
+    app_path: &mut super::app::CurrentPath,
+    body_state: &mut BodyState,
+    path: &std::path::Path,
+) -> Result<(), crate::Error> {
+    body_state.selection.disable();
+    app_path.swap(path)?;
+
+    crate::sys_log!("i", "Change the open directory: {}", path.to_string_lossy());
+
+    let cursor = &mut body_state.cursor;
+
+    cursor.resize(crate::misc::child_files_len(path));
+    cursor.reset();
+
+    Ok(())
+}
+
+struct MoveParent {
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+}
+
+impl Command for MoveParent {
+    fn run(&self) -> Result<(), crate::Error> {
+        let path = { self.app_state.read().unwrap().path.get().clone() };
+
+        if path == std::path::Path::new("/") {
+            return Ok(());
+        }
+
+        let mut app_state = self.app_state.write().unwrap();
+        let mut body_state = self.body_state.write().unwrap();
+        let old_child_files = crate::misc::sorted_child_files(&path);
+        let old_cursor_pos = { body_state.cursor.current() };
+        let parent = crate::misc::parent(&path);
+
+        move_current_dir(&mut app_state.path, &mut body_state, &parent)?;
+
+        let child_files = crate::misc::sorted_child_files(&parent);
+        let cursor = &mut body_state.cursor;
+
+        if let Some(target_path) = old_child_files.get(old_cursor_pos) {
+            let mut cur = cursor.cache.write().unwrap();
+            cur.wrap_node(target_path);
+        }
+
+        if let Some(pos) = child_files.into_iter().position(|p| p == path) {
+            cursor.shift_p(pos);
+        }
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -222,6 +281,14 @@ impl Component for Body {
                     prenum: prenum.unwrap_or(1),
                 },
             );
+            registry.register_key(
+                Mode::Normal,
+                "h".parse()?,
+                MoveParent {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            )
         }
 
         Ok(())

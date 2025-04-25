@@ -2,12 +2,12 @@ use super::Command;
 use super::Component;
 use super::root::RootState;
 
-struct CurrentPath {
+pub struct CurrentPath {
     inner: std::path::PathBuf,
 }
 
 impl CurrentPath {
-    fn swap(&mut self, path: &std::path::Path) -> Result<(), crate::Error> {
+    pub fn swap(&mut self, path: &std::path::Path) -> Result<(), crate::Error> {
         if !path.is_dir() {
             return Err(crate::Error::InvalidArgument(
                 path.to_string_lossy().to_string(),
@@ -19,18 +19,8 @@ impl CurrentPath {
         Ok(())
     }
 
-    fn get(&self) -> &std::path::PathBuf {
+    pub fn get(&self) -> &std::path::PathBuf {
         &self.inner
-    }
-}
-
-impl Default for CurrentPath {
-    fn default() -> Self {
-        use clap::Parser;
-
-        Self {
-            inner: crate::Args::parse().path,
-        }
     }
 }
 
@@ -65,9 +55,8 @@ impl ProcessCounter {
     }
 }
 
-#[derive(Default)]
 pub struct AppState {
-    path: CurrentPath,
+    pub path: CurrentPath,
     pub is_render: bool,
     pub mode: Mode,
     process_counter: ProcessCounter,
@@ -86,9 +75,30 @@ impl App {
         root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
         f: F,
     ) -> Self {
+        use clap::Parser;
         use std::sync::{Arc, RwLock};
 
-        let app_state = Arc::new(RwLock::new(AppState::default()));
+        let path = crate::Args::parse().path;
+
+        let path = match path.canonicalize().map_err(|_| {
+            crate::Error::InvalidArgument(format!(
+                "{} is cannot canonicalize",
+                path.to_string_lossy()
+            ))
+        }) {
+            Ok(path) => path,
+            Err(e) => {
+                e.handle();
+                unreachable!()
+            }
+        };
+
+        let app_state = Arc::new(RwLock::new(AppState {
+            path: CurrentPath { inner: path },
+            is_render: true,
+            mode: Mode::default(),
+            process_counter: ProcessCounter::default(),
+        }));
 
         Self {
             state: app_state.clone(),
