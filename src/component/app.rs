@@ -127,6 +127,7 @@ impl Component for App {
             let registry = &mut lock.mapping_registry;
 
             registry.register_key(Mode::Normal, "ZZ".parse()?, ExitApp);
+            registry.register_key(Mode::Visual, "ZZ".parse()?, ExitApp);
         }
 
         self.inner.iter().try_for_each(|inner| inner.on_init())

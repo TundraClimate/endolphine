@@ -13,6 +13,10 @@ impl Selection {
         self.inner.is_some()
     }
 
+    fn enable(&mut self, base_pos: usize) {
+        self.inner = Some((base_pos, base_pos));
+    }
+
     fn disable(&mut self) {
         self.inner = None;
     }
@@ -172,12 +176,12 @@ impl Command for PageUp {
 }
 
 fn move_current_dir(
-    app_path: &mut super::app::CurrentPath,
+    app_state: &mut AppState,
     body_state: &mut BodyState,
     path: &std::path::Path,
 ) -> Result<(), crate::Error> {
     body_state.selection.disable();
-    app_path.swap(path)?;
+    app_state.path.swap(path)?;
 
     crate::sys_log!("i", "Change the open directory: {}", path.to_string_lossy());
 
@@ -208,7 +212,7 @@ impl Command for MoveParent {
         let old_cursor_pos = { body_state.cursor.current() };
         let parent = crate::misc::parent(&path);
 
-        move_current_dir(&mut app_state.path, &mut body_state, &parent)?;
+        move_current_dir(&mut app_state, &mut body_state, &parent)?;
 
         let child_files = crate::misc::sorted_child_files(&parent);
         let cursor = &mut body_state.cursor;
@@ -255,7 +259,7 @@ impl Command for EnterDirOrEdit {
             let mut app = self.app_state.write().unwrap();
             let mut body = self.body_state.write().unwrap();
 
-            move_current_dir(&mut app.path, &mut body, target_path)?;
+            move_current_dir(&mut app, &mut body, target_path)?;
 
             let cursor = &body.cursor;
             let mut cache = cursor.cache.write().unwrap();
@@ -314,6 +318,32 @@ impl Command for EnterDirOrEdit {
                 crate::app::enable_tui()?;
                 /* canvas::cache_clear(); */
             }
+        }
+
+        Ok(())
+    }
+}
+
+struct VisualSelect {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for VisualSelect {
+    fn run(&self) -> Result<(), crate::Error> {
+        use super::app::Mode;
+
+        let mut app = self.app_state.write().unwrap();
+        let mut body = self.body_state.write().unwrap();
+        let cursor_pos = body.cursor.current();
+        let selection = &mut body.selection;
+
+        if selection.is_active() {
+            selection.disable();
+            app.mode = Mode::Normal;
+        } else {
+            selection.enable(cursor_pos);
+            app.mode = Mode::Visual;
         }
 
         Ok(())
@@ -387,6 +417,14 @@ impl Component for Body {
                 Mode::Normal,
                 "l".parse()?,
                 EnterDirOrEdit {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "V".parse()?,
+                VisualSelect {
                     body_state: self.state.clone(),
                     app_state: self.app_state.clone(),
                 },
