@@ -226,6 +226,100 @@ impl Command for MoveParent {
     }
 }
 
+struct EnterDirOrEdit {
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+}
+
+impl Command for EnterDirOrEdit {
+    fn run(&self) -> Result<(), crate::Error> {
+        let path = { self.app_state.read().unwrap().path.get().clone() };
+        let child_files = crate::misc::sorted_child_files(&path);
+
+        if child_files.is_empty() {
+            return Ok(());
+        }
+
+        let target_path = {
+            let body = self.body_state.read().unwrap();
+            let cursor = &body.cursor;
+
+            let Some(target_path) = child_files.get(cursor.current()) else {
+                return Ok(());
+            };
+
+            target_path
+        };
+
+        if target_path.is_dir() {
+            let mut app = self.app_state.write().unwrap();
+            let mut body = self.body_state.write().unwrap();
+
+            move_current_dir(&mut app.path, &mut body, target_path)?;
+
+            let cursor = &body.cursor;
+            let mut cache = cursor.cache.write().unwrap();
+
+            if let Some(pos) = child_files.iter().position(|e| cache.inner_equal(e)) {
+                cursor.shift_p(pos);
+                cache.unwrap_surface();
+            } else {
+                cache.reset();
+            }
+        } else {
+            let config = crate::config::load();
+            let mut cmd = config.editor.clone();
+            let mut in_term = true;
+
+            if let Some(extension) = target_path.extension().map(|e| e.to_string_lossy()) {
+                if let Some(opts) = config
+                    .open
+                    .as_ref()
+                    .and_then(|opt| opt.corresponding_with(&extension))
+                {
+                    cmd = opts.cmd;
+                    in_term = opts.in_term.unwrap_or(true);
+
+                    crate::sys_log!("i", "Override open command: {}", cmd.join(" "));
+                }
+            }
+
+            let Some((cmd, args)) = cmd.split_first() else {
+                crate::sys_log!("w", "Invalid config: open command is empty");
+                crate::log!("Invalid config: editor or opener");
+
+                return Ok(());
+            };
+
+            if in_term {
+                crate::app::disable_tui()?;
+            }
+
+            crate::sys_log!(
+                "i",
+                "Open file with {}: {}",
+                cmd,
+                target_path.to_string_lossy()
+            );
+
+            std::process::Command::new(cmd)
+                .args(args)
+                .arg(target_path)
+                .status()
+                .map_err(|e| {
+                    crate::Error::CommandExecutionFailed(cmd.to_owned(), e.kind().to_string())
+                })?;
+
+            if in_term {
+                crate::app::enable_tui()?;
+                /* canvas::cache_clear(); */
+            }
+        }
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -288,7 +382,15 @@ impl Component for Body {
                     body_state: self.state.clone(),
                     app_state: self.app_state.clone(),
                 },
-            )
+            );
+            registry.register_key(
+                Mode::Normal,
+                "l".parse()?,
+                EnterDirOrEdit {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
         }
 
         Ok(())
