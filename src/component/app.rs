@@ -55,8 +55,31 @@ impl ProcessCounter {
     }
 }
 
+pub struct Config {
+    inner: crate::config::Config,
+}
+
+impl Config {
+    fn new_with_init() -> Self {
+        Self {
+            inner: crate::config::file_path()
+                .and_then(|p| std::fs::read_to_string(p).ok())
+                .and_then(|c| toml::from_str(&c).ok())
+                .unwrap_or_else(|| {
+                    crate::sys_log!("w", "load config.toml failed, use the default config");
+                    crate::config::Config::default()
+                }),
+        }
+    }
+
+    pub fn load(&self) -> &crate::config::Config {
+        &self.inner
+    }
+}
+
 pub struct AppState {
     pub path: CurrentPath,
+    pub config: Config,
     pub is_render: bool,
     pub mode: Mode,
     process_counter: ProcessCounter,
@@ -95,6 +118,7 @@ impl App {
 
         let app_state = Arc::new(RwLock::new(AppState {
             path: CurrentPath { inner: path },
+            config: Config::new_with_init(),
             is_render: true,
             mode: Mode::default(),
             process_counter: ProcessCounter::default(),

@@ -271,7 +271,8 @@ impl Command for EnterDirOrEdit {
                 cache.reset();
             }
         } else {
-            let config = crate::config::load();
+            let body = self.app_state.read().unwrap();
+            let config = body.config.load();
             let mut cmd = config.editor.clone();
             let mut in_term = true;
 
