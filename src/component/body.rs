@@ -200,7 +200,7 @@ struct MoveParent {
 
 impl Command for MoveParent {
     fn run(&self) -> Result<(), crate::Error> {
-        let path = { self.app_state.read().unwrap().path.get().clone() };
+        let path = self.app_state.read().unwrap().path.get().clone();
 
         if path == std::path::Path::new("/") {
             return Ok(());
@@ -209,7 +209,7 @@ impl Command for MoveParent {
         let mut app_state = self.app_state.write().unwrap();
         let mut body_state = self.body_state.write().unwrap();
         let old_child_files = crate::misc::sorted_child_files(&path);
-        let old_cursor_pos = { body_state.cursor.current() };
+        let old_cursor_pos = body_state.cursor.current();
         let parent = crate::misc::parent(&path);
 
         move_current_dir(&mut app_state, &mut body_state, &parent)?;
@@ -237,7 +237,7 @@ struct EnterDirOrEdit {
 
 impl Command for EnterDirOrEdit {
     fn run(&self) -> Result<(), crate::Error> {
-        let path = { self.app_state.read().unwrap().path.get().clone() };
+        let path = self.app_state.read().unwrap().path.get().clone();
         let child_files = crate::misc::sorted_child_files(&path);
 
         if child_files.is_empty() {
