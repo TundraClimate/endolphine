@@ -51,6 +51,30 @@ impl Command for CancelInput {
     }
 }
 
+struct InputCursorNext {
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for InputCursorNext {
+    fn run(&self) -> Result<(), crate::Error> {
+        self.app_state.write().unwrap().input.cursor_right();
+
+        Ok(())
+    }
+}
+
+struct InputCursorPrev {
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for InputCursorPrev {
+    fn run(&self) -> Result<(), crate::Error> {
+        self.app_state.write().unwrap().input.cursor_left();
+
+        Ok(())
+    }
+}
+
 impl Component for Input {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -70,6 +94,20 @@ impl Component for Input {
                 Mode::Input,
                 "<ESC>".parse()?,
                 CancelInput {
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Input,
+                "<c-l>".parse()?,
+                InputCursorNext {
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Input,
+                "<c-h>".parse()?,
+                InputCursorPrev {
                     app_state: self.app_state.clone(),
                 },
             );
