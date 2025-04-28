@@ -39,6 +39,18 @@ impl Command for CompleteInput {
     }
 }
 
+struct CancelInput {
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for CancelInput {
+    fn run(&self) -> Result<(), crate::Error> {
+        self.app_state.write().unwrap().input.disable();
+
+        Ok(())
+    }
+}
+
 impl Component for Input {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -51,6 +63,13 @@ impl Component for Input {
                 Mode::Input,
                 "<CR>".parse()?,
                 CompleteInput {
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Input,
+                "<ESC>".parse()?,
+                CancelInput {
                     app_state: self.app_state.clone(),
                 },
             );
