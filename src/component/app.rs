@@ -39,14 +39,14 @@ impl Default for Mode {
 }
 
 #[derive(Default)]
-struct ProcessCounter(usize);
+pub struct ProcessCounter(usize);
 
 impl ProcessCounter {
-    fn up(&mut self) {
+    pub fn up(&mut self) {
         self.0 = self.0.saturating_add(1);
     }
 
-    fn down(&mut self) {
+    pub fn down(&mut self) {
         self.0 = self.0.saturating_sub(1);
     }
 
@@ -82,7 +82,8 @@ pub struct AppState {
     pub config: Config,
     pub is_render: bool,
     pub mode: Mode,
-    process_counter: ProcessCounter,
+    pub input: crate::input::Input,
+    pub process_counter: ProcessCounter,
 }
 
 pub struct App {
@@ -121,6 +122,7 @@ impl App {
             config: Config::new_with_init(),
             is_render: true,
             mode: Mode::default(),
+            input: crate::input::Input::default(),
             process_counter: ProcessCounter::default(),
         }));
 

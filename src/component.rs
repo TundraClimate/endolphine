@@ -1,5 +1,6 @@
 mod app;
 mod body;
+mod input;
 mod key_handler;
 mod key_reader;
 mod root;
@@ -21,6 +22,7 @@ trait Command: Send + Sync {
 pub fn components() -> Box<dyn Component> {
     use app::App;
     use body::Body;
+    use input::Input;
     use key_handler::KeyHandler;
     use key_reader::KeyReader;
     use root::Root;
@@ -33,6 +35,10 @@ pub fn components() -> Box<dyn Component> {
             Box::new(App::with_state(root_state.clone(), |app_state| {
                 vec![
                     Box::new(KeyHandler {
+                        root_state: root_state.clone(),
+                        app_state: app_state.clone(),
+                    }),
+                    Box::new(Input {
                         root_state: root_state.clone(),
                         app_state: app_state.clone(),
                     }),
