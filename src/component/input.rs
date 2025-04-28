@@ -75,6 +75,44 @@ impl Command for InputCursorPrev {
     }
 }
 
+struct InputDeleteCurrent {
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for InputDeleteCurrent {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut lock = self.app_state.write().unwrap();
+        let input = &mut lock.input;
+
+        input.buffer_pick();
+
+        if input.load_action().as_deref() == Some("Search") {
+            // crate::app::sync_grep()
+        }
+
+        Ok(())
+    }
+}
+
+struct InputDeleteNext {
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for InputDeleteNext {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut lock = self.app_state.write().unwrap();
+        let input = &mut lock.input;
+
+        input.buffer_pick_next();
+
+        if input.load_action().as_deref() == Some("Search") {
+            // crate::app::sync_grep()
+        }
+
+        Ok(())
+    }
+}
+
 impl Component for Input {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -108,6 +146,20 @@ impl Component for Input {
                 Mode::Input,
                 "<c-h>".parse()?,
                 InputCursorPrev {
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Input,
+                "<BS>".parse()?,
+                InputDeleteCurrent {
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Input,
+                "<s-BS>".parse()?,
+                InputDeleteNext {
                     app_state: self.app_state.clone(),
                 },
             );
