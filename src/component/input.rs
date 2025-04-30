@@ -11,29 +11,10 @@ struct CompleteInput {
 
 impl Command for CompleteInput {
     fn run(&self) -> Result<(), crate::Error> {
-        let (action, content) = {
-            let mut lock = self.app_state.write().unwrap();
-            let input = &mut lock.input;
+        let mut lock = self.app_state.write().unwrap();
 
-            input.complete_input();
-
-            (input.drain_action(), input.drain_storage())
-        };
-
-        let rc = self.app_state.clone();
-
-        tokio::task::spawn_blocking(move || {
-            let Some(content) = content else { return };
-
-            if let Some(action) = action {
-                let mut lock = rc.write().unwrap();
-                let proc_counter = &mut lock.process_counter;
-
-                proc_counter.up();
-                // HANDLER HERE
-                proc_counter.down();
-            }
-        });
+        lock.input.complete_input();
+        lock.mode = super::app::Mode::Normal;
 
         Ok(())
     }
@@ -45,7 +26,10 @@ struct CancelInput {
 
 impl Command for CancelInput {
     fn run(&self) -> Result<(), crate::Error> {
-        self.app_state.write().unwrap().input.disable();
+        let mut lock = self.app_state.write().unwrap();
+
+        lock.input.disable();
+        lock.mode = super::app::Mode::Normal;
 
         Ok(())
     }

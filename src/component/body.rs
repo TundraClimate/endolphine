@@ -351,6 +351,86 @@ impl Command for VisualSelect {
     }
 }
 
+struct CreateFileOrDir {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    content: String,
+    is_file: bool,
+}
+
+impl Command for CreateFileOrDir {
+    fn run(&self) -> Result<(), crate::Error> {
+        let path = self
+            .app_state
+            .read()
+            .unwrap()
+            .path
+            .get()
+            .join(&self.content);
+
+        if path.exists() {
+            crate::sys_log!(
+                "w",
+                "Command CreateFileOrDir failed: \"{}\" is already exists",
+                self.content
+            );
+            crate::log!(
+                "Add new file failed: \"{}\" is already exists",
+                self.content
+            );
+
+            return Ok(());
+        }
+
+        let add_res = if self.is_file {
+            std::fs::write(&path, "")
+        } else {
+            std::fs::create_dir(&path)
+        };
+
+        if let Err(e) = add_res {
+            crate::sys_log!("w", "Command CreateFileOrDir failed: {}", e.kind());
+            crate::log!("Add new file failed: {}", e.kind());
+
+            return Ok(());
+        }
+
+        self.body_state
+            .read()
+            .unwrap()
+            .cursor
+            .resize(crate::misc::child_files_len(&path));
+        crate::sys_log!(
+            "w",
+            "Command CreateFileOrDir successful: create the {}",
+            self.content
+        );
+        crate::log!("\"{}\" create successful", self.content);
+
+        Ok(())
+    }
+}
+
+struct AskCreate {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for AskCreate {
+    fn run(&self) -> Result<(), crate::Error> {
+        self.body_state.write().unwrap().selection.disable();
+        let mut lock = self.app_state.write().unwrap();
+
+        lock.input.enable("", Some("CreateFileOrDir".into()));
+        lock.mode = super::app::Mode::Input;
+
+        crate::sys_log!("i", "Called command: CreateFileOrDir");
+        crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -430,7 +510,70 @@ impl Component for Body {
                     app_state: self.app_state.clone(),
                 },
             );
+            registry.register_key(
+                Mode::Normal,
+                "a".parse()?,
+                AskCreate {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            )
         }
+
+        Ok(())
+    }
+
+    fn on_tick(&self) -> Result<(), crate::Error> {
+        if matches!(self.app_state.read().unwrap().mode, super::app::Mode::Input) {
+            return Ok(());
+        }
+
+        let (action, content) = {
+            let mut lock = self.app_state.write().unwrap();
+            let input = &mut lock.input;
+
+            (input.drain_action(), input.drain_storage())
+        };
+
+        let Some(content) = content else {
+            return Ok(());
+        };
+
+        let app_state = self.app_state.clone();
+        let body_state = self.state.clone();
+
+        tokio::task::spawn_blocking(move || {
+            if let Some(action) = action {
+                {
+                    let mut lock = app_state.write().unwrap();
+                    let proc_counter = &mut lock.process_counter;
+
+                    proc_counter.up();
+                }
+
+                {
+                    if let Err(e) = match action.as_str() {
+                        "CreateFileOrDir" => CreateFileOrDir {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
+                            content: content.to_owned(),
+                            is_file: !content.ends_with("/"),
+                        }
+                        .run(),
+                        _ => Ok(()),
+                    } {
+                        e.handle();
+                    };
+                }
+
+                {
+                    let mut lock = app_state.write().unwrap();
+                    let proc_counter = &mut lock.process_counter;
+
+                    proc_counter.down();
+                }
+            }
+        });
 
         Ok(())
     }
