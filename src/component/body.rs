@@ -665,6 +665,158 @@ impl Command for AskDelete {
     }
 }
 
+struct Paste {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for Paste {
+    fn run(&self) -> Result<(), crate::Error> {
+        let app_state = self.app_state.read().unwrap();
+        let config = &app_state.config.get();
+        let native_clip = config.native_clip;
+
+        let files = if native_clip {
+            if !crate::clipboard::is_cmd_installed() {
+                crate::sys_log!(
+                    "w",
+                    "File paste failed: native command not installed, and config the native-clip is enabled"
+                );
+                crate::log!("Paste failed: command not installed (ex: wl-paste, xclip)");
+
+                return Ok(());
+            }
+
+            match crate::clipboard::read_clipboard_native("text/uri-list") {
+                Ok(text) => text
+                    .lines()
+                    .filter_map(|f| f.strip_prefix("file://"))
+                    .map(std::path::PathBuf::from)
+                    .filter(|f| crate::misc::exists_item(f))
+                    .collect::<Vec<std::path::PathBuf>>(),
+
+                Err(e) => {
+                    crate::sys_log!("w", "Couldn't read a clipboard: {}", e.kind());
+                    crate::log!("Paste failed: {}", e.kind());
+
+                    return Ok(());
+                }
+            }
+        } else {
+            crate::clipboard::read_clipboard()
+                .split('\n')
+                .map(std::path::PathBuf::from)
+                .filter(|c| crate::misc::exists_item(c))
+                .collect::<Vec<_>>()
+        };
+
+        let current_path = app_state.path.get();
+        let suffix = config.paste.similar_file_suffix();
+        let is_overwrite = config.paste.default_overwrite;
+
+        for file in files.iter() {
+            let Ok(metadata) = file.symlink_metadata() else {
+                continue;
+            };
+
+            if !crate::misc::exists_item(file) {
+                continue;
+            }
+
+            let copied_path = current_path.join(crate::misc::file_name(file));
+            let copied_path = if copied_path == *file {
+                let stem = copied_path
+                    .file_stem()
+                    .map(|s| s.to_string_lossy())
+                    .unwrap_or_default();
+                let added_suffix =
+                    if let Some(extension) = copied_path.extension().map(|e| e.to_string_lossy()) {
+                        format!("{}{}.{}", stem, suffix, extension)
+                    } else {
+                        format!("{}{}", stem, suffix)
+                    };
+
+                current_path.join(added_suffix)
+            } else {
+                copied_path
+            };
+
+            if (metadata.is_file() || metadata.is_symlink())
+                && (!crate::misc::exists_item(&copied_path) || is_overwrite)
+            {
+                if let Err(e) = std::fs::copy(file, &copied_path) {
+                    crate::sys_log!("w", "Paste from clipboard failed: {}", e.kind());
+                    crate::log!("Paste failed: \"{}\"", e.kind());
+                }
+            }
+
+            if metadata.is_dir() {
+                for entry in walkdir::WalkDir::new(file).into_iter().flatten() {
+                    if entry.file_type().is_dir() {
+                        continue;
+                    }
+
+                    let Ok(rel_path) = entry.path().strip_prefix(file) else {
+                        continue;
+                    };
+
+                    let copied_path = copied_path.join(rel_path);
+
+                    if !crate::misc::exists_item(&copied_path) || is_overwrite {
+                        let parent = crate::misc::parent(&copied_path);
+
+                        if !parent.exists() {
+                            if let Err(e) = std::fs::create_dir_all(parent) {
+                                crate::sys_log!("w", "Command Paste failed: {}", e.kind());
+                                crate::log!("Paste failed: \"{}\"", e.kind());
+
+                                continue;
+                            }
+                        }
+
+                        if let Err(e) = std::fs::copy(entry.path(), &copied_path) {
+                            crate::sys_log!("w", "Command Paste failed: {}", e.kind());
+                            crate::log!("Paste failed: \"{}\"", e.kind());
+                        }
+                    }
+                }
+            }
+        }
+
+        let body_state = self.body_state.read().unwrap();
+
+        body_state
+            .cursor
+            .resize(crate::misc::child_files_len(current_path));
+        crate::sys_log!("i", "Command Paste successful: {} files", files.len());
+        crate::log!("{} files paste successful.", files.len());
+
+        Ok(())
+    }
+}
+
+struct AskPaste {
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for AskPaste {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut app_state = self.app_state.write().unwrap();
+
+        let default = if app_state.config.get().paste.default_overwrite {
+            "y"
+        } else {
+            ""
+        };
+
+        let input = &mut app_state.input;
+
+        input.enable(default, Some("Paste".into()));
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -868,6 +1020,42 @@ impl Component for Body {
                     },
                 );
             }
+
+            let is_force_paste = self.app_state.read().unwrap().config.get().paste.force_mode;
+
+            if is_force_paste {
+                registry.register_key(
+                    Mode::Normal,
+                    "p".parse()?,
+                    Paste {
+                        body_state: self.state.clone(),
+                        app_state: self.app_state.clone(),
+                    },
+                );
+                registry.register_key(
+                    Mode::Visual,
+                    "p".parse()?,
+                    Paste {
+                        body_state: self.state.clone(),
+                        app_state: self.app_state.clone(),
+                    },
+                );
+            } else {
+                registry.register_key(
+                    Mode::Normal,
+                    "p".parse()?,
+                    AskPaste {
+                        app_state: self.app_state.clone(),
+                    },
+                );
+                registry.register_key(
+                    Mode::Visual,
+                    "p".parse()?,
+                    AskPaste {
+                        app_state: self.app_state.clone(),
+                    },
+                );
+            }
         }
 
         Ok(())
@@ -916,6 +1104,11 @@ impl Component for Body {
                         }
                         .run(),
                         "DeleteSelected" => DeleteSelected {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
+                        }
+                        .run(),
+                        "Paste" => Paste {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                         }
