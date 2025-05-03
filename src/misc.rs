@@ -115,3 +115,35 @@ pub fn into_tmp(paths: &[PathBuf]) -> std::io::Result<()> {
 
     Ok(())
 }
+
+pub fn clip_paths(native: bool, paths: &[PathBuf]) {
+    if native && !crate::clipboard::is_cmd_installed() {
+        crate::sys_log!(
+            "w",
+            "File yank failed: native command not installed, and config the native-clip is enabled"
+        );
+        crate::log!("Yank failed: command not installed (ex: wl-clip, xclip)");
+
+        return;
+    }
+
+    use std::fmt::Write;
+    let text = paths.iter().fold(String::new(), |mut acc, p| {
+        let _ = writeln!(
+            acc,
+            "{}{}",
+            if native { "file://" } else { "" },
+            p.to_string_lossy(),
+        );
+        acc
+    });
+
+    if native {
+        if let Err(e) = crate::clipboard::clip_native(&text, "text/uri-list") {
+            crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
+            crate::log!("Yank failed: {}", e.kind());
+        }
+    } else {
+        crate::clipboard::clip(&text)
+    }
+}

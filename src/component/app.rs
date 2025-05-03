@@ -72,7 +72,7 @@ impl Config {
         }
     }
 
-    pub fn load(&self) -> &crate::config::Config {
+    pub fn get(&self) -> &crate::config::Config {
         &self.inner
     }
 }
