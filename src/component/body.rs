@@ -683,7 +683,23 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "j".parse()?,
+                MoveDown {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
+                "k".parse()?,
+                MoveUp {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
                 "k".parse()?,
                 MoveUp {
                     state: self.state.clone(),
@@ -698,6 +714,13 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "gg".parse()?,
+                MoveTop {
+                    state: self.state.clone(),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
                 "G".parse()?,
                 MoveBottom {
@@ -705,7 +728,22 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "G".parse()?,
+                MoveBottom {
+                    state: self.state.clone(),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
+                "gj".parse()?,
+                PageDown {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
                 "gj".parse()?,
                 PageDown {
                     state: self.state.clone(),
@@ -721,7 +759,23 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "gk".parse()?,
+                PageUp {
+                    state: self.state.clone(),
+                    prenum: prenum.unwrap_or(1),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
+                "h".parse()?,
+                MoveParent {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
                 "h".parse()?,
                 MoveParent {
                     body_state: self.state.clone(),
@@ -737,6 +791,14 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "l".parse()?,
+                EnterDirOrEdit {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
                 "V".parse()?,
                 VisualSelect {
@@ -745,7 +807,23 @@ impl Component for Body {
                 },
             );
             registry.register_key(
+                Mode::Visual,
+                "V".parse()?,
+                VisualSelect {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
                 Mode::Normal,
+                "a".parse()?,
+                AskCreate {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
                 "a".parse()?,
                 AskCreate {
                     body_state: self.state.clone(),
