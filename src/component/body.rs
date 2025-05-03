@@ -910,6 +910,16 @@ impl Component for Body {
                             is_file: !content.ends_with("/"),
                         }
                         .run(),
+                        "DeleteFileOrDir" => DeleteFileOrDir {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
+                        }
+                        .run(),
+                        "DeleteSelected" => DeleteSelected {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
+                        }
+                        .run(),
                         _ => Ok(()),
                     } {
                         e.handle();
