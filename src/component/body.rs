@@ -817,6 +817,92 @@ impl Command for AskPaste {
     }
 }
 
+struct Rename {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    content: String,
+}
+
+impl Command for Rename {
+    fn run(&self) -> Result<(), crate::Error> {
+        let app_state = self.app_state.read().unwrap();
+        let path = app_state.path.get();
+        let body_state = self.body_state.read().unwrap();
+        let cursor = &body_state.cursor;
+
+        if let Some(under_cursor_file) =
+            crate::misc::sorted_child_files(&path).get(cursor.current())
+        {
+            let renamed = path.join(&self.content);
+
+            let Ok(metadata) = under_cursor_file.symlink_metadata() else {
+                crate::sys_log!("w", "Command Rename failed: target metadata cannot access");
+                crate::log!("Rename failed: cannot access metadata");
+
+                return Ok(());
+            };
+
+            if !under_cursor_file.exists() && !metadata.is_symlink() {
+                crate::sys_log!("w", "Command Rename failed: target file not exists");
+                crate::log!("Rename failed: \"{}\" is not exists", self.content);
+
+                return Ok(());
+            }
+
+            if let Err(e) = std::fs::rename(under_cursor_file, &renamed) {
+                crate::sys_log!("w", "Command Rename failed: {}", e.kind());
+                crate::log!("Rename failed: {}", e.kind());
+
+                return Ok(());
+            }
+
+            crate::sys_log!(
+                "i",
+                "Command Rename successful: \"{}\" into the \"{}\"",
+                under_cursor_file.to_string_lossy(),
+                renamed.to_string_lossy()
+            );
+            crate::log!(
+                "\"{}\" renamed to \"{}\"",
+                crate::misc::file_name(under_cursor_file),
+                crate::misc::file_name(&renamed)
+            );
+        }
+
+        Ok(())
+    }
+}
+
+struct AskRename {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for AskRename {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut body_state = self.body_state.write().unwrap();
+
+        body_state.selection.disable();
+
+        if let Some(under_cursor_file) =
+            crate::misc::sorted_child_files(self.app_state.read().unwrap().path.get())
+                .get(body_state.cursor.current())
+        {
+            let name = crate::misc::file_name(under_cursor_file);
+
+            self.app_state
+                .write()
+                .unwrap()
+                .input
+                .enable(name, Some("Rename".into()));
+            crate::sys_log!("i", "Called command: Rename");
+            crate::log!("Enter new name for \"{}\"", name);
+        }
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -1056,6 +1142,22 @@ impl Component for Body {
                     },
                 );
             }
+            registry.register_key(
+                Mode::Normal,
+                "r".parse()?,
+                AskRename {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
+                "r".parse()?,
+                AskRename {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
         }
 
         Ok(())
@@ -1111,6 +1213,12 @@ impl Component for Body {
                         "Paste" => Paste {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
+                        }
+                        .run(),
+                        "Rename" => Rename {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
+                            content: content.to_owned(),
                         }
                         .run(),
                         _ => Ok(()),
