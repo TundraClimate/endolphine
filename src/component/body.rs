@@ -903,6 +903,104 @@ impl Command for AskRename {
     }
 }
 
+struct Yank {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for Yank {
+    fn run(&self) -> Result<(), crate::Error> {
+        let app_state = self.app_state.read().unwrap();
+        let body_state = self.body_state.read().unwrap();
+        let path = app_state.path.get();
+        let cursor = &body_state.cursor;
+
+        let Some(under_cursor_file) = crate::misc::sorted_child_files(path)
+            .get(cursor.current())
+            .cloned()
+        else {
+            crate::sys_log!("w", "File yank failed: invalid cursor position");
+            crate::log!("Yank failed: invalid cursor position");
+
+            return Ok(());
+        };
+
+        let is_native = app_state.config.get().native_clip;
+
+        if is_native {
+            let text = format!("file://{}", under_cursor_file.to_string_lossy());
+
+            if let Err(e) = crate::clipboard::clip_native(&text, "text/uri-list") {
+                crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
+                crate::log!("Yank failed: {}", e.kind());
+
+                return Ok(());
+            }
+        } else {
+            crate::clipboard::clip(&under_cursor_file.to_string_lossy());
+        }
+
+        crate::sys_log!(
+            "i",
+            "File the {} yanked",
+            under_cursor_file.to_string_lossy()
+        );
+        crate::log!("Yanked \"{}\"", crate::misc::file_name(&under_cursor_file));
+
+        Ok(())
+    }
+}
+
+struct YankSelected {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for YankSelected {
+    fn run(&self) -> Result<(), crate::Error> {
+        let app_state = self.app_state.read().unwrap();
+        let mut body_state = self.body_state.write().unwrap();
+        let path = app_state.path.get();
+        let selection = &mut body_state.selection;
+        let is_native = app_state.config.get().native_clip;
+        let selected_files = crate::misc::sorted_child_files(path)
+            .into_iter()
+            .enumerate()
+            .filter_map(|(i, f)| {
+                selection
+                    .is_selected(i)
+                    .then_some(f.to_string_lossy().to_string())
+            })
+            .map(|p| {
+                if is_native {
+                    format!("file://{}", p)
+                } else {
+                    p
+                }
+            })
+            .collect::<Vec<_>>();
+
+        if is_native {
+            if let Err(e) =
+                crate::clipboard::clip_native(&selected_files.join("\n"), "text/uri-list")
+            {
+                crate::sys_log!("w", "Native file yank command failed: {}", e.kind());
+                crate::log!("Yank failed: {}", e.kind());
+
+                return Ok(());
+            }
+        } else {
+            crate::clipboard::clip(&selected_files.join("\n"));
+        }
+
+        selection.disable();
+        crate::sys_log!("i", "{} files yanked", selected_files.len());
+        crate::log!("Yanked {} items", selected_files.len());
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -1154,6 +1252,22 @@ impl Component for Body {
                 Mode::Visual,
                 "r".parse()?,
                 AskRename {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "yy".parse()?,
+                Yank {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
+                "y".parse()?,
+                YankSelected {
                     body_state: self.state.clone(),
                     app_state: self.app_state.clone(),
                 },
