@@ -52,6 +52,7 @@ impl Selection {
 pub struct BodyState {
     cursor: crate::cursor::Cursor,
     selection: Selection,
+    pub input: crate::input::Input,
 }
 
 pub struct Body {
@@ -432,11 +433,12 @@ struct AskCreate {
 
 impl Command for AskCreate {
     fn run(&self) -> Result<(), crate::Error> {
-        self.body_state.write().unwrap().selection.disable();
-        let mut lock = self.app_state.write().unwrap();
+        let mut body_state = self.body_state.write().unwrap();
 
-        lock.input.enable("", Some("CreateFileOrDir".into()));
-        lock.mode = super::app::Mode::Input;
+        body_state.selection.disable();
+        body_state.input.enable("", Some("CreateFileOrDir".into()));
+
+        self.app_state.write().unwrap().mode = super::app::Mode::Input;
 
         crate::sys_log!("i", "Called command: CreateFileOrDir");
         crate::log!("Enter name for new File or Directory (for Directory, end with \"/\")");
@@ -626,21 +628,20 @@ struct AskDelete {
 
 impl Command for AskDelete {
     fn run(&self) -> Result<(), crate::Error> {
-        let body_state = self.body_state.read().unwrap();
+        let mut body_state = self.body_state.write().unwrap();
         let under_cursor_file =
             crate::misc::sorted_child_files(self.app_state.read().unwrap().path.get())
                 .get(body_state.cursor.current())
                 .cloned();
-        let mut app_state = self.app_state.write().unwrap();
-        let input = &mut app_state.input;
-        let selection = &body_state.selection;
+        let is_selection = body_state.selection.is_active();
+        let selected = body_state.selection.inner;
+        let input = &mut body_state.input;
 
-        if selection.is_active() {
+        if is_selection {
             input.enable("", Some("DeleteSelected".into()));
             crate::sys_log!("i", "Called command: DeleteSelected");
 
-            let selected_len = selection
-                .inner
+            let selected_len = selected
                 .map(|(base, pin)| {
                     let max = base.max(pin);
                     let min = base.min(pin);
@@ -796,12 +797,13 @@ impl Command for Paste {
 }
 
 struct AskPaste {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
 }
 
 impl Command for AskPaste {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut app_state = self.app_state.write().unwrap();
+        let app_state = self.app_state.read().unwrap();
 
         let default = if app_state.config.get().paste.default_overwrite {
             "y"
@@ -809,9 +811,11 @@ impl Command for AskPaste {
             ""
         };
 
-        let input = &mut app_state.input;
-
-        input.enable(default, Some("Paste".into()));
+        self.body_state
+            .write()
+            .unwrap()
+            .input
+            .enable(default, Some("Paste".into()));
 
         Ok(())
     }
@@ -889,7 +893,7 @@ impl Command for AskRename {
         {
             let name = crate::misc::file_name(under_cursor_file);
 
-            self.app_state
+            self.body_state
                 .write()
                 .unwrap()
                 .input
@@ -1228,6 +1232,7 @@ impl Component for Body {
                     Mode::Normal,
                     "p".parse()?,
                     AskPaste {
+                        body_state: self.state.clone(),
                         app_state: self.app_state.clone(),
                     },
                 );
@@ -1235,6 +1240,7 @@ impl Component for Body {
                     Mode::Visual,
                     "p".parse()?,
                     AskPaste {
+                        body_state: self.state.clone(),
                         app_state: self.app_state.clone(),
                     },
                 );
@@ -1273,16 +1279,20 @@ impl Component for Body {
             );
         }
 
+        self.inner.iter().try_for_each(|c| c.on_init())?;
+
         Ok(())
     }
 
     fn on_tick(&self) -> Result<(), crate::Error> {
+        self.inner.iter().try_for_each(|c| c.on_tick())?;
+
         if matches!(self.app_state.read().unwrap().mode, super::app::Mode::Input) {
             return Ok(());
         }
 
         let (action, content) = {
-            let mut lock = self.app_state.write().unwrap();
+            let mut lock = self.state.write().unwrap();
             let input = &mut lock.input;
 
             (input.drain_action(), input.drain_storage())

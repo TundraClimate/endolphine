@@ -2,10 +2,12 @@ use super::{Command, Component};
 
 pub struct Input {
     pub root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
+    pub body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
     pub app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
 }
 
 struct CompleteInput {
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
 }
 
@@ -13,7 +15,7 @@ impl Command for CompleteInput {
     fn run(&self) -> Result<(), crate::Error> {
         let mut lock = self.app_state.write().unwrap();
 
-        lock.input.complete_input();
+        self.body_state.write().unwrap().input.complete_input();
         lock.mode = super::app::Mode::Normal;
 
         Ok(())
@@ -21,6 +23,7 @@ impl Command for CompleteInput {
 }
 
 struct CancelInput {
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
 }
 
@@ -28,7 +31,7 @@ impl Command for CancelInput {
     fn run(&self) -> Result<(), crate::Error> {
         let mut lock = self.app_state.write().unwrap();
 
-        lock.input.disable();
+        self.body_state.write().unwrap().input.disable();
         lock.mode = super::app::Mode::Normal;
 
         Ok(())
@@ -36,36 +39,36 @@ impl Command for CancelInput {
 }
 
 struct InputCursorNext {
-    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
 }
 
 impl Command for InputCursorNext {
     fn run(&self) -> Result<(), crate::Error> {
-        self.app_state.write().unwrap().input.cursor_right();
+        self.body_state.write().unwrap().input.cursor_right();
 
         Ok(())
     }
 }
 
 struct InputCursorPrev {
-    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
 }
 
 impl Command for InputCursorPrev {
     fn run(&self) -> Result<(), crate::Error> {
-        self.app_state.write().unwrap().input.cursor_left();
+        self.body_state.write().unwrap().input.cursor_left();
 
         Ok(())
     }
 }
 
 struct InputDeleteCurrent {
-    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
 }
 
 impl Command for InputDeleteCurrent {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.app_state.write().unwrap();
+        let mut lock = self.body_state.write().unwrap();
         let input = &mut lock.input;
 
         input.buffer_pick();
@@ -79,12 +82,12 @@ impl Command for InputDeleteCurrent {
 }
 
 struct InputDeleteNext {
-    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
 }
 
 impl Command for InputDeleteNext {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.app_state.write().unwrap();
+        let mut lock = self.body_state.write().unwrap();
         let input = &mut lock.input;
 
         input.buffer_pick_next();
@@ -98,13 +101,13 @@ impl Command for InputDeleteNext {
 }
 
 struct InputInsert {
-    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
     c: char,
 }
 
 impl Command for InputInsert {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.app_state.write().unwrap();
+        let mut lock = self.body_state.write().unwrap();
         let input = &mut lock.input;
 
         input.buffer_insert(self.c);
@@ -129,6 +132,7 @@ impl Component for Input {
                 Mode::Input,
                 "<CR>".parse()?,
                 CompleteInput {
+                    body_state: self.body_state.clone(),
                     app_state: self.app_state.clone(),
                 },
             );
@@ -136,6 +140,7 @@ impl Component for Input {
                 Mode::Input,
                 "<ESC>".parse()?,
                 CancelInput {
+                    body_state: self.body_state.clone(),
                     app_state: self.app_state.clone(),
                 },
             );
@@ -143,35 +148,35 @@ impl Component for Input {
                 Mode::Input,
                 "<c-l>".parse()?,
                 InputCursorNext {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                 },
             );
             registry.register_key(
                 Mode::Input,
                 "<c-h>".parse()?,
                 InputCursorPrev {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                 },
             );
             registry.register_key(
                 Mode::Input,
                 "<BS>".parse()?,
                 InputDeleteCurrent {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                 },
             );
             registry.register_key(
                 Mode::Input,
                 "<s-BS>".parse()?,
                 InputDeleteNext {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                 },
             );
             registry.register_key(
                 Mode::Input,
                 "<SPACE>".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ' ',
                 },
             );
@@ -179,7 +184,7 @@ impl Component for Input {
                 Mode::Input,
                 "!".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '!',
                 },
             );
@@ -187,7 +192,7 @@ impl Component for Input {
                 Mode::Input,
                 "\"".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '"',
                 },
             );
@@ -195,7 +200,7 @@ impl Component for Input {
                 Mode::Input,
                 "#".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '#',
                 },
             );
@@ -203,7 +208,7 @@ impl Component for Input {
                 Mode::Input,
                 "$".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '$',
                 },
             );
@@ -211,7 +216,7 @@ impl Component for Input {
                 Mode::Input,
                 "%".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '%',
                 },
             );
@@ -219,7 +224,7 @@ impl Component for Input {
                 Mode::Input,
                 "&".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '&',
                 },
             );
@@ -227,7 +232,7 @@ impl Component for Input {
                 Mode::Input,
                 "'".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '\'',
                 },
             );
@@ -235,7 +240,7 @@ impl Component for Input {
                 Mode::Input,
                 "(".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '(',
                 },
             );
@@ -243,7 +248,7 @@ impl Component for Input {
                 Mode::Input,
                 ")".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ')',
                 },
             );
@@ -251,7 +256,7 @@ impl Component for Input {
                 Mode::Input,
                 "*".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '*',
                 },
             );
@@ -259,7 +264,7 @@ impl Component for Input {
                 Mode::Input,
                 "+".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '+',
                 },
             );
@@ -267,7 +272,7 @@ impl Component for Input {
                 Mode::Input,
                 ",".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ',',
                 },
             );
@@ -275,7 +280,7 @@ impl Component for Input {
                 Mode::Input,
                 "-".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '-',
                 },
             );
@@ -283,7 +288,7 @@ impl Component for Input {
                 Mode::Input,
                 ".".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '.',
                 },
             );
@@ -291,7 +296,7 @@ impl Component for Input {
                 Mode::Input,
                 "/".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '/',
                 },
             );
@@ -299,7 +304,7 @@ impl Component for Input {
                 Mode::Input,
                 "0".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '0',
                 },
             );
@@ -307,7 +312,7 @@ impl Component for Input {
                 Mode::Input,
                 "1".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '1',
                 },
             );
@@ -315,7 +320,7 @@ impl Component for Input {
                 Mode::Input,
                 "2".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '2',
                 },
             );
@@ -323,7 +328,7 @@ impl Component for Input {
                 Mode::Input,
                 "3".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '3',
                 },
             );
@@ -331,7 +336,7 @@ impl Component for Input {
                 Mode::Input,
                 "4".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '4',
                 },
             );
@@ -339,7 +344,7 @@ impl Component for Input {
                 Mode::Input,
                 "5".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '5',
                 },
             );
@@ -347,7 +352,7 @@ impl Component for Input {
                 Mode::Input,
                 "6".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '6',
                 },
             );
@@ -355,7 +360,7 @@ impl Component for Input {
                 Mode::Input,
                 "7".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '7',
                 },
             );
@@ -363,7 +368,7 @@ impl Component for Input {
                 Mode::Input,
                 "8".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '8',
                 },
             );
@@ -371,7 +376,7 @@ impl Component for Input {
                 Mode::Input,
                 "9".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '9',
                 },
             );
@@ -379,7 +384,7 @@ impl Component for Input {
                 Mode::Input,
                 ":".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ':',
                 },
             );
@@ -387,7 +392,7 @@ impl Component for Input {
                 Mode::Input,
                 ";".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ';',
                 },
             );
@@ -395,7 +400,7 @@ impl Component for Input {
                 Mode::Input,
                 "<lt>".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '<',
                 },
             );
@@ -403,7 +408,7 @@ impl Component for Input {
                 Mode::Input,
                 "=".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '=',
                 },
             );
@@ -411,7 +416,7 @@ impl Component for Input {
                 Mode::Input,
                 ">".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '>',
                 },
             );
@@ -419,7 +424,7 @@ impl Component for Input {
                 Mode::Input,
                 "?".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '?',
                 },
             );
@@ -427,7 +432,7 @@ impl Component for Input {
                 Mode::Input,
                 "@".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '@',
                 },
             );
@@ -435,7 +440,7 @@ impl Component for Input {
                 Mode::Input,
                 "a".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'a',
                 },
             );
@@ -443,7 +448,7 @@ impl Component for Input {
                 Mode::Input,
                 "b".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'b',
                 },
             );
@@ -451,7 +456,7 @@ impl Component for Input {
                 Mode::Input,
                 "c".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'c',
                 },
             );
@@ -459,7 +464,7 @@ impl Component for Input {
                 Mode::Input,
                 "d".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'd',
                 },
             );
@@ -467,7 +472,7 @@ impl Component for Input {
                 Mode::Input,
                 "e".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'e',
                 },
             );
@@ -475,7 +480,7 @@ impl Component for Input {
                 Mode::Input,
                 "f".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'f',
                 },
             );
@@ -483,7 +488,7 @@ impl Component for Input {
                 Mode::Input,
                 "g".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'g',
                 },
             );
@@ -491,7 +496,7 @@ impl Component for Input {
                 Mode::Input,
                 "h".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'h',
                 },
             );
@@ -499,7 +504,7 @@ impl Component for Input {
                 Mode::Input,
                 "i".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'i',
                 },
             );
@@ -507,7 +512,7 @@ impl Component for Input {
                 Mode::Input,
                 "j".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'j',
                 },
             );
@@ -515,7 +520,7 @@ impl Component for Input {
                 Mode::Input,
                 "k".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'k',
                 },
             );
@@ -523,7 +528,7 @@ impl Component for Input {
                 Mode::Input,
                 "l".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'l',
                 },
             );
@@ -531,7 +536,7 @@ impl Component for Input {
                 Mode::Input,
                 "m".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'm',
                 },
             );
@@ -539,7 +544,7 @@ impl Component for Input {
                 Mode::Input,
                 "n".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'n',
                 },
             );
@@ -547,7 +552,7 @@ impl Component for Input {
                 Mode::Input,
                 "o".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'o',
                 },
             );
@@ -555,7 +560,7 @@ impl Component for Input {
                 Mode::Input,
                 "p".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'p',
                 },
             );
@@ -563,7 +568,7 @@ impl Component for Input {
                 Mode::Input,
                 "q".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'q',
                 },
             );
@@ -571,7 +576,7 @@ impl Component for Input {
                 Mode::Input,
                 "r".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'r',
                 },
             );
@@ -579,7 +584,7 @@ impl Component for Input {
                 Mode::Input,
                 "s".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 's',
                 },
             );
@@ -587,7 +592,7 @@ impl Component for Input {
                 Mode::Input,
                 "t".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 't',
                 },
             );
@@ -595,7 +600,7 @@ impl Component for Input {
                 Mode::Input,
                 "u".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'u',
                 },
             );
@@ -603,7 +608,7 @@ impl Component for Input {
                 Mode::Input,
                 "v".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'v',
                 },
             );
@@ -611,7 +616,7 @@ impl Component for Input {
                 Mode::Input,
                 "w".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'w',
                 },
             );
@@ -619,7 +624,7 @@ impl Component for Input {
                 Mode::Input,
                 "x".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'x',
                 },
             );
@@ -627,7 +632,7 @@ impl Component for Input {
                 Mode::Input,
                 "y".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'y',
                 },
             );
@@ -635,7 +640,7 @@ impl Component for Input {
                 Mode::Input,
                 "z".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'z',
                 },
             );
@@ -643,7 +648,7 @@ impl Component for Input {
                 Mode::Input,
                 "A".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'A',
                 },
             );
@@ -651,7 +656,7 @@ impl Component for Input {
                 Mode::Input,
                 "B".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'B',
                 },
             );
@@ -659,7 +664,7 @@ impl Component for Input {
                 Mode::Input,
                 "C".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'C',
                 },
             );
@@ -667,7 +672,7 @@ impl Component for Input {
                 Mode::Input,
                 "D".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'D',
                 },
             );
@@ -675,7 +680,7 @@ impl Component for Input {
                 Mode::Input,
                 "E".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'E',
                 },
             );
@@ -683,7 +688,7 @@ impl Component for Input {
                 Mode::Input,
                 "F".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'F',
                 },
             );
@@ -691,7 +696,7 @@ impl Component for Input {
                 Mode::Input,
                 "G".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'G',
                 },
             );
@@ -699,7 +704,7 @@ impl Component for Input {
                 Mode::Input,
                 "H".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'H',
                 },
             );
@@ -707,7 +712,7 @@ impl Component for Input {
                 Mode::Input,
                 "I".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'I',
                 },
             );
@@ -715,7 +720,7 @@ impl Component for Input {
                 Mode::Input,
                 "J".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'J',
                 },
             );
@@ -723,7 +728,7 @@ impl Component for Input {
                 Mode::Input,
                 "K".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'K',
                 },
             );
@@ -731,7 +736,7 @@ impl Component for Input {
                 Mode::Input,
                 "L".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'L',
                 },
             );
@@ -739,7 +744,7 @@ impl Component for Input {
                 Mode::Input,
                 "M".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'M',
                 },
             );
@@ -747,7 +752,7 @@ impl Component for Input {
                 Mode::Input,
                 "N".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'N',
                 },
             );
@@ -755,7 +760,7 @@ impl Component for Input {
                 Mode::Input,
                 "O".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'O',
                 },
             );
@@ -763,7 +768,7 @@ impl Component for Input {
                 Mode::Input,
                 "P".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'P',
                 },
             );
@@ -771,7 +776,7 @@ impl Component for Input {
                 Mode::Input,
                 "Q".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'Q',
                 },
             );
@@ -779,7 +784,7 @@ impl Component for Input {
                 Mode::Input,
                 "R".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'R',
                 },
             );
@@ -787,7 +792,7 @@ impl Component for Input {
                 Mode::Input,
                 "S".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'S',
                 },
             );
@@ -795,7 +800,7 @@ impl Component for Input {
                 Mode::Input,
                 "T".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'T',
                 },
             );
@@ -803,7 +808,7 @@ impl Component for Input {
                 Mode::Input,
                 "U".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'U',
                 },
             );
@@ -811,7 +816,7 @@ impl Component for Input {
                 Mode::Input,
                 "V".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'V',
                 },
             );
@@ -819,7 +824,7 @@ impl Component for Input {
                 Mode::Input,
                 "W".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'W',
                 },
             );
@@ -827,7 +832,7 @@ impl Component for Input {
                 Mode::Input,
                 "X".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'X',
                 },
             );
@@ -835,7 +840,7 @@ impl Component for Input {
                 Mode::Input,
                 "Y".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'Y',
                 },
             );
@@ -843,7 +848,7 @@ impl Component for Input {
                 Mode::Input,
                 "Z".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: 'Z',
                 },
             );
@@ -851,7 +856,7 @@ impl Component for Input {
                 Mode::Input,
                 "[".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '[',
                 },
             );
@@ -859,7 +864,7 @@ impl Component for Input {
                 Mode::Input,
                 "\\".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '\\',
                 },
             );
@@ -867,7 +872,7 @@ impl Component for Input {
                 Mode::Input,
                 "]".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: ']',
                 },
             );
@@ -875,7 +880,7 @@ impl Component for Input {
                 Mode::Input,
                 "^".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '^',
                 },
             );
@@ -883,7 +888,7 @@ impl Component for Input {
                 Mode::Input,
                 "_".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '_',
                 },
             );
@@ -891,7 +896,7 @@ impl Component for Input {
                 Mode::Input,
                 "`".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '`',
                 },
             );
@@ -899,7 +904,7 @@ impl Component for Input {
                 Mode::Input,
                 "{".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '{',
                 },
             );
@@ -907,7 +912,7 @@ impl Component for Input {
                 Mode::Input,
                 "|".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '|',
                 },
             );
@@ -915,7 +920,7 @@ impl Component for Input {
                 Mode::Input,
                 "}".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '}',
                 },
             );
@@ -923,7 +928,7 @@ impl Component for Input {
                 Mode::Input,
                 "~".parse()?,
                 InputInsert {
-                    app_state: self.app_state.clone(),
+                    body_state: self.body_state.clone(),
                     c: '~',
                 },
             );

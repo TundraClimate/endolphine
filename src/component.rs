@@ -38,14 +38,16 @@ pub fn components() -> Box<dyn Component> {
                         root_state: root_state.clone(),
                         app_state: app_state.clone(),
                     }),
-                    Box::new(Input {
-                        root_state: root_state.clone(),
-                        app_state: app_state.clone(),
-                    }),
                     Box::new(Body::with_state(
                         app_state.clone(),
                         root_state.clone(),
-                        |_body_state| vec![],
+                        |body_state| {
+                            vec![Box::new(Input {
+                                root_state: root_state.clone(),
+                                body_state: body_state.clone(),
+                                app_state: app_state.clone(),
+                            })]
+                        },
                     )),
                 ]
             })),

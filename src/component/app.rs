@@ -82,7 +82,6 @@ pub struct AppState {
     pub config: Config,
     pub is_render: bool,
     pub mode: Mode,
-    pub input: crate::input::Input,
     pub process_counter: ProcessCounter,
 }
 
@@ -122,7 +121,6 @@ impl App {
             config: Config::new_with_init(),
             is_render: true,
             mode: Mode::default(),
-            input: crate::input::Input::default(),
             process_counter: ProcessCounter::default(),
         }));
 
