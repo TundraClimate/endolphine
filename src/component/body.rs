@@ -830,8 +830,7 @@ impl Command for Rename {
         let body_state = self.body_state.read().unwrap();
         let cursor = &body_state.cursor;
 
-        if let Some(under_cursor_file) =
-            crate::misc::sorted_child_files(&path).get(cursor.current())
+        if let Some(under_cursor_file) = crate::misc::sorted_child_files(path).get(cursor.current())
         {
             let renamed = path.join(&self.content);
 
