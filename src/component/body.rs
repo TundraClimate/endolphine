@@ -49,10 +49,26 @@ impl Selection {
 }
 
 #[derive(Default)]
+struct EpGrep {
+    inner: String,
+}
+
+impl EpGrep {
+    fn reset(&mut self) {
+        self.inner.clear();
+    }
+
+    fn is_match_found(&self, target: &str) -> bool {
+        regex::Regex::new(&self.inner).is_ok_and(|regex| regex.is_match(target))
+    }
+}
+
+#[derive(Default)]
 pub struct BodyState {
     cursor: crate::cursor::Cursor,
     selection: Selection,
     pub input: crate::input::Input,
+    grep: EpGrep,
 }
 
 pub struct Body {
@@ -1004,6 +1020,51 @@ impl Command for YankSelected {
     }
 }
 
+struct Search {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+}
+
+impl Command for Search {
+    fn run(&self) -> Result<(), crate::Error> {
+        let mut body_state = self.body_state.write().unwrap();
+
+        body_state.selection.disable();
+        body_state.grep.reset();
+        body_state.input.enable("/", Some("Search".into()));
+
+        Ok(())
+    }
+}
+
+struct SearchNext {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+}
+
+impl Command for SearchNext {
+    fn run(&self) -> Result<(), crate::Error> {
+        let app_state = self.app_state.read().unwrap();
+        let path = app_state.path.get();
+        let child_files = crate::misc::sorted_child_files(path);
+        let body_state = self.body_state.read().unwrap();
+        let cursor = &body_state.cursor;
+        let current_pos = cursor.current();
+        let grep = &body_state.grep;
+
+        let first_match_pos = child_files[current_pos + 1..]
+            .iter()
+            .chain(child_files[..current_pos].iter())
+            .position(|f| grep.is_match_found(crate::misc::file_name(f)))
+            .map(|pos| pos + 1)
+            .unwrap_or(0);
+
+        cursor.shift_loop_p(first_match_pos);
+        crate::log!("/{}", grep.inner);
+
+        Ok(())
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -1277,6 +1338,36 @@ impl Component for Body {
                     app_state: self.app_state.clone(),
                 },
             );
+            registry.register_key(
+                Mode::Normal,
+                "/".parse()?,
+                Search {
+                    body_state: self.state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
+                "/".parse()?,
+                Search {
+                    body_state: self.state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Normal,
+                "n".parse()?,
+                SearchNext {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
+                "n".parse()?,
+                SearchNext {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
         }
 
         self.inner.iter().try_for_each(|c| c.on_init())?;
@@ -1342,6 +1433,11 @@ impl Component for Body {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                             content: content.to_owned(),
+                        }
+                        .run(),
+                        "Search" => SearchNext {
+                            body_state: body_state.clone(),
+                            app_state: app_state.clone(),
                         }
                         .run(),
                         _ => Ok(()),
