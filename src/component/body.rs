@@ -212,6 +212,7 @@ fn move_current_dir(
     path: &std::path::Path,
 ) -> Result<(), crate::Error> {
     body_state.selection.disable();
+    app_state.mode = super::app::Mode::Normal;
     app_state.path.swap(path)?;
 
     crate::sys_log!("i", "Change the open directory: {}", path.to_string_lossy());
@@ -554,20 +555,23 @@ struct DeleteSelected {
 
 impl Command for DeleteSelected {
     fn run(&self) -> Result<(), crate::Error> {
-        let app_state = self.app_state.read().unwrap();
-        let path = app_state.path.get().clone();
-        let selected = {
+        let (selected, path, is_alt_for_tmp, is_yank, is_native_clip) = {
+            let app_state = self.app_state.read().unwrap();
             let body_state = self.body_state.read().unwrap();
-            crate::misc::sorted_child_files(&path)
-                .into_iter()
-                .enumerate()
-                .filter_map(|(i, f)| body_state.selection.is_selected(i).then_some(f))
-                .collect::<Vec<_>>()
+            let path = app_state.path.get().clone();
+            let config = app_state.config.get();
+            (
+                crate::misc::sorted_child_files(&path)
+                    .into_iter()
+                    .enumerate()
+                    .filter_map(|(i, f)| body_state.selection.is_selected(i).then_some(f))
+                    .collect::<Vec<_>>(),
+                path,
+                config.delete.for_tmp,
+                config.delete.yank,
+                config.delete.yank && config.native_clip,
+            )
         };
-        let config = app_state.config.get();
-        let is_alt_for_tmp = config.delete.for_tmp;
-        let is_yank = config.delete.yank;
-        let is_native_clip = is_yank && config.native_clip;
 
         if is_alt_for_tmp {
             if is_yank {
@@ -626,6 +630,7 @@ impl Command for DeleteSelected {
             .cursor
             .resize(crate::misc::child_files_len(&path));
         body_state.selection.disable();
+        self.app_state.write().unwrap().mode = super::app::Mode::Normal;
         crate::sys_log!(
             "i",
             "Command DeleteSelected successful: {} files deleted",
@@ -903,9 +908,11 @@ impl Command for AskRename {
 
         body_state.selection.disable();
 
+        let mut app_state = self.app_state.write().unwrap();
+        app_state.mode = super::app::Mode::Input;
+
         if let Some(under_cursor_file) =
-            crate::misc::sorted_child_files(self.app_state.read().unwrap().path.get())
-                .get(body_state.cursor.current())
+            crate::misc::sorted_child_files(app_state.path.get()).get(body_state.cursor.current())
         {
             let name = crate::misc::file_name(under_cursor_file);
 
@@ -977,7 +984,7 @@ struct YankSelected {
 
 impl Command for YankSelected {
     fn run(&self) -> Result<(), crate::Error> {
-        let app_state = self.app_state.read().unwrap();
+        let mut app_state = self.app_state.write().unwrap();
         let mut body_state = self.body_state.write().unwrap();
         let path = app_state.path.get();
         let selection = &mut body_state.selection;
@@ -1013,6 +1020,7 @@ impl Command for YankSelected {
         }
 
         selection.disable();
+        app_state.mode = super::app::Mode::Normal;
         crate::sys_log!("i", "{} files yanked", selected_files.len());
         crate::log!("Yanked {} items", selected_files.len());
 
@@ -1022,6 +1030,7 @@ impl Command for YankSelected {
 
 struct Search {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
 }
 
 impl Command for Search {
@@ -1031,6 +1040,8 @@ impl Command for Search {
         body_state.selection.disable();
         body_state.grep.reset();
         body_state.input.enable("/", Some("Search".into()));
+
+        self.app_state.write().unwrap().mode = super::app::Mode::Input;
 
         Ok(())
     }
@@ -1343,6 +1354,7 @@ impl Component for Body {
                 "/".parse()?,
                 Search {
                     body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
                 },
             );
             registry.register_key(
@@ -1350,6 +1362,7 @@ impl Component for Body {
                 "/".parse()?,
                 Search {
                     body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
                 },
             );
             registry.register_key(
