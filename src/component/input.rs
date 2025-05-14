@@ -68,13 +68,28 @@ struct InputDeleteCurrent {
 
 impl Command for InputDeleteCurrent {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.body_state.write().unwrap();
-        let input = &mut lock.input;
+        let mut buf: Option<String> = None;
 
-        input.buffer_pick();
+        {
+            let mut lock = self.body_state.write().unwrap();
 
-        if input.load_action().as_deref() == Some("Search") {
-            // crate::app::sync_grep()
+            let input = &mut lock.input;
+
+            input.buffer_pick();
+
+            if input.load_action().as_deref() == Some("Search") {
+                if let Some(buffer) = input.buffer_load() {
+                    buf = Some(buffer.clone());
+                }
+            }
+        }
+
+        if let Some(buf) = buf {
+            self.body_state
+                .write()
+                .unwrap()
+                .grep
+                .set_with_strip_preslash(&buf);
         }
 
         Ok(())
@@ -87,13 +102,27 @@ struct InputDeleteNext {
 
 impl Command for InputDeleteNext {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.body_state.write().unwrap();
-        let input = &mut lock.input;
+        let mut buf: Option<String> = None;
 
-        input.buffer_pick_next();
+        {
+            let mut lock = self.body_state.write().unwrap();
+            let input = &mut lock.input;
 
-        if input.load_action().as_deref() == Some("Search") {
-            // crate::app::sync_grep()
+            input.buffer_pick_next();
+
+            if input.load_action().as_deref() == Some("Search") {
+                if let Some(buffer) = input.buffer_load() {
+                    buf = Some(buffer.clone());
+                }
+            }
+        }
+
+        if let Some(buf) = buf {
+            self.body_state
+                .write()
+                .unwrap()
+                .grep
+                .set_with_strip_preslash(&buf);
         }
 
         Ok(())
@@ -107,13 +136,27 @@ struct InputInsert {
 
 impl Command for InputInsert {
     fn run(&self) -> Result<(), crate::Error> {
-        let mut lock = self.body_state.write().unwrap();
-        let input = &mut lock.input;
+        let mut buf: Option<String> = None;
 
-        input.buffer_insert(self.c);
+        {
+            let mut lock = self.body_state.write().unwrap();
+            let input = &mut lock.input;
 
-        if input.load_action().as_deref() == Some("Search") {
-            // crate::app::sync_grep()
+            input.buffer_insert(self.c);
+
+            if input.load_action().as_deref() == Some("Search") {
+                if let Some(buffer) = input.buffer_load() {
+                    buf = Some(buffer.clone());
+                }
+            }
+        }
+
+        if let Some(buf) = buf {
+            self.body_state
+                .write()
+                .unwrap()
+                .grep
+                .set_with_strip_preslash(&buf);
         }
 
         Ok(())

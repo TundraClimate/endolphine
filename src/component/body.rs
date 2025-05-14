@@ -49,7 +49,7 @@ impl Selection {
 }
 
 #[derive(Default)]
-struct EpGrep {
+pub struct EpGrep {
     inner: String,
 }
 
@@ -61,6 +61,10 @@ impl EpGrep {
     fn is_match_found(&self, target: &str) -> bool {
         regex::Regex::new(&self.inner).is_ok_and(|regex| regex.is_match(target))
     }
+
+    pub fn set_with_strip_preslash(&mut self, new: &str) {
+        self.inner = new.strip_prefix("/").unwrap_or(new).to_string();
+    }
 }
 
 #[derive(Default)]
@@ -68,7 +72,7 @@ pub struct BodyState {
     cursor: crate::cursor::Cursor,
     selection: Selection,
     pub input: crate::input::Input,
-    grep: EpGrep,
+    pub grep: EpGrep,
 }
 
 pub struct Body {
