@@ -144,6 +144,58 @@ impl Command for ExitApp {
     }
 }
 
+struct Remapping {
+    root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    remap: crate::key::Keymap,
+}
+
+impl Command for Remapping {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let root_state = self.root_state.read().unwrap();
+        let current_mode = self.app_state.read().unwrap().mode;
+        let keymap = self.remap.as_vec();
+        let (mut begin, mut end) = (0usize, 0usize);
+
+        keymap.iter().enumerate().try_for_each(|(i, key)| {
+            end = i + 1;
+
+            if key.is_digit() {
+                return Ok(());
+            }
+
+            let keymap = &keymap[begin..end];
+
+            if root_state.mapping_registry.has_map(keymap, current_mode) {
+                let prenum = {
+                    let prenum = keymap
+                        .iter()
+                        .copied()
+                        .take_while(crate::key::Key::is_digit)
+                        .map(|k| k.as_num())
+                        .collect::<Vec<_>>();
+                    let mut sum = 0usize;
+
+                    for (i, k) in prenum.into_iter().rev().enumerate() {
+                        sum += (k - 48) as usize * (10usize.pow(i as u32));
+                    }
+
+                    if sum == 0 { None } else { Some(sum) }
+                };
+                let ctx = super::CommandContext { prenum };
+
+                if let Some(cmd) = root_state.mapping_registry.get(current_mode, keymap) {
+                    cmd.run(ctx)?;
+                }
+
+                begin = end;
+            }
+
+            Ok(())
+        })
+    }
+}
+
 impl Component for App {
     fn on_init(&self) -> Result<(), crate::Error> {
         {
@@ -152,6 +204,53 @@ impl Component for App {
 
             registry.register_key(Mode::Normal, "ZZ".parse()?, ExitApp);
             registry.register_key(Mode::Visual, "ZZ".parse()?, ExitApp);
+
+            let app_state = self.state.read().unwrap();
+            let config = &app_state.config.get().keymap;
+
+            if let Some(define) = config {
+                if let Some(normal) = define.normal_mapping() {
+                    normal.into_iter().for_each(|(from, to)| {
+                        registry.register_key(
+                            Mode::Normal,
+                            from,
+                            Remapping {
+                                root_state: self.root_state.clone(),
+                                app_state: self.state.clone(),
+                                remap: to,
+                            },
+                        )
+                    });
+                }
+
+                if let Some(visual) = define.visual_mapping() {
+                    visual.into_iter().for_each(|(from, to)| {
+                        registry.register_key(
+                            Mode::Visual,
+                            from,
+                            Remapping {
+                                root_state: self.root_state.clone(),
+                                app_state: self.state.clone(),
+                                remap: to,
+                            },
+                        )
+                    });
+                }
+
+                if let Some(input) = define.input_mapping() {
+                    input.into_iter().for_each(|(from, to)| {
+                        registry.register_key(
+                            Mode::Input,
+                            from,
+                            Remapping {
+                                root_state: self.root_state.clone(),
+                                app_state: self.state.clone(),
+                                remap: to,
+                            },
+                        )
+                    });
+                }
+            }
         }
 
         self.inner.iter().try_for_each(|inner| inner.on_init())

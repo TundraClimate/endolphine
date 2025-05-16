@@ -21,7 +21,9 @@ impl KeyBuffer {
     }
 
     pub fn prenum(&self) -> Option<usize> {
-        let prenum = crate::app::load_buf()
+        let prenum = self
+            .inner
+            .clone()
             .into_iter()
             .take_while(crate::key::Key::is_digit)
             .map(|k| k.as_num())
@@ -50,6 +52,27 @@ impl MappingRegistry {
     ) {
         self.inner
             .insert((mode as u8, keymap.to_string()), Box::new(cmd));
+    }
+
+    pub fn has_map(&self, buf: &[crate::key::Key], mode: super::app::Mode) -> bool {
+        if buf.is_empty() || buf.iter().all(crate::key::Key::is_digit) {
+            return false;
+        }
+
+        let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
+
+        let mode = mode as u8;
+
+        self.inner.keys().any(|(rmode, keymap)| {
+            buf.len() == keymap.len()
+                && mode == *rmode
+                && buf.iter().enumerate().all(|(i, k)| {
+                    keymap
+                        .as_str()
+                        .parse::<crate::key::Keymap>()
+                        .is_ok_and(|key| key.as_vec().get(i) == Some(k))
+                })
+        })
     }
 
     pub fn has_similar_map(&self, buf: &[crate::key::Key], mode: Mode) -> bool {

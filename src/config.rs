@@ -271,6 +271,48 @@ impl KeymapConfig {
                 .ok()
         })
     }
+
+    pub fn normal_mapping(&self) -> Option<Vec<(Keymap, Keymap)>> {
+        self.normal.as_ref().and_then(|normal| {
+            normal
+                .0
+                .keys()
+                .zip(normal.0.values())
+                .try_fold(Vec::<(Keymap, Keymap)>::new(), |mut acc, (key, val)| {
+                    acc.push((key.as_str().parse()?, val.as_str().parse()?));
+                    Ok::<_, crate::Error>(acc)
+                })
+                .ok()
+        })
+    }
+
+    pub fn visual_mapping(&self) -> Option<Vec<(Keymap, Keymap)>> {
+        self.visual.as_ref().and_then(|visual| {
+            visual
+                .0
+                .keys()
+                .zip(visual.0.values())
+                .try_fold(Vec::<(Keymap, Keymap)>::new(), |mut acc, (key, val)| {
+                    acc.push((key.as_str().parse()?, val.as_str().parse()?));
+                    Ok::<_, crate::Error>(acc)
+                })
+                .ok()
+        })
+    }
+
+    pub fn input_mapping(&self) -> Option<Vec<(Keymap, Keymap)>> {
+        self.input.as_ref().and_then(|input| {
+            input
+                .0
+                .keys()
+                .zip(input.0.values())
+                .try_fold(Vec::<(Keymap, Keymap)>::new(), |mut acc, (key, val)| {
+                    acc.push((key.as_str().parse()?, val.as_str().parse()?));
+                    Ok::<_, crate::Error>(acc)
+                })
+                .ok()
+        })
+    }
 }
 
 #[derive(serde::Deserialize, serde::Serialize, Clone)]

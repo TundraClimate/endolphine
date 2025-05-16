@@ -17,13 +17,13 @@ impl Component for KeyHandler {
 
             if root
                 .mapping_registry
-                .has_similar_map(&root.key_buffer.inner, current_mode)
+                .has_similar_map(root.key_buffer.get(), current_mode)
             {
                 is_buffer_reset = false;
 
                 if let Some(cmd) = root
                     .mapping_registry
-                    .get(current_mode, &root.key_buffer.inner)
+                    .get(current_mode, root.key_buffer.get())
                 {
                     is_buffer_reset = true;
 
