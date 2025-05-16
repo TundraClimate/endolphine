@@ -15,8 +15,12 @@ pub trait Component: Send + Sync {
     }
 }
 
+struct CommandContext {
+    prenum: Option<usize>,
+}
+
 trait Command: Send + Sync {
-    fn run(&self) -> Result<(), crate::Error>;
+    fn run(&self, ctx: CommandContext) -> Result<(), crate::Error>;
 }
 
 pub fn components() -> Box<dyn Component> {

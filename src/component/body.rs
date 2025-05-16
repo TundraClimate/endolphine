@@ -103,14 +103,13 @@ impl Body {
 
 struct MoveDown {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
-    prenum: usize,
 }
 
 impl Command for MoveDown {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
 
-        state.cursor.shift_p(self.prenum);
+        state.cursor.shift_p(ctx.prenum.unwrap_or(1));
 
         let cursor_pos = state.cursor.current();
         state.selection.select_if_active(cursor_pos);
@@ -121,14 +120,13 @@ impl Command for MoveDown {
 
 struct MoveUp {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
-    prenum: usize,
 }
 
 impl Command for MoveUp {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
 
-        state.cursor.shift_n(self.prenum);
+        state.cursor.shift_n(ctx.prenum.unwrap_or(1));
 
         let cursor_pos = state.cursor.current();
         state.selection.select_if_active(cursor_pos);
@@ -142,7 +140,7 @@ struct MoveTop {
 }
 
 impl Command for MoveTop {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
 
         state.cursor.reset();
@@ -159,7 +157,7 @@ struct MoveBottom {
 }
 
 impl Command for MoveBottom {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
         let len = state.cursor.len();
 
@@ -174,15 +172,14 @@ impl Command for MoveBottom {
 
 struct PageDown {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
-    prenum: usize,
 }
 
 impl Command for PageDown {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
         let page_len = crate::misc::body_height() as usize;
 
-        state.cursor.shift_p(self.prenum * page_len);
+        state.cursor.shift_p(ctx.prenum.unwrap_or(1) * page_len);
 
         let cursor_pos = state.cursor.current();
         state.selection.select_if_active(cursor_pos);
@@ -193,15 +190,14 @@ impl Command for PageDown {
 
 struct PageUp {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
-    prenum: usize,
 }
 
 impl Command for PageUp {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut state = self.state.write().unwrap();
         let page_len = crate::misc::body_height() as usize;
 
-        state.cursor.shift_n(self.prenum * page_len);
+        state.cursor.shift_n(ctx.prenum.unwrap_or(1) * page_len);
 
         let cursor_pos = state.cursor.current();
         state.selection.select_if_active(cursor_pos);
@@ -235,7 +231,7 @@ struct MoveParent {
 }
 
 impl Command for MoveParent {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let path = self.app_state.read().unwrap().path.get().clone();
 
         if path == std::path::Path::new("/") {
@@ -272,7 +268,7 @@ struct EnterDirOrEdit {
 }
 
 impl Command for EnterDirOrEdit {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let path = self.app_state.read().unwrap().path.get().clone();
         let child_files = crate::misc::sorted_child_files(&path);
 
@@ -367,7 +363,7 @@ struct VisualSelect {
 }
 
 impl Command for VisualSelect {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         use super::app::Mode;
 
         let mut app = self.app_state.write().unwrap();
@@ -395,7 +391,7 @@ struct CreateFileOrDir {
 }
 
 impl Command for CreateFileOrDir {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let path = self
             .app_state
             .read()
@@ -453,7 +449,7 @@ struct AskCreate {
 }
 
 impl Command for AskCreate {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut body_state = self.body_state.write().unwrap();
 
         body_state.selection.disable();
@@ -474,7 +470,7 @@ struct DeleteFileOrDir {
 }
 
 impl Command for DeleteFileOrDir {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
         let path = app_state.path.get().clone();
         let body_state = self.body_state.read().unwrap();
@@ -558,7 +554,7 @@ struct DeleteSelected {
 }
 
 impl Command for DeleteSelected {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let (selected, path, is_alt_for_tmp, is_yank, is_native_clip) = {
             let app_state = self.app_state.read().unwrap();
             let body_state = self.body_state.read().unwrap();
@@ -652,7 +648,7 @@ struct AskDelete {
 }
 
 impl Command for AskDelete {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut body_state = self.body_state.write().unwrap();
         let under_cursor_file =
             crate::misc::sorted_child_files(self.app_state.read().unwrap().path.get())
@@ -697,7 +693,7 @@ struct Paste {
 }
 
 impl Command for Paste {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
         let config = &app_state.config.get();
         let native_clip = config.native_clip;
@@ -827,7 +823,7 @@ struct AskPaste {
 }
 
 impl Command for AskPaste {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
 
         let default = if app_state.config.get().paste.default_overwrite {
@@ -853,7 +849,7 @@ struct Rename {
 }
 
 impl Command for Rename {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
         let path = app_state.path.get();
         let body_state = self.body_state.read().unwrap();
@@ -907,7 +903,7 @@ struct AskRename {
 }
 
 impl Command for AskRename {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut body_state = self.body_state.write().unwrap();
 
         body_state.selection.disable();
@@ -939,7 +935,7 @@ struct Yank {
 }
 
 impl Command for Yank {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
         let body_state = self.body_state.read().unwrap();
         let path = app_state.path.get();
@@ -987,7 +983,7 @@ struct YankSelected {
 }
 
 impl Command for YankSelected {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut app_state = self.app_state.write().unwrap();
         let mut body_state = self.body_state.write().unwrap();
         let path = app_state.path.get();
@@ -1038,7 +1034,7 @@ struct Search {
 }
 
 impl Command for Search {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut body_state = self.body_state.write().unwrap();
 
         body_state.selection.disable();
@@ -1057,7 +1053,7 @@ struct SearchNext {
 }
 
 impl Command for SearchNext {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let app_state = self.app_state.read().unwrap();
         let path = app_state.path.get();
         let child_files = crate::misc::sorted_child_files(path);
@@ -1086,7 +1082,6 @@ impl Component for Body {
 
         {
             let mut lock = self.root_state.write().unwrap();
-            let prenum = lock.key_buffer.prenum();
             let registry = &mut lock.mapping_registry;
 
             registry.register_key(
@@ -1094,7 +1089,6 @@ impl Component for Body {
                 "j".parse()?,
                 MoveDown {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1102,7 +1096,6 @@ impl Component for Body {
                 "j".parse()?,
                 MoveDown {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1110,7 +1103,6 @@ impl Component for Body {
                 "k".parse()?,
                 MoveUp {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1118,7 +1110,6 @@ impl Component for Body {
                 "k".parse()?,
                 MoveUp {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1154,7 +1145,6 @@ impl Component for Body {
                 "gj".parse()?,
                 PageDown {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1162,7 +1152,6 @@ impl Component for Body {
                 "gj".parse()?,
                 PageDown {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1170,7 +1159,6 @@ impl Component for Body {
                 "gk".parse()?,
                 PageUp {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1178,7 +1166,6 @@ impl Component for Body {
                 "gk".parse()?,
                 PageUp {
                     state: self.state.clone(),
-                    prenum: prenum.unwrap_or(1),
                 },
             );
             registry.register_key(
@@ -1412,6 +1399,7 @@ impl Component for Body {
 
         let app_state = self.app_state.clone();
         let body_state = self.state.clone();
+        let prenum = self.root_state.read().unwrap().key_buffer.prenum();
 
         tokio::task::spawn_blocking(move || {
             if let Some(action) = action {
@@ -1423,6 +1411,7 @@ impl Component for Body {
                 }
 
                 {
+                    let ctx = super::CommandContext { prenum };
                     if let Err(e) = match action.as_str() {
                         "CreateFileOrDir" => CreateFileOrDir {
                             body_state: body_state.clone(),
@@ -1430,33 +1419,33 @@ impl Component for Body {
                             content: content.to_owned(),
                             is_file: !content.ends_with("/"),
                         }
-                        .run(),
+                        .run(ctx),
                         "DeleteFileOrDir" => DeleteFileOrDir {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                         }
-                        .run(),
+                        .run(ctx),
                         "DeleteSelected" => DeleteSelected {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                         }
-                        .run(),
+                        .run(ctx),
                         "Paste" => Paste {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                         }
-                        .run(),
+                        .run(ctx),
                         "Rename" => Rename {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                             content: content.to_owned(),
                         }
-                        .run(),
+                        .run(ctx),
                         "Search" => SearchNext {
                             body_state: body_state.clone(),
                             app_state: app_state.clone(),
                         }
-                        .run(),
+                        .run(ctx),
                         _ => Ok(()),
                     } {
                         e.handle();

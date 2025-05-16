@@ -135,7 +135,7 @@ impl App {
 struct ExitApp;
 
 impl Command for ExitApp {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         crate::app::disable_tui()?;
 
         crate::sys_log!("i", "Endolphine close successfully");

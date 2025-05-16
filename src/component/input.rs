@@ -12,7 +12,7 @@ struct CompleteInput {
 }
 
 impl Command for CompleteInput {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut lock = self.app_state.write().unwrap();
 
         self.body_state.write().unwrap().input.complete_input();
@@ -28,7 +28,7 @@ struct CancelInput {
 }
 
 impl Command for CancelInput {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut lock = self.app_state.write().unwrap();
 
         self.body_state.write().unwrap().input.disable();
@@ -43,7 +43,7 @@ struct InputCursorNext {
 }
 
 impl Command for InputCursorNext {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         self.body_state.write().unwrap().input.cursor_right();
 
         Ok(())
@@ -55,7 +55,7 @@ struct InputCursorPrev {
 }
 
 impl Command for InputCursorPrev {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         self.body_state.write().unwrap().input.cursor_left();
 
         Ok(())
@@ -67,7 +67,7 @@ struct InputDeleteCurrent {
 }
 
 impl Command for InputDeleteCurrent {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut buf: Option<String> = None;
 
         {
@@ -101,7 +101,7 @@ struct InputDeleteNext {
 }
 
 impl Command for InputDeleteNext {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut buf: Option<String> = None;
 
         {
@@ -135,7 +135,7 @@ struct InputInsert {
 }
 
 impl Command for InputInsert {
-    fn run(&self) -> Result<(), crate::Error> {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
         let mut buf: Option<String> = None;
 
         {

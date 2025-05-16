@@ -8,6 +8,10 @@ pub struct KeyBuffer {
 }
 
 impl KeyBuffer {
+    pub fn get(&self) -> &Vec<crate::key::Key> {
+        &self.inner
+    }
+
     pub fn push(&mut self, key: crate::key::Key) {
         self.inner.push(key);
     }
@@ -73,11 +77,7 @@ impl MappingRegistry {
         })
     }
 
-    pub fn eval_keymap(
-        &self,
-        mode: Mode,
-        keymap: &[crate::key::Key],
-    ) -> Option<Result<(), crate::Error>> {
+    pub fn get(&self, mode: Mode, keymap: &[crate::key::Key]) -> Option<&dyn Command> {
         let keymap = keymap
             .iter()
             .skip_while(|k| k.is_digit())
@@ -89,7 +89,7 @@ impl MappingRegistry {
                 mode as u8,
                 crate::key::Keymap::new(keymap.as_slice()).to_string(),
             ))
-            .map(|cmd| cmd.run())
+            .map(|cmd| &**cmd)
     }
 }
 

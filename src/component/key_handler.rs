@@ -9,24 +9,36 @@ pub struct KeyHandler {
 
 impl Component for KeyHandler {
     fn on_tick(&self) -> Result<(), crate::Error> {
-        let mut root = self.root_state.write().unwrap();
-        let current_mode = { self.app_state.read().unwrap().mode };
+        let mut is_buffer_reset = true;
 
-        if !root
-            .mapping_registry
-            .has_similar_map(&root.key_buffer.inner, current_mode)
         {
-            root.key_buffer.clear();
+            let root = self.root_state.read().unwrap();
+            let current_mode = self.app_state.read().unwrap().mode;
 
-            return Ok(());
+            if root
+                .mapping_registry
+                .has_similar_map(&root.key_buffer.inner, current_mode)
+            {
+                is_buffer_reset = false;
+
+                if let Some(cmd) = root
+                    .mapping_registry
+                    .get(current_mode, &root.key_buffer.inner)
+                {
+                    is_buffer_reset = true;
+
+                    let ctx = super::CommandContext {
+                        prenum: root.key_buffer.prenum(),
+                    };
+                    cmd.run(ctx)?;
+                }
+            }
         }
 
-        if let Some(cmd_res) = root
-            .mapping_registry
-            .eval_keymap(current_mode, &root.key_buffer.inner)
-        {
+        if is_buffer_reset {
+            let mut root = self.root_state.write().unwrap();
+
             root.key_buffer.clear();
-            cmd_res?;
         }
 
         Ok(())
