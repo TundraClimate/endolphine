@@ -15,7 +15,17 @@ impl Component for KeyHandler {
             let root = self.root_state.read().unwrap();
             let current_mode = self.app_state.read().unwrap().mode;
 
-            if root
+            if matches!(current_mode, super::app::Mode::Input) {
+                if let Some(cmd) = root
+                    .mapping_registry
+                    .get_pure(current_mode, root.key_buffer.get())
+                {
+                    let ctx = super::CommandContext {
+                        prenum: root.key_buffer.prenum(),
+                    };
+                    cmd.run(ctx)?;
+                }
+            } else if root
                 .mapping_registry
                 .has_similar_map(root.key_buffer.get(), current_mode)
             {

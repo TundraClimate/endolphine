@@ -114,6 +114,12 @@ impl MappingRegistry {
             ))
             .map(|cmd| &**cmd)
     }
+
+    pub fn get_pure(&self, mode: Mode, keymap: &[crate::key::Key]) -> Option<&dyn Command> {
+        self.inner
+            .get(&(mode as u8, crate::key::Keymap::new(keymap).to_string()))
+            .map(|cmd| &**cmd)
+    }
 }
 
 #[derive(Default)]
