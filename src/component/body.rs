@@ -1382,85 +1382,54 @@ impl Component for Body {
     fn on_tick(&self) -> Result<(), crate::Error> {
         self.inner.iter().try_for_each(|c| c.on_tick())?;
 
-        if matches!(self.app_state.read().unwrap().mode, super::app::Mode::Input) {
-            return Ok(());
-        }
-
-        let (action, content) = {
-            let mut lock = self.state.write().unwrap();
-            let input = &mut lock.input;
-
-            (input.drain_action(), input.drain_storage())
-        };
-
-        let Some(content) = content else {
-            return Ok(());
-        };
-
-        let app_state = self.app_state.clone();
-        let body_state = self.state.clone();
-        let prenum = self.root_state.read().unwrap().key_buffer.prenum();
-
-        tokio::task::spawn_blocking(move || {
-            if let Some(action) = action {
-                {
-                    let mut lock = app_state.write().unwrap();
-                    let proc_counter = &mut lock.process_counter;
-
-                    proc_counter.up();
-                }
-
-                {
-                    let ctx = super::CommandContext { prenum };
-                    if let Err(e) = match action.as_str() {
-                        "CreateFileOrDir" => CreateFileOrDir {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                            content: content.to_owned(),
-                            is_file: !content.ends_with("/"),
-                        }
-                        .run(ctx),
-                        "DeleteFileOrDir" => DeleteFileOrDir {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                        }
-                        .run(ctx),
-                        "DeleteSelected" => DeleteSelected {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                        }
-                        .run(ctx),
-                        "Paste" => Paste {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                        }
-                        .run(ctx),
-                        "Rename" => Rename {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                            content: content.to_owned(),
-                        }
-                        .run(ctx),
-                        "Search" => SearchNext {
-                            body_state: body_state.clone(),
-                            app_state: app_state.clone(),
-                        }
-                        .run(ctx),
-                        _ => Ok(()),
-                    } {
-                        e.handle();
-                    };
-                }
-
-                {
-                    let mut lock = app_state.write().unwrap();
-                    let proc_counter = &mut lock.process_counter;
-
-                    proc_counter.down();
-                }
-            }
-        });
-
         Ok(())
+    }
+}
+
+pub fn run_input_task(
+    action: &str,
+    content: &str,
+    body_state: &std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: &std::sync::Arc<std::sync::RwLock<AppState>>,
+    ctx: super::CommandContext,
+) -> Result<(), crate::Error> {
+    match action {
+        "CreateFileOrDir" => CreateFileOrDir {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+            content: content.to_owned(),
+            is_file: !content.ends_with("/"),
+        }
+        .run(ctx),
+        "DeleteFileOrDir" => DeleteFileOrDir {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+        }
+        .run(ctx),
+        "DeleteSelected" => DeleteSelected {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+        }
+        .run(ctx),
+        "Paste" => Paste {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+        }
+        .run(ctx),
+        "Rename" => Rename {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+            content: content.to_owned(),
+        }
+        .run(ctx),
+        "Search" => SearchNext {
+            body_state: body_state.clone(),
+            app_state: app_state.clone(),
+        }
+        .run(ctx),
+        _ => Err(crate::Error::IncorrectProgram(
+            "InputHandler".to_string(),
+            "Invalid action".to_string(),
+        )),
     }
 }

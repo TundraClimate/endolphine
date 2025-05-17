@@ -1,6 +1,7 @@
 mod app;
 mod body;
 mod input;
+mod input_handler;
 mod key_handler;
 mod key_reader;
 mod root;
@@ -27,6 +28,7 @@ pub fn components() -> Box<dyn Component> {
     use app::App;
     use body::Body;
     use input::Input;
+    use input_handler::InputHandler;
     use key_handler::KeyHandler;
     use key_reader::KeyReader;
     use root::Root;
@@ -46,11 +48,18 @@ pub fn components() -> Box<dyn Component> {
                         app_state.clone(),
                         root_state.clone(),
                         |body_state| {
-                            vec![Box::new(Input {
-                                root_state: root_state.clone(),
-                                body_state: body_state.clone(),
-                                app_state: app_state.clone(),
-                            })]
+                            vec![
+                                Box::new(Input {
+                                    root_state: root_state.clone(),
+                                    body_state: body_state.clone(),
+                                    app_state: app_state.clone(),
+                                }),
+                                Box::new(InputHandler {
+                                    root_state: root_state.clone(),
+                                    body_state: body_state.clone(),
+                                    app_state: app_state.clone(),
+                                }),
+                            ]
                         },
                     )),
                 ]
