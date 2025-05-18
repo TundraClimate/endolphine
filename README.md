@@ -168,8 +168,7 @@ items = [
 | Normal, Visual | `l`          | Open under cursor item                                                     |
 | Normal, Visual | `V`          | Toggle Normal and Visual mode                                              |
 | Normal, Visual | `M`          | Toggle Menu widget                                                         |
-| Normal         | `m`          | Focus Menu                                                                 |
-| Visual         | `m`          | Unfocus Menu                                                               |
+| Normal, Visual | `m`          | Toggle Menu focus                                                          |
 | Normal, Visual | `a`          | Ask create item and change to normal mode                                  |
 | Normal, Visual | `d`          | (if config delete.ask = true) Ask delete file(s) and change to normal mode |
 | Normal         | `dd`         | Delete under cursor item                                                   |

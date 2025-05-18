@@ -5,6 +5,7 @@ mod input_handler;
 mod key_handler;
 mod key_reader;
 mod root;
+mod sidemenu;
 
 pub trait Component: Send + Sync {
     fn on_init(&self) -> Result<(), crate::Error> {
@@ -32,6 +33,7 @@ pub fn components() -> Box<dyn Component> {
     use key_handler::KeyHandler;
     use key_reader::KeyReader;
     use root::Root;
+    use sidemenu::SideMenu;
 
     Box::new(Root::with_state(|root_state| {
         vec![
@@ -62,6 +64,11 @@ pub fn components() -> Box<dyn Component> {
                             ]
                         },
                     )),
+                    Box::new(SideMenu {
+                        root_state: root_state.clone(),
+                        menu: std::sync::Arc::new(crate::menu::Menu::default()),
+                        is_opened: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
+                    }),
                 ]
             })),
         ]
