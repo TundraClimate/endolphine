@@ -30,6 +30,7 @@ pub enum Mode {
     Normal,
     Visual,
     Input,
+    Menu,
 }
 
 impl Default for Mode {
@@ -204,6 +205,7 @@ impl Component for App {
 
             registry.register_key(Mode::Normal, "ZZ".parse()?, ExitApp);
             registry.register_key(Mode::Visual, "ZZ".parse()?, ExitApp);
+            registry.register_key(Mode::Menu, "ZZ".parse()?, ExitApp);
 
             let app_state = self.state.read().unwrap();
             let config = &app_state.config.get().keymap;

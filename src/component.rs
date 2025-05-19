@@ -66,6 +66,7 @@ pub fn components() -> Box<dyn Component> {
                     )),
                     Box::new(SideMenu {
                         root_state: root_state.clone(),
+                        app_state: app_state.clone(),
                         menu: std::sync::Arc::new(crate::menu::Menu::default()),
                         is_opened: std::sync::Arc::new(std::sync::atomic::AtomicBool::new(false)),
                     }),
