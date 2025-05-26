@@ -1,6 +1,7 @@
 mod app;
 mod builtin;
 mod canvas;
+mod canvas_impl;
 mod clipboard;
 mod command;
 mod component;

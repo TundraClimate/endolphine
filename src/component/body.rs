@@ -79,6 +79,8 @@ pub struct Body {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
     root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
+    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    body_canvas: std::sync::Arc<std::sync::RwLock<BodyCanvas>>,
     inner: Vec<Box<dyn Component>>,
 }
 
@@ -88,14 +90,20 @@ impl Body {
     >(
         app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
         root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
+        body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
         f: F,
     ) -> Self {
         let body_state = std::sync::Arc::new(std::sync::RwLock::new(BodyState::default()));
+        let body_canvas = std::sync::Arc::new(std::sync::RwLock::new(BodyCanvas::new_with_init(
+            *body_rect.read().unwrap(),
+        )));
 
         Self {
             state: body_state.clone(),
             app_state,
             root_state,
+            body_rect,
+            body_canvas,
             inner: f(body_state.clone()),
         }
     }
@@ -303,8 +311,8 @@ impl Command for EnterDirOrEdit {
                 cache.reset();
             }
         } else {
-            let body = self.app_state.read().unwrap();
-            let config = body.config.get();
+            let mut app_state = self.app_state.write().unwrap();
+            let config = app_state.config.get();
             let mut cmd = config.editor.clone();
             let mut in_term = true;
 
@@ -330,6 +338,7 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::disable_tui()?;
+                app_state.is_render = false;
             }
 
             crate::sys_log!(
@@ -349,6 +358,7 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::enable_tui()?;
+                app_state.is_render = false;
                 /* canvas::cache_clear(); */
             }
         }
@@ -1076,6 +1086,44 @@ impl Command for SearchNext {
     }
 }
 
+struct BodyCanvas {
+    canvas: crate::canvas_impl::Canvas,
+    prev_rect: crate::canvas_impl::Rect,
+}
+
+impl BodyCanvas {
+    fn init(&mut self) {
+        self.canvas.set_bg(crossterm::style::Color::Red);
+        self.canvas.set_fg(crossterm::style::Color::White);
+        self.canvas.fill();
+    }
+
+    fn new_with_init(rect: crate::canvas_impl::Rect) -> Self {
+        let mut c = Self {
+            canvas: crate::canvas_impl::Canvas::from(rect),
+            prev_rect: rect,
+        };
+
+        c.init();
+
+        c
+    }
+
+    fn has_rect_update(&self, rect: crate::canvas_impl::Rect) -> bool {
+        self.prev_rect != rect
+    }
+
+    fn draw(&self) {
+        self.canvas.print(1, 0, "Hi World");
+    }
+
+    fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
+        self.canvas = crate::canvas_impl::Canvas::from(rect);
+        self.prev_rect = rect;
+        self.init();
+    }
+}
+
 impl Component for Body {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -1382,7 +1430,25 @@ impl Component for Body {
     fn on_tick(&self) -> Result<(), crate::Error> {
         self.inner.iter().try_for_each(|c| c.on_tick())?;
 
+        let rect = *self.body_rect.read().unwrap();
+        if self.body_canvas.read().unwrap().has_rect_update(rect) {
+            self.body_canvas.write().unwrap().reset_size_with_init(rect);
+        }
+
+        self.body_canvas.read().unwrap().draw();
+
         Ok(())
+    }
+
+    fn on_resize(&self, size: (u16, u16)) -> Result<(), crate::Error> {
+        self.body_canvas
+            .write()
+            .unwrap()
+            .reset_size_with_init(*self.body_rect.read().unwrap());
+
+        self.inner
+            .iter()
+            .try_for_each(|inner| inner.on_resize(size))
     }
 }
 

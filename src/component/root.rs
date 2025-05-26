@@ -123,16 +123,38 @@ impl MappingRegistry {
 }
 
 #[derive(Default)]
+pub struct ResizeHook {
+    columns: u16,
+    rows: u16,
+    flag: bool,
+}
+
+impl ResizeHook {
+    pub fn update(&mut self, cols: u16, rows: u16) {
+        self.columns = cols;
+        self.rows = rows;
+        self.flag = true;
+    }
+}
+
+#[derive(Default)]
 pub struct RootState {
     pub key_buffer: KeyBuffer,
     pub mapping_registry: MappingRegistry,
+    pub resize_hook: ResizeHook,
 }
 
-pub struct Root(Vec<Box<dyn Component>>);
+pub struct Root {
+    state: std::sync::Arc<std::sync::RwLock<RootState>>,
+    inner: Vec<Box<dyn Component>>,
+}
 
 impl Root {
     pub fn with_state<
-        F: FnOnce(std::sync::Arc<std::sync::RwLock<RootState>>) -> Vec<Box<dyn Component>>,
+        F: FnOnce(
+            std::sync::Arc<std::sync::RwLock<RootState>>,
+            std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        ) -> Vec<Box<dyn Component>>,
     >(
         f: F,
     ) -> Self {
@@ -140,16 +162,38 @@ impl Root {
 
         let root_state = Arc::new(RwLock::new(RootState::default()));
 
-        Self(f(root_state))
+        let size = crossterm::terminal::size().unwrap_or((0, 0));
+        let rect = Arc::new(RwLock::new(crate::canvas_impl::Rect::new(
+            0, 0, size.0, size.1,
+        )));
+
+        Self {
+            state: root_state.clone(),
+            inner: f(root_state, rect),
+        }
     }
 }
 
 impl Component for Root {
     fn on_init(&self) -> Result<(), crate::Error> {
-        self.0.iter().try_for_each(|inner| inner.on_init())
+        self.inner.iter().try_for_each(|inner| inner.on_init())
     }
 
     fn on_tick(&self) -> Result<(), crate::Error> {
-        self.0.iter().try_for_each(|inner| inner.on_tick())
+        {
+            let mut state = self.state.write().unwrap();
+            if state.resize_hook.flag {
+                state.resize_hook.flag = false;
+                self.on_resize((state.resize_hook.columns, state.resize_hook.rows))?;
+            }
+        }
+
+        self.inner.iter().try_for_each(|inner| inner.on_tick())
+    }
+
+    fn on_resize(&self, size: (u16, u16)) -> Result<(), crate::Error> {
+        self.inner
+            .iter()
+            .try_for_each(|inner| inner.on_resize(size))
     }
 }

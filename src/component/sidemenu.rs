@@ -1,26 +1,44 @@
 use super::{Command, Component};
 
 pub struct SideMenu {
-    pub root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
-    pub app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
-    pub menu: std::sync::Arc<crate::menu::Menu>,
-    pub is_opened: std::sync::Arc<std::sync::atomic::AtomicBool>,
+    root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    menu_canvas: std::sync::Arc<std::sync::RwLock<MenuCanvas>>,
+    menu: std::sync::Arc<crate::menu::Menu>,
+}
+
+impl SideMenu {
+    pub fn new(
+        root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
+        app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+        menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        menu: std::sync::Arc<crate::menu::Menu>,
+    ) -> Self {
+        Self {
+            root_state,
+            app_state,
+            menu_canvas: std::sync::Arc::new(std::sync::RwLock::new(MenuCanvas::new_with_init(
+                *menu_rect.clone().read().unwrap(),
+            ))),
+            menu_rect,
+            menu,
+        }
+    }
 }
 
 struct MenuToggle {
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
     menu: std::sync::Arc<crate::menu::Menu>,
-    is_opened: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Command for MenuToggle {
     fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
-        use std::sync::atomic::Ordering;
+        let mut app_state = self.app_state.write().unwrap();
 
-        if !self.is_opened.load(Ordering::Relaxed) || self.menu.is_enabled() {
+        if !app_state.is_menu_opened.load() || self.menu.is_enabled() {
             self.menu.toggle_enable();
 
-            let mut app_state = self.app_state.write().unwrap();
             if matches!(app_state.mode, super::app::Mode::Menu) {
                 app_state.mode = super::app::Mode::Normal;
             } else {
@@ -28,7 +46,7 @@ impl Command for MenuToggle {
             }
         }
 
-        self.is_opened.fetch_not(Ordering::Relaxed);
+        app_state.is_menu_opened.update_not();
 
         Ok(())
     }
@@ -37,20 +55,18 @@ impl Command for MenuToggle {
 struct MenuMove {
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
     menu: std::sync::Arc<crate::menu::Menu>,
-    is_opened: std::sync::Arc<std::sync::atomic::AtomicBool>,
 }
 
 impl Command for MenuMove {
     fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
-        use std::sync::atomic::Ordering;
+        let mut app_state = self.app_state.write().unwrap();
 
-        if !self.is_opened.load(Ordering::Relaxed) {
-            self.is_opened.fetch_not(Ordering::Relaxed);
+        if !app_state.is_menu_opened.load() {
+            app_state.is_menu_opened.update_not();
         }
 
         self.menu.toggle_enable();
 
-        let mut app_state = self.app_state.write().unwrap();
         if matches!(app_state.mode, super::app::Mode::Menu) {
             app_state.mode = super::app::Mode::Normal;
         } else {
@@ -95,6 +111,44 @@ impl Command for EnterFromMenu {
     }
 }
 
+struct MenuCanvas {
+    canvas: crate::canvas_impl::Canvas,
+    prev_rect: crate::canvas_impl::Rect,
+}
+
+impl MenuCanvas {
+    fn init(&mut self) {
+        self.canvas.set_bg(crossterm::style::Color::Blue);
+        self.canvas.set_fg(crossterm::style::Color::White);
+        self.canvas.fill();
+    }
+
+    fn new_with_init(rect: crate::canvas_impl::Rect) -> Self {
+        let mut c = Self {
+            canvas: crate::canvas_impl::Canvas::from(rect),
+            prev_rect: rect,
+        };
+
+        c.init();
+
+        c
+    }
+
+    fn has_rect_update(&self, rect: crate::canvas_impl::Rect) -> bool {
+        self.prev_rect != rect
+    }
+
+    fn draw(&self) {
+        self.canvas.print(1, 0, "Hi Menu");
+    }
+
+    fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
+        self.canvas = crate::canvas_impl::Canvas::from(rect);
+        self.prev_rect = rect;
+        self.init();
+    }
+}
+
 impl Component for SideMenu {
     fn on_init(&self) -> Result<(), crate::Error> {
         use super::app::Mode;
@@ -109,7 +163,6 @@ impl Component for SideMenu {
                 MenuToggle {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -118,7 +171,6 @@ impl Component for SideMenu {
                 MenuToggle {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -127,7 +179,6 @@ impl Component for SideMenu {
                 MenuToggle {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -136,7 +187,6 @@ impl Component for SideMenu {
                 MenuMove {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -145,7 +195,6 @@ impl Component for SideMenu {
                 MenuMove {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -154,7 +203,6 @@ impl Component for SideMenu {
                 MenuMove {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
-                    is_opened: self.is_opened.clone(),
                 },
             );
             registry.register_key(
@@ -166,6 +214,26 @@ impl Component for SideMenu {
                 },
             )
         }
+
+        Ok(())
+    }
+
+    fn on_tick(&self) -> Result<(), crate::Error> {
+        let rect = *self.menu_rect.read().unwrap();
+        if self.menu_canvas.read().unwrap().has_rect_update(rect) {
+            self.menu_canvas.write().unwrap().reset_size_with_init(rect);
+        }
+
+        self.menu_canvas.read().unwrap().draw();
+
+        Ok(())
+    }
+
+    fn on_resize(&self, _size: (u16, u16)) -> Result<(), crate::Error> {
+        self.menu_canvas
+            .write()
+            .unwrap()
+            .reset_size_with_init(*self.menu_rect.read().unwrap());
 
         Ok(())
     }

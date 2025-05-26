@@ -19,6 +19,7 @@ walkdir = "2.5.0"
 toml = "0.8.19"
 serde = { version = "1.0.217", features = ["derive"] }
 regex = "1.11.1"
+unicode-width = "0.2.0"
 
 [[bin]]
 name = "ep"

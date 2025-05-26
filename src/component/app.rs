@@ -78,10 +78,34 @@ impl Config {
     }
 }
 
+pub struct MenuStatus {
+    inner: bool,
+    hook: bool,
+}
+
+impl MenuStatus {
+    fn new(default: bool) -> Self {
+        Self {
+            inner: default,
+            hook: false,
+        }
+    }
+
+    pub fn load(&self) -> bool {
+        self.inner
+    }
+
+    pub fn update_not(&mut self) {
+        self.inner = !self.inner;
+        self.hook = true;
+    }
+}
+
 pub struct AppState {
     pub path: CurrentPath,
     pub config: Config,
     pub is_render: bool,
+    pub is_menu_opened: MenuStatus,
     pub mode: Mode,
     pub process_counter: ProcessCounter,
 }
@@ -89,14 +113,41 @@ pub struct AppState {
 pub struct App {
     state: std::sync::Arc<std::sync::RwLock<AppState>>,
     root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
+    app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
     inner: Vec<Box<dyn Component>>,
 }
 
 impl App {
+    fn split_rect(
+        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        menu_opened: bool,
+    ) -> (crate::canvas_impl::Rect, crate::canvas_impl::Rect) {
+        use crate::canvas_impl::LayoutSpec;
+
+        let rect = app_rect.read().unwrap();
+        let specs = if menu_opened {
+            vec![LayoutSpec::Min(20), LayoutSpec::Fill]
+        } else {
+            vec![LayoutSpec::Min(0), LayoutSpec::Fill]
+        };
+        let split = rect.split_vertical(specs);
+
+        (split[0], split[1])
+    }
+
     pub fn with_state<
-        F: FnOnce(std::sync::Arc<std::sync::RwLock<AppState>>) -> Vec<Box<dyn Component>>,
+        F: FnOnce(
+            std::sync::Arc<std::sync::RwLock<AppState>>,
+            (
+                std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+                std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+            ),
+        ) -> Vec<Box<dyn Component>>,
     >(
         root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
+        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
         f: F,
     ) -> Self {
         use clap::Parser;
@@ -117,18 +168,26 @@ impl App {
             }
         };
 
+        let default_menu_status = false;
         let app_state = Arc::new(RwLock::new(AppState {
             path: CurrentPath { inner: path },
             config: Config::new_with_init(),
             is_render: true,
+            is_menu_opened: MenuStatus::new(default_menu_status),
             mode: Mode::default(),
             process_counter: ProcessCounter::default(),
         }));
+        let splitted = App::split_rect(app_rect.clone(), default_menu_status);
+        let menu_rect = Arc::new(RwLock::new(splitted.0));
+        let body_rect = Arc::new(RwLock::new(splitted.1));
 
         Self {
             state: app_state.clone(),
+            inner: f(app_state.clone(), (menu_rect.clone(), body_rect.clone())),
             root_state,
-            inner: f(app_state.clone()),
+            app_rect,
+            menu_rect,
+            body_rect,
         }
     }
 }
@@ -259,6 +318,43 @@ impl Component for App {
     }
 
     fn on_tick(&self) -> Result<(), crate::Error> {
-        self.inner.iter().try_for_each(|inner| inner.on_tick())
+        {
+            if self.state.read().unwrap().is_menu_opened.hook {
+                let mut state = self.state.write().unwrap();
+
+                let (menu_rect, body_rect) =
+                    App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
+
+                *self.menu_rect.write().unwrap() = menu_rect;
+                *self.body_rect.write().unwrap() = body_rect;
+
+                state.is_menu_opened.hook = false;
+            }
+        }
+
+        self.inner.iter().try_for_each(|inner| inner.on_tick())?;
+
+        if self.state.read().unwrap().is_render {
+            std::io::Write::flush(&mut std::io::stdout())
+                .map_err(|e| crate::Error::ScreenFlushFailed(e.kind().to_string()))?;
+        }
+
+        Ok(())
+    }
+
+    fn on_resize(&self, size: (u16, u16)) -> Result<(), crate::Error> {
+        *self.app_rect.write().unwrap() = crate::canvas_impl::Rect::new(0, 0, size.0, size.1);
+
+        let state = self.state.write().unwrap();
+
+        let (menu_rect, body_rect) =
+            App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
+
+        *self.menu_rect.write().unwrap() = menu_rect;
+        *self.body_rect.write().unwrap() = body_rect;
+
+        self.inner
+            .iter()
+            .try_for_each(|inner| inner.on_resize(size))
     }
 }
