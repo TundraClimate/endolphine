@@ -104,7 +104,7 @@ impl MenuStatus {
 pub struct AppState {
     pub path: CurrentPath,
     pub config: Config,
-    pub is_render: bool,
+    pub reflesh_hook: bool,
     pub is_menu_opened: MenuStatus,
     pub mode: Mode,
     pub process_counter: ProcessCounter,
@@ -172,7 +172,7 @@ impl App {
         let app_state = Arc::new(RwLock::new(AppState {
             path: CurrentPath { inner: path },
             config: Config::new_with_init(),
-            is_render: true,
+            reflesh_hook: false,
             is_menu_opened: MenuStatus::new(default_menu_status),
             mode: Mode::default(),
             process_counter: ProcessCounter::default(),
@@ -319,6 +319,25 @@ impl Component for App {
 
     fn on_tick(&self) -> Result<(), crate::Error> {
         {
+            if self.state.read().unwrap().reflesh_hook {
+                let empty_rect = crate::canvas_impl::Rect::new(0, 0, 0, 0);
+
+                *self.menu_rect.write().unwrap() = empty_rect;
+                *self.body_rect.write().unwrap() = empty_rect;
+
+                self.inner.iter().try_for_each(|inner| inner.on_tick())?;
+
+                let mut state = self.state.write().unwrap();
+
+                let (menu_rect, body_rect) =
+                    App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
+
+                *self.menu_rect.write().unwrap() = menu_rect;
+                *self.body_rect.write().unwrap() = body_rect;
+
+                state.reflesh_hook = false;
+            }
+
             if self.state.read().unwrap().is_menu_opened.hook {
                 let mut state = self.state.write().unwrap();
 
@@ -334,10 +353,8 @@ impl Component for App {
 
         self.inner.iter().try_for_each(|inner| inner.on_tick())?;
 
-        if self.state.read().unwrap().is_render {
-            std::io::Write::flush(&mut std::io::stdout())
-                .map_err(|e| crate::Error::ScreenFlushFailed(e.kind().to_string()))?;
-        }
+        std::io::Write::flush(&mut std::io::stdout())
+            .map_err(|e| crate::Error::ScreenFlushFailed(e.kind().to_string()))?;
 
         Ok(())
     }

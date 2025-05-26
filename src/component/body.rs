@@ -338,7 +338,6 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::disable_tui()?;
-                app_state.is_render = false;
             }
 
             crate::sys_log!(
@@ -358,8 +357,7 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::enable_tui()?;
-                app_state.is_render = false;
-                /* canvas::cache_clear(); */
+                app_state.reflesh_hook = true;
             }
         }
 
