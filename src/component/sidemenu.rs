@@ -17,10 +17,11 @@ impl SideMenu {
     ) -> Self {
         Self {
             root_state,
-            app_state,
             menu_canvas: std::sync::Arc::new(std::sync::RwLock::new(MenuCanvas::new_with_init(
+                app_state.clone(),
                 *menu_rect.clone().read().unwrap(),
             ))),
+            app_state,
             menu_rect,
             menu,
         }
@@ -113,19 +114,28 @@ impl Command for EnterFromMenu {
 
 struct MenuCanvas {
     canvas: crate::canvas_impl::Canvas,
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    key: String,
     prev_rect: crate::canvas_impl::Rect,
 }
 
 impl MenuCanvas {
     fn init(&mut self) {
-        self.canvas.set_bg(crossterm::style::Color::Blue);
-        self.canvas.set_fg(crossterm::style::Color::White);
+        let config = self.app_state.read().unwrap().config.get().scheme();
+
+        self.canvas.set_bg(config.bg_focused);
+        self.canvas.set_fg(config.fg_focused);
         self.canvas.fill();
     }
 
-    fn new_with_init(rect: crate::canvas_impl::Rect) -> Self {
+    fn new_with_init(
+        app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+        rect: crate::canvas_impl::Rect,
+    ) -> Self {
         let mut c = Self {
             canvas: crate::canvas_impl::Canvas::from(rect),
+            app_state,
+            key: String::new(),
             prev_rect: rect,
         };
 
@@ -138,8 +148,59 @@ impl MenuCanvas {
         self.prev_rect != rect
     }
 
-    fn draw(&self) {
-        self.canvas.print(1, 0, "Hi Menu");
+    fn calc_key(&self, cursor_pos: usize) -> String {
+        format!("{:?}{}", self.canvas.rect(), cursor_pos)
+    }
+
+    fn draw(&self, elements: &[crate::menu::MenuElement], cursor_pos: usize) {
+        use crossterm::style::{SetBackgroundColor, SetForegroundColor};
+
+        let canvas = &self.canvas;
+        let config = &self.app_state.read().unwrap().config.get().scheme();
+
+        canvas.print(
+            1,
+            0,
+            &format!("{} Select to Cd ", SetBackgroundColor(config.label)),
+        );
+        canvas.print(
+            0,
+            1,
+            &format!(
+                "{}{}",
+                SetBackgroundColor(config.bar),
+                " ".repeat(canvas.rect().width as usize)
+            ),
+        );
+
+        for (i, element) in elements.iter().enumerate() {
+            let cursor = if cursor_pos == i { ">" } else { " " };
+            let tag_bg = if cursor_pos == i {
+                SetBackgroundColor(config.row_cursor).to_string()
+            } else {
+                String::new()
+            };
+            let tag_fg = SetForegroundColor(config.menu_tag);
+
+            canvas.print(
+                0,
+                i as u16 + 2,
+                &format!("{} |{}{} {} ", cursor, tag_bg, tag_fg, element.tag),
+            );
+        }
+
+        for i in 0..self.canvas.rect().height {
+            canvas.print(
+                self.canvas.rect().width,
+                i,
+                &format!(
+                    "{}{}{}",
+                    SetBackgroundColor(config.bar),
+                    SetForegroundColor(config.label),
+                    "|"
+                ),
+            );
+        }
     }
 
     fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
@@ -224,7 +285,15 @@ impl Component for SideMenu {
             self.menu_canvas.write().unwrap().reset_size_with_init(rect);
         }
 
-        self.menu_canvas.read().unwrap().draw();
+        let mut menu_canvas = self.menu_canvas.write().unwrap();
+        let cursor_pos = self.menu.cursor.current();
+        let elements = &self.menu.elements;
+        let key = menu_canvas.calc_key(cursor_pos);
+
+        if key != menu_canvas.key {
+            menu_canvas.draw(elements, cursor_pos);
+            menu_canvas.key = key;
+        }
 
         Ok(())
     }

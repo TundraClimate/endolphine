@@ -7,10 +7,10 @@ pub enum LayoutSpec {
 
 #[derive(PartialEq, Debug, Clone, Copy)]
 pub struct Rect {
-    x: u16,
-    y: u16,
-    width: u16,
-    height: u16,
+    pub x: u16,
+    pub y: u16,
+    pub width: u16,
+    pub height: u16,
 }
 
 impl Rect {
@@ -178,6 +178,10 @@ impl Canvas {
             crossterm::style::ResetColor,
         )
         .ok();
+    }
+
+    pub fn rect(&self) -> Rect {
+        self.rect
     }
 
     pub fn fill(&self) {
