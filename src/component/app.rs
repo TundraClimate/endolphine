@@ -104,7 +104,7 @@ impl MenuStatus {
 pub struct AppState {
     pub path: CurrentPath,
     pub config: Config,
-    pub reflesh_hook: bool,
+    pub refresh_hook: bool,
     pub is_menu_opened: MenuStatus,
     pub mode: Mode,
     pub process_counter: ProcessCounter,
@@ -172,7 +172,7 @@ impl App {
         let app_state = Arc::new(RwLock::new(AppState {
             path: CurrentPath { inner: path },
             config: Config::new_with_init(),
-            reflesh_hook: false,
+            refresh_hook: false,
             is_menu_opened: MenuStatus::new(default_menu_status),
             mode: Mode::default(),
             process_counter: ProcessCounter::default(),
@@ -319,7 +319,7 @@ impl Component for App {
 
     fn on_tick(&self) -> Result<(), crate::Error> {
         {
-            if self.state.read().unwrap().reflesh_hook {
+            if self.state.read().unwrap().refresh_hook {
                 let empty_rect = crate::canvas_impl::Rect::new(0, 0, 0, 0);
 
                 *self.menu_rect.write().unwrap() = empty_rect;
@@ -335,7 +335,7 @@ impl Component for App {
                 *self.menu_rect.write().unwrap() = menu_rect;
                 *self.body_rect.write().unwrap() = body_rect;
 
-                state.reflesh_hook = false;
+                state.refresh_hook = false;
             }
 
             if self.state.read().unwrap().is_menu_opened.hook {

@@ -357,7 +357,7 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::enable_tui()?;
-                app_state.reflesh_hook = true;
+                app_state.refresh_hook = true;
             }
         }
 
