@@ -123,17 +123,17 @@ impl MappingRegistry {
 }
 
 #[derive(Default)]
-pub struct ResizeHook {
+pub struct SizeStatus {
     columns: u16,
     rows: u16,
-    flag: bool,
+    hook: crate::hook::Hook,
 }
 
-impl ResizeHook {
+impl SizeStatus {
     pub fn update(&mut self, cols: u16, rows: u16) {
         self.columns = cols;
         self.rows = rows;
-        self.flag = true;
+        self.hook.pull();
     }
 }
 
@@ -141,7 +141,7 @@ impl ResizeHook {
 pub struct RootState {
     pub key_buffer: KeyBuffer,
     pub mapping_registry: MappingRegistry,
-    pub resize_hook: ResizeHook,
+    pub size_status: SizeStatus,
 }
 
 pub struct Root {
@@ -181,10 +181,14 @@ impl Component for Root {
 
     fn on_tick(&self) -> Result<(), crate::Error> {
         {
-            let mut state = self.state.write().unwrap();
-            if state.resize_hook.flag {
-                state.resize_hook.flag = false;
-                self.on_resize((state.resize_hook.columns, state.resize_hook.rows))?;
+            let state = self.state.read().unwrap();
+
+            if let Some(res) = state
+                .size_status
+                .hook
+                .effect(|| self.on_resize((state.size_status.columns, state.size_status.rows)))
+            {
+                res?;
             }
         }
 

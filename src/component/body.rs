@@ -311,7 +311,7 @@ impl Command for EnterDirOrEdit {
                 cache.reset();
             }
         } else {
-            let mut app_state = self.app_state.write().unwrap();
+            let app_state = self.app_state.read().unwrap();
             let config = app_state.config.get();
             let mut cmd = config.editor.clone();
             let mut in_term = true;
@@ -357,7 +357,7 @@ impl Command for EnterDirOrEdit {
 
             if in_term {
                 crate::app::enable_tui()?;
-                app_state.refresh_hook = true;
+                app_state.refresh_hook.pull();
             }
         }
 

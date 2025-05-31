@@ -18,7 +18,7 @@ impl Component for EventReader {
                         state.write().unwrap().key_buffer.push(key);
                     }
                     Ok(crossterm::event::Event::Resize(col, row)) => {
-                        state.write().unwrap().resize_hook.update(col, row);
+                        state.write().unwrap().size_status.update(col, row);
                     }
                     _ => {}
                 }

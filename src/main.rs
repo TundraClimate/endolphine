@@ -7,6 +7,7 @@ mod command;
 mod component;
 mod config;
 mod cursor;
+mod hook;
 mod initialize;
 mod input;
 mod key;

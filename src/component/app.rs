@@ -80,14 +80,14 @@ impl Config {
 
 pub struct MenuStatus {
     inner: bool,
-    hook: bool,
+    hook: crate::hook::Hook,
 }
 
 impl MenuStatus {
     fn new(default: bool) -> Self {
         Self {
             inner: default,
-            hook: false,
+            hook: crate::hook::Hook::new(),
         }
     }
 
@@ -97,14 +97,14 @@ impl MenuStatus {
 
     pub fn update_not(&mut self) {
         self.inner = !self.inner;
-        self.hook = true;
+        self.hook.pull();
     }
 }
 
 pub struct AppState {
     pub path: CurrentPath,
     pub config: Config,
-    pub refresh_hook: bool,
+    pub refresh_hook: crate::hook::Hook,
     pub is_menu_opened: MenuStatus,
     pub mode: Mode,
     pub process_counter: ProcessCounter,
@@ -172,7 +172,7 @@ impl App {
         let app_state = Arc::new(RwLock::new(AppState {
             path: CurrentPath { inner: path },
             config: Config::new_with_init(),
-            refresh_hook: false,
+            refresh_hook: crate::hook::Hook::new(),
             is_menu_opened: MenuStatus::new(default_menu_status),
             mode: Mode::default(),
             process_counter: ProcessCounter::default(),
@@ -319,7 +319,8 @@ impl Component for App {
 
     fn on_tick(&self) -> Result<(), crate::Error> {
         {
-            if self.state.read().unwrap().refresh_hook {
+            let state = self.state.read().unwrap();
+            let res = state.refresh_hook.effect(|| {
                 let empty_rect = crate::canvas_impl::Rect::new(0, 0, 0, 0);
 
                 *self.menu_rect.write().unwrap() = empty_rect;
@@ -327,28 +328,26 @@ impl Component for App {
 
                 self.inner.iter().try_for_each(|inner| inner.on_tick())?;
 
-                let mut state = self.state.write().unwrap();
-
                 let (menu_rect, body_rect) =
                     App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
 
                 *self.menu_rect.write().unwrap() = menu_rect;
                 *self.body_rect.write().unwrap() = body_rect;
 
-                state.refresh_hook = false;
-            }
+                Ok::<(), crate::Error>(())
+            });
 
-            if self.state.read().unwrap().is_menu_opened.hook {
-                let mut state = self.state.write().unwrap();
+            if let Some(res) = res {
+                res?;
+            };
 
+            state.is_menu_opened.hook.effect(|| {
                 let (menu_rect, body_rect) =
                     App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
 
                 *self.menu_rect.write().unwrap() = menu_rect;
                 *self.body_rect.write().unwrap() = body_rect;
-
-                state.is_menu_opened.hook = false;
-            }
+            });
         }
 
         self.inner.iter().try_for_each(|inner| inner.on_tick())?;
