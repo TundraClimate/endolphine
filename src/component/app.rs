@@ -359,15 +359,17 @@ impl Component for App {
     }
 
     fn on_resize(&self, size: (u16, u16)) -> Result<(), crate::Error> {
-        *self.app_rect.write().unwrap() = crate::canvas_impl::Rect::new(0, 0, size.0, size.1);
+        {
+            *self.app_rect.write().unwrap() = crate::canvas_impl::Rect::new(0, 0, size.0, size.1);
 
-        let state = self.state.write().unwrap();
+            let state = self.state.read().unwrap();
 
-        let (menu_rect, body_rect) =
-            App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
+            let (menu_rect, body_rect) =
+                App::split_rect(self.app_rect.clone(), state.is_menu_opened.load());
 
-        *self.menu_rect.write().unwrap() = menu_rect;
-        *self.body_rect.write().unwrap() = body_rect;
+            *self.menu_rect.write().unwrap() = menu_rect;
+            *self.body_rect.write().unwrap() = body_rect;
+        }
 
         self.inner
             .iter()
