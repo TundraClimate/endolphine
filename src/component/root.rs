@@ -146,10 +146,21 @@ pub struct RootState {
 
 pub struct Root {
     state: std::sync::Arc<std::sync::RwLock<RootState>>,
+    base_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
     inner: Vec<Box<dyn Component>>,
 }
 
 impl Root {
+    fn split_rect(
+        rect: crate::canvas_impl::Rect,
+    ) -> (crate::canvas_impl::Rect, crate::canvas_impl::Rect) {
+        use crate::canvas_impl::LayoutSpec;
+
+        let split = rect.split_horizontal(vec![LayoutSpec::Fill, LayoutSpec::Min(1)]);
+
+        (split[0], split[1])
+    }
+
     pub fn with_state<
         F: FnOnce(
             std::sync::Arc<std::sync::RwLock<RootState>>,
@@ -163,13 +174,14 @@ impl Root {
         let root_state = Arc::new(RwLock::new(RootState::default()));
 
         let size = crossterm::terminal::size().unwrap_or((0, 0));
-        let rect = Arc::new(RwLock::new(crate::canvas_impl::Rect::new(
-            0, 0, size.0, size.1,
-        )));
+        let rect = crate::canvas_impl::Rect::new(0, 0, size.0, size.1);
+        let split = Root::split_rect(rect);
+        let base_rect = Arc::new(RwLock::new(split.0));
 
         Self {
             state: root_state.clone(),
-            inner: f(root_state, rect),
+            inner: f(root_state, base_rect.clone()),
+            base_rect,
         }
     }
 }
@@ -196,6 +208,13 @@ impl Component for Root {
     }
 
     fn on_resize(&self, size: (u16, u16)) -> Result<(), crate::Error> {
+        {
+            let size = crossterm::terminal::size().unwrap_or((0, 0));
+            let rect = crate::canvas_impl::Rect::new(0, 0, size.0, size.1);
+
+            *self.base_rect.write().unwrap() = Root::split_rect(rect).0;
+        }
+
         self.inner
             .iter()
             .try_for_each(|inner| inner.on_resize(size))
