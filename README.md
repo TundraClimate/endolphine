@@ -151,41 +151,43 @@ items = [
 
 ### Keymapping
 
-| Mode           | Keymap       | Desc                                                                       |
-| -------------- | ------------ | -------------------------------------------------------------------------- |
-| Normal, Visual | `ZZ`         | Exit application                                                           |
-| Normal         | `<ESC>`      | Some reset                                                                 |
-| Visual         | `<ESC>`      | Change to normal mode                                                      |
-| Normal         | `k`          | Move cursor up                                                             |
-| Visual         | `k`          | Move cursor up and select item                                             |
-| Normal         | `j`          | Move cursor down                                                           |
-| Visual         | `j`          | Move cursor down and select item                                           |
-| Normal, Visual | `h`          | Open parent directory and change to normal mode                            |
-| Normal, Visual | `gg`         | Move cursor to top                                                         |
-| Normal, Visual | `G`          | Move cursor to bottom                                                      |
-| Normal, Visual | `gk`         | Move cursor up per page                                                    |
-| Normal, Visual | `gj`         | Move cursor down per page                                                  |
-| Normal, Visual | `l`          | Open under cursor item                                                     |
-| Normal, Visual | `V`          | Toggle Normal and Visual mode                                              |
-| Normal, Visual | `M`          | Toggle Menu widget                                                         |
-| Normal, Visual | `m`          | Toggle Menu focus                                                          |
-| Normal, Visual | `a`          | Ask create item and change to normal mode                                  |
-| Normal, Visual | `d`          | (if config delete.ask = true) Ask delete file(s) and change to normal mode |
-| Normal         | `dd`         | Delete under cursor item                                                   |
-| Visual         | `d`          | Delete selected items                                                      |
-| Normal, Visual | `r`          | Ask rename item and change to normal mode                                  |
-| Normal         | `yy`         | Yank under cursor item                                                     |
-| Visual         | `y`          | Yank selected items                                                        |
-| Normal, Visual | `p`          | Paste from clipboard                                                       |
-| Normal, Visual | `/`          | Open search input and change to normal mode                                |
-| Normal, Visual | `n`          | Move cursor to next by search                                              |
-| Input          | `a`..`Z`, .. | Push key to input                                                          |
-| Input          | `<c-h>`      | Move cursor to previous                                                    |
-| Input          | `<c-l>`      | Move cursor to next                                                        |
-| Input          | `<BS>`       | Delete current char in input                                               |
-| Input          | `<s-BS>`     | Delete next char in input                                                  |
-| Input          | `<CR>`       | Complete input                                                             |
-| Input          | `<ESC>`      | Espace from input                                                          |
+| Mode                 | Keymap       | Desc                                                                       |
+| -------------------- | ------------ | -------------------------------------------------------------------------- |
+| Normal, Visual       | `ZZ`         | Exit application                                                           |
+| Normal               | `<ESC>`      | Some reset                                                                 |
+| Visual               | `<ESC>`      | Change to normal mode                                                      |
+| Normal, Menu         | `k`          | Move cursor up                                                             |
+| Visual               | `k`          | Move cursor up and select item                                             |
+| Normal, Menu         | `j`          | Move cursor down                                                           |
+| Visual               | `j`          | Move cursor down and select item                                           |
+| Menu                 | `K`          | Move cursor to top                                                         |
+| Menu                 | `J`          | Move cursor to bottom                                                      |
+| Normal, Visual       | `h`          | Open parent directory and change to normal mode                            |
+| Normal, Visual       | `gg`         | Move cursor to top                                                         |
+| Normal, Visual       | `G`          | Move cursor to bottom                                                      |
+| Normal, Visual       | `gk`         | Move cursor up per page                                                    |
+| Normal, Visual       | `gj`         | Move cursor down per page                                                  |
+| Normal, Visual       | `l`          | Open under cursor item                                                     |
+| Normal, Visual       | `V`          | Toggle Normal and Visual mode                                              |
+| Normal, Visual, Menu | `M`          | Toggle Menu widget                                                         |
+| Normal, Visual, Menu | `m`          | Toggle Menu focus                                                          |
+| Normal, Visual       | `a`          | Ask create item and change to normal mode                                  |
+| Normal, Visual       | `d`          | (if config delete.ask = true) Ask delete file(s) and change to normal mode |
+| Normal               | `dd`         | Delete under cursor item                                                   |
+| Visual               | `d`          | Delete selected items                                                      |
+| Normal, Visual       | `r`          | Ask rename item and change to normal mode                                  |
+| Normal               | `yy`         | Yank under cursor item                                                     |
+| Visual               | `y`          | Yank selected items                                                        |
+| Normal, Visual       | `p`          | Paste from clipboard                                                       |
+| Normal, Visual       | `/`          | Open search input and change to normal mode                                |
+| Normal, Visual       | `n`          | Move cursor to next by search                                              |
+| Input                | `a`..`Z`, .. | Push key to input                                                          |
+| Input                | `<c-h>`      | Move cursor to previous                                                    |
+| Input                | `<c-l>`      | Move cursor to next                                                        |
+| Input                | `<BS>`       | Delete current char in input                                               |
+| Input                | `<s-BS>`     | Delete next char in input                                                  |
+| Input                | `<CR>`       | Complete input                                                             |
+| Input                | `<ESC>`      | Espace from input                                                          |
 
 ### Available themes
 

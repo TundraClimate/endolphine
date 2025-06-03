@@ -112,6 +112,62 @@ impl Command for EnterFromMenu {
     }
 }
 
+struct CursorUp {
+    menu: std::sync::Arc<crate::menu::Menu>,
+}
+
+impl Command for CursorUp {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let cursor = &self.menu.cursor;
+
+        cursor.shift_n(ctx.prenum.unwrap_or(1));
+
+        Ok(())
+    }
+}
+
+struct CursorDown {
+    menu: std::sync::Arc<crate::menu::Menu>,
+}
+
+impl Command for CursorDown {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let cursor = &self.menu.cursor;
+
+        cursor.shift_p(ctx.prenum.unwrap_or(1));
+
+        Ok(())
+    }
+}
+
+struct CursorToTop {
+    menu: std::sync::Arc<crate::menu::Menu>,
+}
+
+impl Command for CursorToTop {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let cursor = &self.menu.cursor;
+
+        cursor.reset();
+
+        Ok(())
+    }
+}
+
+struct CursorToBottom {
+    menu: std::sync::Arc<crate::menu::Menu>,
+}
+
+impl Command for CursorToBottom {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let cursor = &self.menu.cursor;
+
+        cursor.shift_p(cursor.len());
+
+        Ok(())
+    }
+}
+
 struct MenuCanvas {
     canvas: crate::canvas_impl::Canvas,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
@@ -273,7 +329,35 @@ impl Component for SideMenu {
                     app_state: self.app_state.clone(),
                     menu: self.menu.clone(),
                 },
-            )
+            );
+            registry.register_key(
+                Mode::Menu,
+                "j".parse()?,
+                CursorDown {
+                    menu: self.menu.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Menu,
+                "k".parse()?,
+                CursorUp {
+                    menu: self.menu.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Menu,
+                "J".parse()?,
+                CursorToBottom {
+                    menu: self.menu.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Menu,
+                "K".parse()?,
+                CursorToTop {
+                    menu: self.menu.clone(),
+                },
+            );
         }
 
         Ok(())
