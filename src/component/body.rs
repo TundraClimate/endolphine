@@ -299,6 +299,7 @@ impl Command for EnterDirOrEdit {
         if target_path.is_dir() {
             let mut app = self.app_state.write().unwrap();
             let mut body = self.body_state.write().unwrap();
+            let child_files = crate::misc::sorted_child_files(target_path);
 
             move_current_dir(&mut app, &mut body, target_path)?;
 
