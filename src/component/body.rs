@@ -1095,6 +1095,7 @@ struct BodyCanvas {
 
 struct CanvasContext {
     current_path: std::path::PathBuf,
+    cursor_pos: usize,
 }
 
 impl BodyCanvas {
@@ -1104,6 +1105,15 @@ impl BodyCanvas {
         self.canvas.set_bg(config.bg_focused);
         self.canvas.set_fg(config.fg_focused);
         self.canvas.fill();
+        self.canvas.print(
+            0,
+            1,
+            &format!(
+                "{}{}",
+                crossterm::style::SetBackgroundColor(config.bar),
+                " ".repeat(self.canvas.rect().width as usize)
+            ),
+        );
     }
 
     fn new_with_init(
@@ -1127,7 +1137,12 @@ impl BodyCanvas {
     }
 
     fn calc_key(&self, ctx: &CanvasContext) -> String {
-        format!("{:?}{:?}", self.canvas.rect(), ctx.current_path)
+        format!(
+            "{:?}{:?}{}",
+            self.canvas.rect(),
+            ctx.current_path,
+            ctx.cursor_pos
+        )
     }
 
     fn draw(&self, ctx: &CanvasContext) {
@@ -1150,13 +1165,13 @@ impl BodyCanvas {
             let config = self.app_state.read().unwrap().config.get().scheme();
 
             path_area.set_bg(config.bg_focused);
-            file_info_bar.set_bg(config.bg_focused);
+            file_info_bar.set_bg(config.bar);
             file_rows.set_bg(config.bg_focused);
-            info_bar.set_bg(config.bg_focused);
+            info_bar.set_bg(config.bar);
 
             path_area.set_fg(config.fg_focused);
             file_info_bar.set_fg(config.bar_text);
-            file_info_bar.set_fg(config.fg_focused);
+            file_rows.set_fg(config.fg_focused);
             info_bar.set_fg(config.bar_text);
         }
 
@@ -1194,6 +1209,24 @@ impl BodyCanvas {
                     rel_path,
                     display_path,
                     " ".repeat(body_width.into())
+                ),
+            );
+        }
+
+        {
+            let config = self.app_state.read().unwrap().config.get().scheme();
+
+            let page = ctx.cursor_pos / self.canvas.rect().height as usize + 1;
+            let len = crate::misc::child_files_len(&ctx.current_path);
+
+            file_info_bar.print(
+                1,
+                0,
+                &format!(
+                    "Page {} {}(All {} items)",
+                    page,
+                    crossterm::style::SetForegroundColor(config.bar_text_light),
+                    len
                 ),
             );
         }
@@ -1520,10 +1553,12 @@ impl Component for Body {
 
         {
             let app_state = self.app_state.read().unwrap();
+            let body_state = self.state.read().unwrap();
             let current_path = app_state.path.get();
 
             let ctx = CanvasContext {
                 current_path: current_path.to_path_buf(),
+                cursor_pos: body_state.cursor.current(),
             };
 
             let key = body_canvas.calc_key(&ctx);
