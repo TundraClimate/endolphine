@@ -11,6 +11,20 @@ pub fn file_name(path: &Path) -> &str {
         .unwrap_or("_OsIncompatible_")
 }
 
+pub fn entry_name(path: &Path) -> String {
+    if path == Path::new("/") {
+        return String::from("");
+    }
+
+    match path
+        .file_name()
+        .map(|name| name.to_string_lossy().to_string())
+    {
+        Some(name) => name,
+        None => path.to_string_lossy().to_string(),
+    }
+}
+
 pub fn parent(path: &Path) -> PathBuf {
     path.parent()
         .map(|p| p.to_path_buf())

@@ -95,6 +95,7 @@ impl Body {
     ) -> Self {
         let body_state = std::sync::Arc::new(std::sync::RwLock::new(BodyState::default()));
         let body_canvas = std::sync::Arc::new(std::sync::RwLock::new(BodyCanvas::new_with_init(
+            app_state.clone(),
             *body_rect.read().unwrap(),
         )));
 
@@ -1086,19 +1087,32 @@ impl Command for SearchNext {
 
 struct BodyCanvas {
     canvas: crate::canvas_impl::Canvas,
+    app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    key: String,
     prev_rect: crate::canvas_impl::Rect,
+}
+
+struct CanvasContext {
+    current_path: std::path::PathBuf,
 }
 
 impl BodyCanvas {
     fn init(&mut self) {
-        self.canvas.set_bg(crossterm::style::Color::Red);
-        self.canvas.set_fg(crossterm::style::Color::White);
+        let config = self.app_state.read().unwrap().config.get().scheme();
+
+        self.canvas.set_bg(config.bg_focused);
+        self.canvas.set_fg(config.fg_focused);
         self.canvas.fill();
     }
 
-    fn new_with_init(rect: crate::canvas_impl::Rect) -> Self {
+    fn new_with_init(
+        app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+        rect: crate::canvas_impl::Rect,
+    ) -> Self {
         let mut c = Self {
             canvas: crate::canvas_impl::Canvas::from(rect),
+            app_state,
+            key: String::new(),
             prev_rect: rect,
         };
 
@@ -1111,8 +1125,77 @@ impl BodyCanvas {
         self.prev_rect != rect
     }
 
-    fn draw(&self) {
-        self.canvas.print(1, 0, "Hi World");
+    fn calc_key(&self, ctx: &CanvasContext) -> String {
+        format!("{:?}{:?}", self.canvas.rect(), ctx.current_path)
+    }
+
+    fn draw(&self, ctx: &CanvasContext) {
+        use crate::canvas_impl::{Canvas, LayoutSpec};
+
+        let rects = self.canvas.rect().split_horizontal(vec![
+            LayoutSpec::Min(1),
+            LayoutSpec::Min(1),
+            LayoutSpec::Fill,
+            LayoutSpec::Min(1),
+        ]);
+
+        let mut path_area = Canvas::from(rects[0]);
+        let mut file_info_bar = Canvas::from(rects[1]);
+        let mut file_rows = Canvas::from(rects[2]);
+        let mut info_bar = Canvas::from(rects[3]);
+        let body_width = self.canvas.rect().width;
+
+        {
+            let config = self.app_state.read().unwrap().config.get().scheme();
+
+            path_area.set_bg(config.bg_focused);
+            file_info_bar.set_bg(config.bg_focused);
+            file_rows.set_bg(config.bg_focused);
+            info_bar.set_bg(config.bg_focused);
+
+            path_area.set_fg(config.fg_focused);
+            file_info_bar.set_fg(config.bar_text);
+            file_info_bar.set_fg(config.fg_focused);
+            info_bar.set_fg(config.bar_text);
+        }
+
+        {
+            let config = self.app_state.read().unwrap().config.get().scheme();
+
+            let abs_path = &ctx.current_path;
+            let rel_path = format!("{}/", crate::misc::entry_name(abs_path));
+            let display_path = if let Some(parent) = abs_path.parent() {
+                let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {
+                    "root" => "/root".to_string(),
+                    user => format!("/home/{}", user),
+                });
+                let replaced = parent.to_string_lossy().replacen(&usr, "~", 1);
+
+                format!(
+                    "{}{}{}{}",
+                    replaced,
+                    if replaced.as_str() == "/" { "" } else { "/" },
+                    crossterm::style::SetForegroundColor(config.unnecessary_text),
+                    rel_path
+                )
+            } else {
+                format!(
+                    "{}/",
+                    crossterm::style::SetForegroundColor(config.unnecessary_text)
+                )
+            };
+
+            path_area.print(
+                1,
+                0,
+                &format!(
+                    "{} in {}{}",
+                    rel_path,
+                    display_path,
+                    " ".repeat(body_width.into())
+                ),
+            );
+        }
     }
 
     fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
@@ -1429,11 +1512,25 @@ impl Component for Body {
         self.inner.iter().try_for_each(|c| c.on_tick())?;
 
         let rect = *self.body_rect.read().unwrap();
-        if self.body_canvas.read().unwrap().has_rect_update(rect) {
-            self.body_canvas.write().unwrap().reset_size_with_init(rect);
+        let mut body_canvas = self.body_canvas.write().unwrap();
+        if body_canvas.has_rect_update(rect) {
+            body_canvas.reset_size_with_init(rect);
         }
 
-        self.body_canvas.read().unwrap().draw();
+        {
+            let app_state = self.app_state.read().unwrap();
+            let current_path = app_state.path.get();
+
+            let ctx = CanvasContext {
+                current_path: current_path.to_path_buf(),
+            };
+
+            let key = body_canvas.calc_key(&ctx);
+
+            if key != body_canvas.key {
+                body_canvas.draw(&ctx);
+            }
+        }
 
         Ok(())
     }
