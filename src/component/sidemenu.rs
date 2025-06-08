@@ -247,7 +247,7 @@ impl MenuCanvas {
 
         for i in 0..self.canvas.rect().height {
             canvas.print(
-                self.canvas.rect().width,
+                self.canvas.rect().width.saturating_sub(1),
                 i,
                 &format!(
                     "{}{}{}",

@@ -133,14 +133,14 @@ impl From<Rect> for Canvas {
 
 impl Canvas {
     pub fn print(&self, rel_x: u16, rel_y: u16, s: &str) {
-        if self.rect.height < rel_y {
+        if self.rect.height <= rel_y || self.rect.width <= rel_x {
             return;
         }
 
         let abs_x = self.rect.x + rel_x;
         let abs_y = self.rect.y + rel_y;
         let mut text = String::new();
-        let mut rem = self.rect.width as usize;
+        let mut rem = self.rect.width.saturating_sub(rel_x) as usize;
         let mut chars = s.chars().peekable();
 
         while let Some(&c) = chars.peek() {
