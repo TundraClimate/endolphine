@@ -51,7 +51,7 @@ impl ProcessCounter {
         self.0 = self.0.saturating_sub(1);
     }
 
-    fn now(&self) -> usize {
+    pub fn now(&self) -> usize {
         self.0
     }
 }

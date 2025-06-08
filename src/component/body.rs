@@ -1093,6 +1093,7 @@ struct BodyCanvas {
     prev_rect: crate::canvas_impl::Rect,
 }
 
+#[derive(Debug)]
 struct CanvasContext {
     current_path: std::path::PathBuf,
     cursor_pos: usize,
@@ -1108,6 +1109,15 @@ impl BodyCanvas {
         self.canvas.print(
             0,
             1,
+            &format!(
+                "{}{}",
+                crossterm::style::SetBackgroundColor(config.bar),
+                " ".repeat(self.canvas.rect().width as usize)
+            ),
+        );
+        self.canvas.print(
+            0,
+            self.canvas.rect().height.saturating_sub(1),
             &format!(
                 "{}{}",
                 crossterm::style::SetBackgroundColor(config.bar),
@@ -1137,12 +1147,7 @@ impl BodyCanvas {
     }
 
     fn calc_key(&self, ctx: &CanvasContext) -> String {
-        format!(
-            "{:?}{:?}{}",
-            self.canvas.rect(),
-            ctx.current_path,
-            ctx.cursor_pos
-        )
+        format!("{:?}{:?}", self.canvas.rect(), ctx)
     }
 
     fn draw(&self, ctx: &CanvasContext) {
@@ -1229,6 +1234,13 @@ impl BodyCanvas {
                     len
                 ),
             );
+        }
+
+        {
+            let app_state = self.app_state.read().unwrap();
+            let proc_count = app_state.process_counter.now();
+
+            info_bar.print(1, 0, &format!("{} process running", proc_count));
         }
     }
 
