@@ -1549,6 +1549,14 @@ impl Component for Body {
             );
         }
 
+        {
+            let path = self.app_state.read().unwrap().path.get().clone();
+            let mut app_state = self.app_state.write().unwrap();
+            let mut body_state = self.state.write().unwrap();
+
+            move_current_dir(&mut app_state, &mut body_state, &path)?;
+        }
+
         self.inner.iter().try_for_each(|c| c.on_init())?;
 
         Ok(())
