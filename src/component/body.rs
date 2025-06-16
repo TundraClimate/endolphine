@@ -1719,20 +1719,22 @@ impl Component for Body {
             body_canvas.reset_size_with_init(rect);
         }
 
-        {
+        let ctx = {
             let app_state = self.app_state.read().unwrap();
             let body_state = self.state.read().unwrap();
             let current_path = app_state.path.get();
 
-            let ctx = CanvasContext {
+            CanvasContext {
                 current_path: current_path.to_path_buf(),
                 cursor_pos: body_state.cursor.current(),
                 selection_range: body_state
                     .selection
                     .inner
                     .map(|(start, end)| start.min(end)..=start.max(end)),
-            };
+            }
+        };
 
+        {
             let key = body_canvas.calc_key(&ctx);
 
             if key != body_canvas.key {
