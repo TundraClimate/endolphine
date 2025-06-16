@@ -1097,6 +1097,7 @@ struct BodyCanvas {
 struct CanvasContext {
     current_path: std::path::PathBuf,
     cursor_pos: usize,
+    selection_range: Option<std::ops::RangeInclusive<usize>>,
 }
 
 impl BodyCanvas {
@@ -1152,6 +1153,10 @@ impl BodyCanvas {
 
     fn draw(&self, ctx: &CanvasContext) {
         use crate::canvas_impl::{Canvas, LayoutSpec};
+
+        if self.canvas.rect().height == 0 {
+            return;
+        }
 
         let rects = self.canvas.rect().split_horizontal(vec![
             LayoutSpec::Min(1),
@@ -1234,6 +1239,149 @@ impl BodyCanvas {
                     len
                 ),
             );
+        }
+
+        {
+            let page_index = ctx.cursor_pos / self.canvas.rect().height as usize;
+            let app_state = self.app_state.read().unwrap();
+            let path = app_state.path.get();
+            let items = crate::misc::sorted_child_files(path)
+                .iter()
+                .filter(|path| path.exists())
+                .cloned()
+                .collect::<Vec<_>>()
+                .chunks(file_rows.rect().height.into())
+                .collect::<Vec<_>>()
+                .get(page_index)
+                .map(|item| item.to_vec())
+                .unwrap_or(vec![]);
+            let app_state = self.app_state.read().unwrap();
+            let config = app_state.config.get();
+            let scheme = config.scheme();
+
+            for rel_i in 0..self.canvas.rect().height {
+                let abs_i = self.canvas.rect().height as usize * page_index + rel_i as usize;
+
+                match items.get(rel_i as usize) {
+                    Some(item) => {
+                        let is_cursor_pos = ctx.cursor_pos == abs_i;
+                        let cursor = if is_cursor_pos { ">" } else { " " };
+                        let file_type = format!(
+                            "{}{}",
+                            crossterm::style::SetForegroundColor(scheme.perm_ty),
+                            match item {
+                                item if item.is_symlink() => 'l',
+                                item if item.is_dir() => 'd',
+                                item if item.is_file() => '-',
+                                _ => 'o',
+                            }
+                        );
+                        let Ok(metadata) = item.symlink_metadata() else {
+                            file_rows.print(
+                                0,
+                                rel_i,
+                                &format!(
+                                    "{}Permission denied{}",
+                                    crossterm::style::SetForegroundColor(scheme.row_broken),
+                                    " ".repeat(body_width.into())
+                                ),
+                            );
+
+                            continue;
+                        };
+                        let mode = std::os::unix::fs::PermissionsExt::mode(&metadata.permissions());
+                        let perm = [0, 3, 6]
+                            .into_iter()
+                            .flat_map(|range_shift| {
+                                [0, 1, 2].map(|perm_shift| {
+                                    format!(
+                                        "{}{}",
+                                        [
+                                            crossterm::style::SetForegroundColor(scheme.perm_r),
+                                            crossterm::style::SetForegroundColor(scheme.perm_w),
+                                            crossterm::style::SetForegroundColor(scheme.perm_e)
+                                        ][perm_shift],
+                                        if mode & 0o400 >> range_shift >> perm_shift != 0 {
+                                            ['r', 'w', 'x'][perm_shift]
+                                        } else {
+                                            '-'
+                                        }
+                                    )
+                                })
+                            })
+                            .collect::<String>();
+                        let bsize = format!(
+                            "{}{:>8}",
+                            crossterm::style::SetForegroundColor(scheme.row_bsize),
+                            if metadata.is_dir() {
+                                "       -".into()
+                            } else {
+                                let size = metadata.len();
+
+                                si_scale::helpers::bytes1(size as f64)
+                            }
+                        );
+                        let time = format!(
+                            "{}{}",
+                            crossterm::style::SetForegroundColor(scheme.row_mod_time),
+                            metadata
+                                .modified()
+                                .map(|sys_time| {
+                                    chrono::DateTime::<chrono::Local>::from(sys_time)
+                                        .format("%y %m/%d %H:%M")
+                                        .to_string()
+                                })
+                                .unwrap_or(String::from("       x"))
+                        );
+                        let under_name = match ctx.selection_range {
+                            Some(ref range) if range.contains(&abs_i) => scheme.select,
+                            _ if is_cursor_pos => scheme.row_cursor,
+                            _ => scheme.bg_focused,
+                        };
+                        let file_name = format!(
+                            "{}{}{}",
+                            crossterm::style::SetForegroundColor(match item {
+                                path if !path.exists() => scheme.row_broken,
+                                path if path.is_symlink() => scheme.row_symlink,
+                                path if path.is_dir() => scheme.row_dir,
+                                path if path.is_file() => scheme.row_file,
+                                _ => scheme.row_broken,
+                            }),
+                            crate::misc::entry_name(item),
+                            match item.read_link() {
+                                Ok(link) => link.to_string_lossy().to_string(),
+                                Err(_) => "".to_string(),
+                            }
+                        );
+
+                        let row = format!(
+                            "{} | {}{} {} {} {}{}{}{}",
+                            cursor,
+                            file_type,
+                            perm,
+                            bsize,
+                            time,
+                            crossterm::style::SetBackgroundColor(under_name),
+                            file_name,
+                            crossterm::style::SetBackgroundColor(scheme.bg_focused),
+                            " ".repeat(body_width.into()),
+                        );
+
+                        file_rows.print(0, rel_i, &row);
+                    }
+                    None => {
+                        if rel_i == 0 {
+                            let empty_msg = format!(
+                                "{}> | Press 'a' to create the New file | Empty",
+                                crossterm::style::SetForegroundColor(scheme.bar),
+                            );
+                            file_rows.print(0, rel_i, &empty_msg);
+                        } else {
+                            file_rows.print(0, rel_i, &" ".repeat(body_width.into()));
+                        }
+                    }
+                }
+            }
         }
 
         {
@@ -1579,6 +1727,10 @@ impl Component for Body {
             let ctx = CanvasContext {
                 current_path: current_path.to_path_buf(),
                 cursor_pos: body_state.cursor.current(),
+                selection_range: body_state
+                    .selection
+                    .inner
+                    .map(|(start, end)| start.min(end)..=start.max(end)),
             };
 
             let key = body_canvas.calc_key(&ctx);
