@@ -437,15 +437,10 @@ struct CreateFileOrDir {
 
 impl Command for CreateFileOrDir {
     fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
-        let path = self
-            .app_state
-            .read()
-            .unwrap()
-            .path
-            .get()
-            .join(&self.content);
+        let path = self.app_state.read().unwrap().path.get().clone();
+        let content_path = path.join(&self.content);
 
-        if path.exists() {
+        if content_path.exists() {
             crate::sys_log!(
                 "w",
                 "Command CreateFileOrDir failed: \"{}\" is already exists",
@@ -460,9 +455,9 @@ impl Command for CreateFileOrDir {
         }
 
         let add_res = if self.is_file {
-            std::fs::write(&path, "")
+            std::fs::write(&content_path, "")
         } else {
-            std::fs::create_dir(&path)
+            std::fs::create_dir(&content_path)
         };
 
         if let Err(e) = add_res {
