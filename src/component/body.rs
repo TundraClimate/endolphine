@@ -393,6 +393,41 @@ impl Command for VisualSelect {
     }
 }
 
+struct SpawnNewThread<C: Command + Clone> {
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+    cmd: C,
+}
+
+impl<T: Command + Clone + 'static> Command for SpawnNewThread<T> {
+    fn run(&self, ctx: super::CommandContext) -> Result<(), crate::Error> {
+        let cmd = self.cmd.clone();
+        let app_state = self.app_state.clone();
+
+        tokio::task::spawn_blocking(move || {
+            {
+                let lock = app_state.read().unwrap();
+                let proc_counter = &lock.process_counter;
+
+                proc_counter.up();
+            }
+
+            if let Err(e) = cmd.run(ctx) {
+                e.handle();
+            }
+
+            {
+                let lock = app_state.read().unwrap();
+                let proc_counter = &lock.process_counter;
+
+                proc_counter.down();
+            }
+        });
+
+        Ok(())
+    }
+}
+
+#[derive(Clone)]
 struct CreateFileOrDir {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
@@ -474,6 +509,7 @@ impl Command for AskCreate {
     }
 }
 
+#[derive(Clone)]
 struct DeleteFileOrDir {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
@@ -558,6 +594,7 @@ impl Command for DeleteFileOrDir {
     }
 }
 
+#[derive(Clone)]
 struct DeleteSelected {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
@@ -697,6 +734,7 @@ impl Command for AskDelete {
     }
 }
 
+#[derive(Clone)]
 struct Paste {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
@@ -852,6 +890,7 @@ impl Command for AskPaste {
     }
 }
 
+#[derive(Clone)]
 struct Rename {
     body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
@@ -1579,17 +1618,23 @@ impl Component for Body {
                 registry.register_key(
                     Mode::Normal,
                     "dd".parse()?,
-                    DeleteFileOrDir {
-                        body_state: self.state.clone(),
+                    SpawnNewThread {
                         app_state: self.app_state.clone(),
+                        cmd: DeleteFileOrDir {
+                            body_state: self.state.clone(),
+                            app_state: self.app_state.clone(),
+                        },
                     },
                 );
                 registry.register_key(
                     Mode::Visual,
                     "d".parse()?,
-                    DeleteSelected {
-                        body_state: self.state.clone(),
+                    SpawnNewThread {
                         app_state: self.app_state.clone(),
+                        cmd: DeleteSelected {
+                            body_state: self.state.clone(),
+                            app_state: self.app_state.clone(),
+                        },
                     },
                 );
             }
@@ -1600,17 +1645,23 @@ impl Component for Body {
                 registry.register_key(
                     Mode::Normal,
                     "p".parse()?,
-                    Paste {
-                        body_state: self.state.clone(),
+                    SpawnNewThread {
                         app_state: self.app_state.clone(),
+                        cmd: Paste {
+                            body_state: self.state.clone(),
+                            app_state: self.app_state.clone(),
+                        },
                     },
                 );
                 registry.register_key(
                     Mode::Visual,
                     "p".parse()?,
-                    Paste {
-                        body_state: self.state.clone(),
+                    SpawnNewThread {
                         app_state: self.app_state.clone(),
+                        cmd: Paste {
+                            body_state: self.state.clone(),
+                            app_state: self.app_state.clone(),
+                        },
                     },
                 );
             } else {
@@ -1765,32 +1816,47 @@ pub fn run_input_task(
     ctx: super::CommandContext,
 ) -> Result<(), crate::Error> {
     match action {
-        "CreateFileOrDir" => CreateFileOrDir {
-            body_state: body_state.clone(),
+        "CreateFileOrDir" => SpawnNewThread {
             app_state: app_state.clone(),
-            content: content.to_owned(),
-            is_file: !content.ends_with("/"),
+            cmd: CreateFileOrDir {
+                body_state: body_state.clone(),
+                app_state: app_state.clone(),
+                content: content.to_owned(),
+                is_file: !content.ends_with("/"),
+            },
         }
         .run(ctx),
-        "DeleteFileOrDir" => DeleteFileOrDir {
-            body_state: body_state.clone(),
+        "DeleteFileOrDir" => SpawnNewThread {
             app_state: app_state.clone(),
+            cmd: DeleteFileOrDir {
+                body_state: body_state.clone(),
+                app_state: app_state.clone(),
+            },
         }
         .run(ctx),
-        "DeleteSelected" => DeleteSelected {
-            body_state: body_state.clone(),
+        "DeleteSelected" => SpawnNewThread {
             app_state: app_state.clone(),
+            cmd: DeleteSelected {
+                body_state: body_state.clone(),
+                app_state: app_state.clone(),
+            },
         }
         .run(ctx),
-        "Paste" => Paste {
-            body_state: body_state.clone(),
+        "Paste" => SpawnNewThread {
             app_state: app_state.clone(),
+            cmd: Paste {
+                body_state: body_state.clone(),
+                app_state: app_state.clone(),
+            },
         }
         .run(ctx),
-        "Rename" => Rename {
-            body_state: body_state.clone(),
+        "Rename" => SpawnNewThread {
             app_state: app_state.clone(),
-            content: content.to_owned(),
+            cmd: Rename {
+                body_state: body_state.clone(),
+                app_state: app_state.clone(),
+                content: content.to_owned(),
+            },
         }
         .run(ctx),
         "Search" => SearchNext {

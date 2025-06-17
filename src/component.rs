@@ -21,6 +21,7 @@ pub trait Component: Send + Sync {
     }
 }
 
+#[derive(Clone, Copy)]
 struct CommandContext {
     prenum: Option<usize>,
 }

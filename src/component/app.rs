@@ -40,19 +40,19 @@ impl Default for Mode {
 }
 
 #[derive(Default)]
-pub struct ProcessCounter(usize);
+pub struct ProcessCounter(std::sync::atomic::AtomicUsize);
 
 impl ProcessCounter {
-    pub fn up(&mut self) {
-        self.0 = self.0.saturating_add(1);
+    pub fn up(&self) {
+        self.0.fetch_add(1, std::sync::atomic::Ordering::Relaxed);
     }
 
-    pub fn down(&mut self) {
-        self.0 = self.0.saturating_sub(1);
+    pub fn down(&self) {
+        self.0.fetch_sub(1, std::sync::atomic::Ordering::Relaxed);
     }
 
     pub fn now(&self) -> usize {
-        self.0
+        self.0.load(std::sync::atomic::Ordering::Relaxed)
     }
 }
 

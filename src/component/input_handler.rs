@@ -28,31 +28,13 @@ impl Component for InputHandler {
         let prenum = self.root_state.read().unwrap().key_buffer.prenum();
         let ctx = super::CommandContext { prenum };
 
-        tokio::task::spawn_blocking(move || {
-            if let Some(action) = action {
-                {
-                    let mut lock = app_state.write().unwrap();
-                    let proc_counter = &mut lock.process_counter;
-
-                    proc_counter.up();
-                }
-
-                {
-                    if let Err(e) =
-                        super::body::run_input_task(&action, &content, &body_state, &app_state, ctx)
-                    {
-                        e.handle();
-                    };
-                }
-
-                {
-                    let mut lock = app_state.write().unwrap();
-                    let proc_counter = &mut lock.process_counter;
-
-                    proc_counter.down();
-                }
-            }
-        });
+        if let Some(action) = action {
+            if let Err(e) =
+                super::body::run_input_task(&action, &content, &body_state, &app_state, ctx)
+            {
+                e.handle();
+            };
+        }
 
         Ok(())
     }
