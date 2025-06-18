@@ -4,6 +4,24 @@ pub struct Input {
     pub root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
     pub body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
     pub app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    canvas: std::sync::RwLock<InputCanvas>,
+}
+
+impl Input {
+    pub fn new(
+        root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
+        body_state: std::sync::Arc<std::sync::RwLock<super::body::BodyState>>,
+        app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
+    ) -> Self {
+        Input {
+            root_state,
+            body_state,
+            app_state,
+            canvas: std::sync::RwLock::new(InputCanvas {
+                key: "0".to_string(),
+            }),
+        }
+    }
 }
 
 struct CompleteInput {
@@ -160,6 +178,27 @@ impl Command for InputInsert {
         }
 
         Ok(())
+    }
+}
+
+struct InputCanvas {
+    key: String,
+}
+
+impl InputCanvas {
+    fn calc_key(&self, cursor_pos: usize, buffer: &str) -> String {
+        format!("{}{}", cursor_pos, buffer)
+    }
+
+    fn draw(&self, cursor_pos: usize, buffer: &str) {
+        let mut buffer = buffer.to_string();
+        buffer.insert(cursor_pos, '▏');
+
+        crate::log!(
+            " {}{}",
+            buffer,
+            " ".repeat(crossterm::terminal::size().unwrap().0 as usize)
+        );
     }
 }
 
@@ -975,6 +1014,21 @@ impl Component for Input {
                     c: '~',
                 },
             );
+        }
+
+        Ok(())
+    }
+
+    fn on_tick(&self) -> Result<(), crate::Error> {
+        let mut canvas = self.canvas.write().unwrap();
+        let body_state = self.body_state.read().unwrap();
+        let input = &body_state.input;
+
+        if let Some(buffer) = input.buffer_load() {
+            if canvas.key != canvas.calc_key(input.cursor_current(), buffer) || canvas.key != *"0" {
+                canvas.draw(input.cursor_current(), buffer);
+                canvas.key = canvas.calc_key(input.cursor_current(), buffer);
+            }
         }
 
         Ok(())
