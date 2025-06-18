@@ -393,6 +393,26 @@ impl Command for VisualSelect {
     }
 }
 
+struct DisableSelect {
+    body_state: std::sync::Arc<std::sync::RwLock<BodyState>>,
+    app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
+}
+
+impl Command for DisableSelect {
+    fn run(&self, _ctx: super::CommandContext) -> Result<(), crate::Error> {
+        use super::app::Mode;
+
+        let mut app = self.app_state.write().unwrap();
+        let mut body = self.body_state.write().unwrap();
+        let selection = &mut body.selection;
+
+        selection.disable();
+        app.mode = Mode::Normal;
+
+        Ok(())
+    }
+}
+
 struct SpawnNewThread<C: Command + Clone> {
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
     cmd: C,
@@ -1601,6 +1621,14 @@ impl Component for Body {
                 Mode::Visual,
                 "V".parse()?,
                 VisualSelect {
+                    body_state: self.state.clone(),
+                    app_state: self.app_state.clone(),
+                },
+            );
+            registry.register_key(
+                Mode::Visual,
+                "<ESC>".parse()?,
+                DisableSelect {
                     body_state: self.state.clone(),
                     app_state: self.app_state.clone(),
                 },
