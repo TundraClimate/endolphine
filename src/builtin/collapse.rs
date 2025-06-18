@@ -3,12 +3,9 @@ use crate::theme::rgb;
 
 scheme! {
     fg_focused: rgb("#FFFFFF"),
-    fg_unfocused: rgb("#FFFFFF"),
     label: rgb("#000000"),
     bg_focused: rgb("#1D1D1D"),
-    bg_unfocused: rgb("#020202"),
     bar: rgb("#4F4F4F"),
-    bar_dark: rgb("#303030"),
     unnecessary_text: rgb("#969696"),
     bar_text: rgb("#B0B0B0"),
     bar_text_light: rgb("#C0C0C0"),
@@ -24,7 +21,6 @@ scheme! {
     row_mod_time: rgb("#1F9F1F"),
     select: rgb("#50FF50"),
     row_cursor: rgb("#555555"),
-    input: crossterm::style::Color::Reset,
     menu_tag: rgb("#1FFF1F"),
     search_surround: rgb("#1FFF1F"),
 }

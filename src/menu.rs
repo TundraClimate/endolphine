@@ -1,24 +1,9 @@
-use crate::{cursor::Cursor, global};
+use crate::cursor::Cursor;
 use std::{
     path::{Path, PathBuf},
     str::FromStr,
     sync::atomic::{AtomicBool, Ordering},
 };
-
-const MENU_LENGTH: u16 = 20;
-
-pub fn toggle_open() {
-    if is_opened() {
-        crate::canvas::set_view_shift(0);
-    } else {
-        crate::canvas::set_view_shift(MENU_LENGTH);
-    }
-}
-
-pub fn is_opened() -> bool {
-    let shift = crate::canvas::get_view_shift();
-    shift == MENU_LENGTH
-}
 
 pub struct Menu {
     pub elements: Vec<MenuElement>,
@@ -98,12 +83,4 @@ impl<'de> serde::Deserialize<'de> for MenuElement {
         let s = String::deserialize(deserializer)?;
         MenuElement::from_str(&s).map_err(|e| serde::de::Error::custom(&e))
     }
-}
-
-global! {
-    static MENU: Menu = Menu::default();
-}
-
-pub fn refs() -> &'static Menu {
-    &MENU
 }

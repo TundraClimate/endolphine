@@ -113,18 +113,18 @@ pub struct AppState {
 pub struct App {
     state: std::sync::Arc<std::sync::RwLock<AppState>>,
     root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
-    app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
-    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
-    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
+    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
+    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
     inner: Vec<Box<dyn Component>>,
 }
 
 impl App {
     fn split_rect(
-        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
         menu_opened: bool,
-    ) -> (crate::canvas_impl::Rect, crate::canvas_impl::Rect) {
-        use crate::canvas_impl::LayoutSpec;
+    ) -> (crate::canvas::Rect, crate::canvas::Rect) {
+        use crate::canvas::LayoutSpec;
 
         let rect = app_rect.read().unwrap();
         let specs = if menu_opened {
@@ -141,13 +141,13 @@ impl App {
         F: FnOnce(
             std::sync::Arc<std::sync::RwLock<AppState>>,
             (
-                std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
-                std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+                std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
+                std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
             ),
         ) -> Vec<Box<dyn Component>>,
     >(
         root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
-        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        app_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
         f: F,
     ) -> Self {
         use clap::Parser;
@@ -259,6 +259,34 @@ impl Command for Remapping {
 impl Component for App {
     fn on_init(&self) -> Result<(), crate::Error> {
         {
+            let state = self.state.read().unwrap();
+            let config = &state.config.get();
+
+            if config.delete.for_tmp {
+                let tmp_path = std::path::Path::new("/tmp").join("endolphine");
+                if !tmp_path.exists() {
+                    std::fs::create_dir_all(tmp_path).map_err(|e| {
+                        crate::sys_log!("e", "Couldn't create the \"/tmp/\"");
+                        crate::Error::FilesystemError(e.kind().to_string())
+                    })?;
+                }
+            }
+
+            let log_path = std::path::Path::new(option_env!("HOME").unwrap_or("/root"))
+                .join(".local")
+                .join("share")
+                .join("endolphine")
+                .join("log");
+
+            if !log_path.exists() {
+                std::fs::create_dir_all(log_path).map_err(|e| {
+                    crate::sys_log!("e", "Couldn't create the log directory");
+                    crate::Error::FilesystemError(e.kind().to_string())
+                })?;
+            }
+        }
+
+        {
             let mut lock = self.root_state.write().unwrap();
             let registry = &mut lock.mapping_registry;
 
@@ -321,7 +349,7 @@ impl Component for App {
         {
             let state = self.state.read().unwrap();
             let res = state.refresh_hook.effect(|| {
-                let empty_rect = crate::canvas_impl::Rect::new(0, 0, 0, 0);
+                let empty_rect = crate::canvas::Rect::new(0, 0, 0, 0);
 
                 *self.menu_rect.write().unwrap() = empty_rect;
                 *self.body_rect.write().unwrap() = empty_rect;

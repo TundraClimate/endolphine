@@ -1,22 +1,3 @@
-use crate::{global, theme};
-use crossterm::{
-    cursor::MoveTo,
-    style::{Color, Print, ResetColor, SetBackgroundColor, SetForegroundColor},
-    terminal::{Clear, ClearType},
-};
-use std::{
-    collections::HashMap,
-    sync::{
-        RwLock,
-        atomic::{AtomicU16, Ordering},
-    },
-};
-
-mod body;
-mod footer;
-mod header;
-mod menu;
-
 #[macro_export]
 macro_rules! log {
     ($($args:expr),+) => {{
@@ -61,104 +42,181 @@ macro_rules! dbg_log {
     }};
 }
 
-trait View {
-    const ID: u8;
+pub enum LayoutSpec {
+    Min(u16),
+    Fill,
+}
 
-    fn cached_render_row<D: std::fmt::Display>(
-        tag: &str,
-        row: u16,
-        cmds: D,
-    ) -> Result<(), crate::Error> {
-        if !cache_match((row, Self::ID), tag) {
-            cache_insert((row, Self::ID), tag.to_string());
-            Self::render_row(row, cmds.to_string()).map_err(|_| {
-                crate::sys_log!("e", "The view rendering failed: ID={}", Self::ID);
-                crate::Error::RowRenderingFailed
-            })
-        } else {
-            Ok(())
+#[derive(PartialEq, Debug, Clone, Copy)]
+pub struct Rect {
+    pub x: u16,
+    pub y: u16,
+    pub width: u16,
+    pub height: u16,
+}
+
+impl Rect {
+    pub fn new(x: u16, y: u16, width: u16, height: u16) -> Self {
+        Self {
+            x,
+            y,
+            width,
+            height,
         }
     }
 
-    fn render(size: (u16, u16)) -> Result<(), crate::Error>;
+    fn split(&self, specs: Vec<LayoutSpec>, vertical: bool) -> Vec<Rect> {
+        let total = if vertical { self.width } else { self.height };
+        let mut rem = total;
+        let mut dims = vec![0; specs.len()];
 
-    fn render_row(row: u16, cmds: String) -> std::io::Result<()> {
+        for (i, s) in specs.iter().enumerate() {
+            match s {
+                LayoutSpec::Min(v) => {
+                    dims[i] = *v;
+                    rem = rem.saturating_sub(*v);
+                }
+                LayoutSpec::Fill => {}
+            }
+        }
+
+        let used: u16 = dims.iter().sum();
+        let fills = specs
+            .iter()
+            .filter(|s| matches!(s, LayoutSpec::Fill))
+            .count() as u16;
+
+        for (i, s) in specs.iter().enumerate() {
+            if matches!(s, LayoutSpec::Fill) && fills > 0 {
+                dims[i] = total.saturating_sub(used) / fills;
+            }
+        }
+
+        let assigned: u16 = dims.iter().sum();
+
+        if let Some(last) = dims.last_mut() {
+            *last += total.saturating_sub(assigned);
+        }
+
+        let mut res = vec![];
+        let (mut x, mut y) = (self.x, self.y);
+
+        for d in dims {
+            res.push(if vertical {
+                Self {
+                    x,
+                    y: self.y,
+                    width: d,
+                    height: self.height,
+                }
+            } else {
+                Self {
+                    x: self.x,
+                    y,
+                    width: self.width,
+                    height: d,
+                }
+            });
+
+            if vertical {
+                x += d;
+            } else {
+                y += d;
+            }
+        }
+        res
+    }
+
+    pub fn split_vertical(&self, specs: Vec<LayoutSpec>) -> Vec<Rect> {
+        self.split(specs, true)
+    }
+
+    pub fn split_horizontal(&self, specs: Vec<LayoutSpec>) -> Vec<Rect> {
+        self.split(specs, false)
+    }
+}
+
+#[derive(Clone)]
+pub struct Canvas {
+    rect: Rect,
+    default_style: String,
+}
+
+impl From<Rect> for Canvas {
+    fn from(rect: Rect) -> Self {
+        Self {
+            rect,
+            default_style: String::new(),
+        }
+    }
+}
+
+impl Canvas {
+    pub fn print(&self, rel_x: u16, rel_y: u16, s: &str) {
+        if self.rect.height <= rel_y || self.rect.width <= rel_x {
+            return;
+        }
+
+        let abs_x = self.rect.x + rel_x;
+        let abs_y = self.rect.y + rel_y;
+        let mut text = String::new();
+        let mut rem = self.rect.width.saturating_sub(rel_x) as usize;
+        let mut chars = s.chars().peekable();
+
+        while let Some(&c) = chars.peek() {
+            if c == '\x1b' {
+                let mut seq = String::new();
+
+                while let Some(&next) = chars.peek() {
+                    seq.push(next);
+                    chars.next();
+                    if next == 'm' || next == 'K' {
+                        break;
+                    }
+                }
+
+                text.push_str(&seq);
+            } else {
+                let w = unicode_width::UnicodeWidthChar::width(c).unwrap_or(0);
+
+                if w > rem {
+                    text.push_str(&" ".repeat(rem));
+                    break;
+                }
+
+                rem -= w;
+                text.push(c);
+                chars.next();
+            }
+        }
+
         crossterm::queue!(
             std::io::stdout(),
-            MoveTo(get_view_shift(), row),
-            SetForegroundColor(theme::app_fg()),
-            SetBackgroundColor(theme::app_bg()),
-            Clear(ClearType::UntilNewLine),
-            Print(cmds),
-            ResetColor
+            crossterm::cursor::MoveTo(abs_x, abs_y),
+            crossterm::style::Print(self.default_style.as_str()),
+            crossterm::style::Print(text),
+            crossterm::style::ResetColor,
         )
-    }
-}
-
-pub fn render() -> Result<(), crate::Error> {
-    let (width, height) = crossterm::terminal::size().map_err(|e| {
-        crate::sys_log!("e", "Couldn't get the terminal size");
-        crate::Error::PlatformError(e.kind().to_string())
-    })?;
-
-    if height <= 4 {
-        return Ok(());
+        .ok();
     }
 
-    header::Header::render((width, height))?;
-
-    if height > 4 {
-        body::Body::render((width, height))?;
+    pub fn rect(&self) -> Rect {
+        self.rect
     }
 
-    footer::Footer::render((width, height))?;
-
-    if width > 0 {
-        menu::Menu::render((width, height))?;
+    pub fn fill(&self) {
+        for i in 0..self.rect.height {
+            self.print(0, i, &" ".repeat(self.rect.width as usize));
+        }
     }
 
-    use std::io::Write;
+    pub fn set_bg(&mut self, bg: crossterm::style::Color) {
+        self.default_style
+            .push_str(&crossterm::style::SetBackgroundColor(bg).to_string());
+    }
 
-    std::io::stdout()
-        .flush()
-        .map_err(|e| crate::Error::ScreenFlushFailed(e.kind().to_string()))?;
-
-    Ok(())
-}
-
-fn colored_bar(color: Color, len: u16) -> String {
-    format!(
-        "{}{}{}",
-        SetBackgroundColor(color),
-        " ".repeat(len as usize),
-        ResetColor
-    )
-}
-
-global! {
-    static VIEW_SHIFT: AtomicU16 = AtomicU16::new(0);
-}
-
-pub fn get_view_shift() -> u16 {
-    VIEW_SHIFT.load(Ordering::Relaxed)
-}
-
-pub fn set_view_shift(new_value: u16) {
-    VIEW_SHIFT.swap(new_value, Ordering::Relaxed);
-}
-
-global! {
-    static CACHE: RwLock<HashMap<(u16, u8), String>> = RwLock::new(HashMap::new());
-}
-
-pub fn cache_insert(key: (u16, u8), tag: String) {
-    CACHE.write().unwrap().insert(key, tag);
-}
-
-pub fn cache_match(key: (u16, u8), tag: &str) -> bool {
-    CACHE.read().unwrap().get(&key).map(|c| c.as_ref()) == Some(tag)
-}
-
-pub fn cache_clear() {
-    CACHE.write().unwrap().clear();
+    pub fn set_fg(&mut self, fg: crossterm::style::Color) {
+        self.default_style
+            .push_str(&crossterm::style::SetForegroundColor(fg).to_string());
+    }
 }

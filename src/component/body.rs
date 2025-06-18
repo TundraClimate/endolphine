@@ -79,7 +79,7 @@ pub struct Body {
     state: std::sync::Arc<std::sync::RwLock<BodyState>>,
     app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
     root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
-    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
     body_canvas: std::sync::Arc<std::sync::RwLock<BodyCanvas>>,
     inner: Vec<Box<dyn Component>>,
 }
@@ -90,7 +90,7 @@ impl Body {
     >(
         app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
         root_state: std::sync::Arc<std::sync::RwLock<RootState>>,
-        body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        body_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
         f: F,
     ) -> Self {
         let body_state = std::sync::Arc::new(std::sync::RwLock::new(BodyState::default()));
@@ -1121,10 +1121,10 @@ impl Command for SearchNext {
 }
 
 struct BodyCanvas {
-    canvas: crate::canvas_impl::Canvas,
+    canvas: crate::canvas::Canvas,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
     key: String,
-    prev_rect: crate::canvas_impl::Rect,
+    prev_rect: crate::canvas::Rect,
 }
 
 #[derive(Debug)]
@@ -1163,10 +1163,10 @@ impl BodyCanvas {
 
     fn new_with_init(
         app_state: std::sync::Arc<std::sync::RwLock<AppState>>,
-        rect: crate::canvas_impl::Rect,
+        rect: crate::canvas::Rect,
     ) -> Self {
         let mut c = Self {
-            canvas: crate::canvas_impl::Canvas::from(rect),
+            canvas: crate::canvas::Canvas::from(rect),
             app_state,
             key: String::new(),
             prev_rect: rect,
@@ -1177,7 +1177,7 @@ impl BodyCanvas {
         c
     }
 
-    fn has_rect_update(&self, rect: crate::canvas_impl::Rect) -> bool {
+    fn has_rect_update(&self, rect: crate::canvas::Rect) -> bool {
         self.prev_rect != rect
     }
 
@@ -1186,7 +1186,7 @@ impl BodyCanvas {
     }
 
     fn draw(&self, ctx: &CanvasContext) {
-        use crate::canvas_impl::{Canvas, LayoutSpec};
+        use crate::canvas::{Canvas, LayoutSpec};
 
         if self.canvas.rect().height == 0 {
             return;
@@ -1426,8 +1426,8 @@ impl BodyCanvas {
         }
     }
 
-    fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
-        self.canvas = crate::canvas_impl::Canvas::from(rect);
+    fn reset_size_with_init(&mut self, rect: crate::canvas::Rect) {
+        self.canvas = crate::canvas::Canvas::from(rect);
         self.prev_rect = rect;
         self.init();
     }

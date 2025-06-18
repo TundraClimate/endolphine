@@ -1,4 +1,3 @@
-use crate::global;
 use std::{
     path::{Path, PathBuf},
     sync::{
@@ -6,14 +5,6 @@ use std::{
         atomic::{AtomicUsize, Ordering},
     },
 };
-
-pub fn captured() -> &'static Cursor {
-    if crate::menu::refs().is_enabled() {
-        &crate::menu::refs().cursor
-    } else {
-        load()
-    }
-}
 
 pub struct Cursor {
     index: AtomicUsize,
@@ -132,59 +123,5 @@ impl CursorCache {
         } else {
             false
         }
-    }
-}
-
-global! {
-    static CURSOR: Cursor = Cursor::default();
-}
-
-pub fn load() -> &'static Cursor {
-    &CURSOR
-}
-
-global! {
-    static SELECTION: RwLock<Option<(usize, usize)>> = RwLock::new(None);
-}
-
-pub fn is_selection() -> bool {
-    SELECTION.read().is_ok_and(|i| i.is_some())
-}
-
-pub fn disable_selection() {
-    crate::app::switch_mode(crate::app::AppMode::Normal);
-    *SELECTION.write().unwrap() = None;
-}
-
-pub fn toggle_selection(init: usize) {
-    let mut lock = SELECTION.write().unwrap();
-    if lock.is_some() {
-        crate::app::switch_mode(crate::app::AppMode::Normal);
-        *lock = None;
-    } else {
-        crate::app::switch_mode(crate::app::AppMode::Visual);
-        *lock = Some((init, init));
-    }
-}
-
-pub fn is_selected(i: usize) -> bool {
-    if !is_selection() {
-        return false;
-    }
-
-    let lock = SELECTION.read().unwrap();
-    if let Some((base, pin)) = *lock {
-        let min = base.min(pin);
-        let max = base.max(pin);
-        (min..=max).contains(&i)
-    } else {
-        false
-    }
-}
-
-pub fn select_area(other: usize) {
-    let mut lock = SELECTION.write().unwrap();
-    if let Some((base, _)) = *lock {
-        *lock = Some((base, other));
     }
 }

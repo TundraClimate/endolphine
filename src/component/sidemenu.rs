@@ -3,7 +3,7 @@ use super::{Command, Component};
 pub struct SideMenu {
     root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
-    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+    menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
     menu_canvas: std::sync::Arc<std::sync::RwLock<MenuCanvas>>,
     menu: std::sync::Arc<crate::menu::Menu>,
 }
@@ -12,7 +12,7 @@ impl SideMenu {
     pub fn new(
         root_state: std::sync::Arc<std::sync::RwLock<super::root::RootState>>,
         app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
-        menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas_impl::Rect>>,
+        menu_rect: std::sync::Arc<std::sync::RwLock<crate::canvas::Rect>>,
         menu: std::sync::Arc<crate::menu::Menu>,
     ) -> Self {
         Self {
@@ -169,10 +169,10 @@ impl Command for CursorToBottom {
 }
 
 struct MenuCanvas {
-    canvas: crate::canvas_impl::Canvas,
+    canvas: crate::canvas::Canvas,
     app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
     key: String,
-    prev_rect: crate::canvas_impl::Rect,
+    prev_rect: crate::canvas::Rect,
 }
 
 impl MenuCanvas {
@@ -186,10 +186,10 @@ impl MenuCanvas {
 
     fn new_with_init(
         app_state: std::sync::Arc<std::sync::RwLock<super::app::AppState>>,
-        rect: crate::canvas_impl::Rect,
+        rect: crate::canvas::Rect,
     ) -> Self {
         let mut c = Self {
-            canvas: crate::canvas_impl::Canvas::from(rect),
+            canvas: crate::canvas::Canvas::from(rect),
             app_state,
             key: String::new(),
             prev_rect: rect,
@@ -200,7 +200,7 @@ impl MenuCanvas {
         c
     }
 
-    fn has_rect_update(&self, rect: crate::canvas_impl::Rect) -> bool {
+    fn has_rect_update(&self, rect: crate::canvas::Rect) -> bool {
         self.prev_rect != rect
     }
 
@@ -259,8 +259,8 @@ impl MenuCanvas {
         }
     }
 
-    fn reset_size_with_init(&mut self, rect: crate::canvas_impl::Rect) {
-        self.canvas = crate::canvas_impl::Canvas::from(rect);
+    fn reset_size_with_init(&mut self, rect: crate::canvas::Rect) {
+        self.canvas = crate::canvas::Canvas::from(rect);
         self.prev_rect = rect;
         self.init();
     }

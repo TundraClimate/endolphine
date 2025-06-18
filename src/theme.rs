@@ -1,5 +1,4 @@
 use crossterm::style::Color;
-use std::path::PathBuf;
 
 #[derive(serde::Deserialize, serde::Serialize)]
 pub enum Theme {
@@ -57,12 +56,9 @@ impl serde::Serialize for ColorWrap {
 
 schemes! {
     fg_focused,
-    fg_unfocused,
     bg_focused,
-    bg_unfocused,
     label,
     bar,
-    bar_dark,
     unnecessary_text,
     bar_text,
     bar_text_light,
@@ -78,7 +74,6 @@ schemes! {
     row_bsize,
     row_mod_time,
     select,
-    input,
     menu_tag,
     search_surround,
 }
@@ -99,12 +94,9 @@ impl From<SchemeWrap> for Scheme {
     fn from(value: SchemeWrap) -> Self {
         Self {
             fg_focused: value.fg_focused.into(),
-            fg_unfocused: value.fg_unfocused.into(),
             bg_focused: value.bg_focused.into(),
-            bg_unfocused: value.bg_unfocused.into(),
             label: value.label.into(),
             bar: value.bar.into(),
-            bar_dark: value.bar_dark.into(),
             unnecessary_text: value.unnecessary_text.into(),
             bar_text: value.bar_text.into(),
             bar_text_light: value.bar_text_light.into(),
@@ -120,7 +112,6 @@ impl From<SchemeWrap> for Scheme {
             row_bsize: value.row_bsize.into(),
             row_mod_time: value.row_mod_time.into(),
             select: value.select.into(),
-            input: value.input.into(),
             menu_tag: value.menu_tag.into(),
             search_surround: value.search_surround.into(),
         }
@@ -154,92 +145,4 @@ pub fn rgb(t: &str) -> Color {
     let b = u8::from_str_radix(&t[5..], 16).unwrap();
 
     Color::Rgb { r, g, b }
-}
-
-pub fn scheme() -> &'static Scheme {
-    crate::config::theme()
-}
-
-pub fn app_fg() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().fg_unfocused
-    } else {
-        scheme().fg_focused
-    }
-}
-
-pub fn app_bg() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().bg_unfocused
-    } else {
-        scheme().bg_focused
-    }
-}
-
-pub fn bar_color() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().bar_dark
-    } else {
-        scheme().bar
-    }
-}
-
-pub fn wid_bar_color() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().bar
-    } else {
-        scheme().bar_dark
-    }
-}
-
-pub fn widget_fg() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().fg_focused
-    } else {
-        scheme().fg_unfocused
-    }
-}
-
-pub fn widget_bg() -> Color {
-    if crate::menu::refs().is_enabled() {
-        scheme().bg_focused
-    } else {
-        scheme().bg_unfocused
-    }
-}
-
-pub fn path_name(path: &PathBuf) -> Color {
-    match path {
-        path if !path.exists() => scheme().row_broken,
-        path if path.is_symlink() => scheme().row_symlink,
-        path if path.is_dir() => scheme().row_dir,
-        path if path.is_file() => scheme().row_file,
-        _ => scheme().row_broken,
-    }
-}
-
-pub fn item_bg(is_selected: bool, is_cursor_pos: bool) -> Color {
-    if is_selected {
-        scheme().select
-    } else if is_cursor_pos {
-        scheme().row_cursor
-    } else {
-        app_bg()
-    }
-}
-
-pub fn widget_item_bg(is_cursor_pos: bool, is_enable: bool) -> Color {
-    if is_cursor_pos && is_enable {
-        scheme().row_cursor
-    } else {
-        widget_bg()
-    }
-}
-
-pub fn permission(index: usize) -> Color {
-    match index % 3 {
-        0 => scheme().perm_r,
-        1 => scheme().perm_w,
-        _ => scheme().perm_e,
-    }
 }

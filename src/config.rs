@@ -1,6 +1,6 @@
 use crate::{
-    builtin, command, config, global,
-    key::{Key, Keymap},
+    builtin, config, global,
+    key::Keymap,
     menu::MenuElement,
     theme::{self, Scheme, Theme},
 };
@@ -30,7 +30,11 @@ pub async fn edit() {
 }
 
 pub fn check() -> Result<(), (toml::de::Error, String)> {
-    if let Some(Err(e)) = try_load() {
+    let read: Option<Result<Config, _>> = file_path()
+        .and_then(|p| std::fs::read_to_string(p).ok())
+        .map(|c| toml::from_str(&c));
+
+    if let Some(Err(e)) = read {
         let config = config::file_path().and_then(|p| std::fs::read_to_string(p).ok());
         if let (Some(config), Some(span)) = (config, e.span()) {
             let lines = config
@@ -212,66 +216,6 @@ pub struct KeymapConfig {
 }
 
 impl KeymapConfig {
-    pub fn normal_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.normal.as_ref().and_then(|normal| {
-            normal
-                .0
-                .keys()
-                .zip(normal.0.values())
-                .try_fold(
-                    Vec::<(Keymap, command::Remapping)>::new(),
-                    |mut acc, (key, val)| {
-                        acc.push((
-                            key.as_str().parse()?,
-                            command::Remapping(val.as_str().parse()?),
-                        ));
-                        Ok::<_, crate::Error>(acc)
-                    },
-                )
-                .ok()
-        })
-    }
-
-    pub fn visual_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.visual.as_ref().and_then(|visual| {
-            visual
-                .0
-                .keys()
-                .zip(visual.0.values())
-                .try_fold(
-                    Vec::<(Keymap, command::Remapping)>::new(),
-                    |mut acc, (key, val)| {
-                        acc.push((
-                            key.as_str().parse()?,
-                            command::Remapping(val.as_str().parse()?),
-                        ));
-                        Ok::<_, crate::Error>(acc)
-                    },
-                )
-                .ok()
-        })
-    }
-
-    pub fn input_key_map(&self) -> Option<Vec<(Keymap, command::Remapping)>> {
-        self.input.as_ref().and_then(|input| {
-            input
-                .0
-                .keys()
-                .zip(input.0.values())
-                .try_fold(
-                    Vec::<(Keymap, command::Remapping)>::new(),
-                    |mut acc, (key, val)| {
-                        acc.push((
-                            key.as_str().parse()?,
-                            command::Remapping(val.as_str().parse()?),
-                        ));
-                        Ok::<_, crate::Error>(acc)
-                    },
-                )
-                .ok()
-        })
-    }
-
     pub fn normal_mapping(&self) -> Option<Vec<(Keymap, Keymap)>> {
         self.normal.as_ref().and_then(|normal| {
             normal
@@ -340,103 +284,6 @@ global! {
         });
 }
 
-fn try_load() -> Option<Result<Config, toml::de::Error>> {
-    file_path()
-        .and_then(|p| std::fs::read_to_string(p).ok())
-        .map(|c| toml::from_str(&c))
-}
-
 pub fn load() -> &'static Config {
     &CONFIG
-}
-
-global! {
-    static THEME: Scheme = CONFIG.scheme();
-}
-
-pub fn theme() -> &'static Scheme {
-    &THEME
-}
-
-global! {
-    static KEYMAP_REGISTRY: std::sync::RwLock<std::collections::HashMap<(u8, String), Box<dyn command::Command>>> =
-        std::sync::RwLock::new(std::collections::HashMap::new());
-}
-
-pub fn register_key<C: command::Command + 'static>(
-    mode: crate::app::AppMode,
-    keymap: Keymap,
-    cmd: C,
-) {
-    let mut lock = KEYMAP_REGISTRY.write().unwrap();
-    lock.insert((mode as u8, keymap.to_string()), Box::new(cmd));
-}
-
-pub fn has_similar_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
-    let lock = KEYMAP_REGISTRY.read().unwrap();
-
-    if buf.is_empty() {
-        return false;
-    }
-
-    if buf.iter().all(Key::is_digit) {
-        return true;
-    }
-
-    let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
-
-    let mode = mode as u8;
-
-    lock.keys().any(|(rmode, keymap)| {
-        buf.len() <= keymap.len()
-            && mode == *rmode
-            && buf.iter().enumerate().all(|(i, k)| {
-                keymap
-                    .as_str()
-                    .parse::<Keymap>()
-                    .is_ok_and(|key| key.as_vec().get(i) == Some(k))
-            })
-    })
-}
-
-pub fn has_map(buf: &[Key], mode: crate::app::AppMode) -> bool {
-    let lock = KEYMAP_REGISTRY.read().unwrap();
-
-    if buf.is_empty() || buf.iter().all(Key::is_digit) {
-        return false;
-    }
-
-    let buf = buf.iter().skip_while(|k| k.is_digit()).collect::<Vec<_>>();
-
-    let mode = mode as u8;
-
-    lock.keys().any(|(rmode, keymap)| {
-        buf.len() == keymap.len()
-            && mode == *rmode
-            && buf.iter().enumerate().all(|(i, k)| {
-                keymap
-                    .as_str()
-                    .parse::<Keymap>()
-                    .is_ok_and(|key| key.as_vec().get(i) == Some(k))
-            })
-    })
-}
-
-pub fn eval_input_keymap(keymap: &[Key]) -> Option<Result<(), crate::Error>> {
-    let lock = KEYMAP_REGISTRY.read().unwrap();
-    let mode = crate::app::AppMode::Input as u8;
-    lock.get(&(mode, Keymap::new(keymap).to_string()))
-        .map(|cmd| cmd.run())
-}
-
-pub fn eval_keymap(mode: crate::app::AppMode, keymap: &[Key]) -> Option<Result<(), crate::Error>> {
-    let lock = KEYMAP_REGISTRY.read().unwrap();
-    let keymap = keymap
-        .iter()
-        .skip_while(|k| k.is_digit())
-        .cloned()
-        .collect::<Vec<Key>>();
-
-    lock.get(&(mode as u8, Keymap::new(keymap.as_slice()).to_string()))
-        .map(|cmd| cmd.run())
 }

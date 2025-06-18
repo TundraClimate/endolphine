@@ -1,14 +1,11 @@
 mod app;
 mod builtin;
 mod canvas;
-mod canvas_impl;
 mod clipboard;
-mod command;
 mod component;
 mod config;
 mod cursor;
 mod hook;
-mod initialize;
 mod input;
 mod key;
 mod menu;
@@ -64,6 +61,37 @@ fn check_config() -> ! {
     }
 }
 
+fn setup_conf() -> Result<(), Error> {
+    let conf_path = crate::config::file_path();
+    if let Some(conf_path) = conf_path {
+        if !conf_path.exists() {
+            let parent = crate::misc::parent(&conf_path);
+
+            if !parent.exists() {
+                std::fs::create_dir_all(parent).map_err(|e| {
+                    crate::sys_log!("e", "Couldn't create the configration dir");
+                    crate::Error::FilesystemError(e.kind().to_string())
+                })?;
+            }
+
+            let config_default = toml::to_string_pretty(&crate::config::Config::default())
+                .map_err(|e| {
+                    crate::sys_log!("e", "Couldn't generate the default configration");
+                    crate::Error::TomlParseFailed(e.to_string())
+                })?;
+
+            if !conf_path.exists() {
+                std::fs::write(&conf_path, config_default).map_err(|e| {
+                    crate::sys_log!("e", "Couldn't create the configration file");
+                    crate::Error::FilesystemError(e.kind().to_string())
+                })?;
+            }
+        }
+    }
+
+    Ok(())
+}
+
 async fn start() -> Result<(), Error> {
     if cfg!(windows) {
         panic!("Endolphine is not supported in Windows")
@@ -80,7 +108,7 @@ async fn start() -> Result<(), Error> {
         std::process::exit(1);
     }));
 
-    initialize::config()?;
+    setup_conf()?;
 
     let args = Args::parse();
 
