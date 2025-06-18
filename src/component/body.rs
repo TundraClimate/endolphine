@@ -1132,6 +1132,7 @@ struct CanvasContext {
     current_path: std::path::PathBuf,
     cursor_pos: usize,
     selection_range: Option<std::ops::RangeInclusive<usize>>,
+    grep: String,
 }
 
 impl BodyCanvas {
@@ -1381,7 +1382,38 @@ impl BodyCanvas {
                                 path if path.is_file() => scheme.row_file,
                                 _ => scheme.row_broken,
                             }),
-                            crate::misc::entry_name(item),
+                            'n: {
+                                let reg = regex::Regex::new(&ctx.grep);
+                                let name = crate::misc::entry_name(item);
+
+                                if ctx.grep.is_empty() {
+                                    break 'n name;
+                                }
+
+                                let Ok(regex) = reg else {
+                                    break 'n name;
+                                };
+
+                                match regex.find(&name).map(|r| (r.start(), r.end())) {
+                                    Some((start, end)) => {
+                                        let surround_color = crossterm::style::SetBackgroundColor(
+                                            scheme.search_surround,
+                                        );
+                                        let reset_color =
+                                            crossterm::style::SetBackgroundColor(scheme.bg_focused);
+
+                                        format!(
+                                            "{}{}{}{}{}",
+                                            &name[..start],
+                                            surround_color,
+                                            &name[start..end],
+                                            reset_color,
+                                            &name[end..]
+                                        )
+                                    }
+                                    None => name,
+                                }
+                            },
                             match item.read_link() {
                                 Ok(link) => link.to_string_lossy().to_string(),
                                 Err(_) => "".to_string(),
@@ -1769,6 +1801,7 @@ impl Component for Body {
             let app_state = self.app_state.read().unwrap();
             let body_state = self.state.read().unwrap();
             let current_path = app_state.path.get();
+            let grep = body_state.grep.inner.clone();
 
             CanvasContext {
                 current_path: current_path.to_path_buf(),
@@ -1777,6 +1810,7 @@ impl Component for Body {
                     .selection
                     .inner
                     .map(|(start, end)| start.min(end)..=start.max(end)),
+                grep,
             }
         };
 
