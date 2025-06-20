@@ -1,4 +1,5 @@
 mod arguments;
+mod config;
 mod tui;
 
 #[tokio::main]
@@ -21,6 +22,10 @@ async fn main() {
 
         process::exit(1);
     }));
+
+    if let Err(e) = config::setup_local() {
+        panic!("Failed to create configure files: {}", e.kind());
+    }
 
     match arguments::parse_args() {
         Expected::OpenEndolphine(path) => {
