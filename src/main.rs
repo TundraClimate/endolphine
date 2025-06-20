@@ -28,7 +28,9 @@ async fn main() {
         }
         Expected::OpenConfigEditor => {}
         Expected::Termination(cause) => match cause {
-            TerminationCause::InvalidPath(path) => {}
+            TerminationCause::InvalidPath(path) => {
+                panic!("Invalid path detected: {}", path.to_string_lossy())
+            }
         },
     }
 }
