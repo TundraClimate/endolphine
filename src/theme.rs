@@ -81,6 +81,10 @@ pub async fn download_official_theme(name: &str) -> io::Result<()> {
         panic!("Cannot access to official repository");
     };
 
+    if res.status().is_client_error() {
+        panic!("\"{}\" is invalid token", name);
+    }
+
     let Ok(bytes) = res.bytes().await else {
         panic!("Couldn't read bytes");
     };
