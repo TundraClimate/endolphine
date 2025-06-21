@@ -71,8 +71,9 @@ pub struct Theme {
 pub async fn download_official_theme(name: &str) -> io::Result<()> {
     use std::fs;
 
+    // TODO FIX URL to master
     let official_url = format!(
-        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/feature/render/theme/{}",
+        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/feature/render/theme/{}.toml",
         name
     );
 
