@@ -1,5 +1,6 @@
 mod arguments;
 mod config;
+mod theme;
 mod tui;
 
 #[tokio::main]
@@ -23,7 +24,7 @@ async fn main() {
         process::exit(1);
     }));
 
-    if let Err(e) = config::setup_local() {
+    if let Err(e) = config::setup_local().await {
         panic!("Failed to create configure files: {}", e.kind());
     }
 

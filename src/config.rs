@@ -1,3 +1,4 @@
+use crate::theme::Theme;
 use serde::{Deserialize, Serialize};
 use std::{
     io,
@@ -15,7 +16,8 @@ pub fn file_path() -> PathBuf {
         .join("config.toml")
 }
 
-pub fn setup_local() -> io::Result<()> {
+pub async fn setup_local() -> io::Result<()> {
+    use crate::theme;
     use std::fs;
 
     let config_path = file_path();
@@ -27,18 +29,20 @@ pub fn setup_local() -> io::Result<()> {
             fs::create_dir_all(parent)?;
         }
 
-        let theme_dir = parent.join("theme");
+        let default_config = toml::to_string_pretty(&ConfigModel::default())
+            .expect("Wrong default config: code bug");
 
-        if !theme_dir.exists() {
-            fs::create_dir_all(&theme_dir)?;
-        }
+        fs::write(config_path, default_config)?;
+    }
 
-        if theme_dir.read_dir().is_ok_and(|dir| dir.count() == 0) {
-            // donwload_dark_theme()
-            // https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/master/theme/dark.toml
-        }
+    let theme_dir = theme::dir_path();
 
-        fs::write(config_path, b"")?;
+    if !theme_dir.exists() {
+        fs::create_dir_all(&theme_dir)?;
+    }
+
+    if theme_dir.read_dir().is_ok_and(|dir| dir.count() == 0) {
+        theme::download_official_theme("dark").await?;
     }
 
     Ok(())
@@ -52,9 +56,11 @@ struct ConfigModel {
 
 pub struct Config {
     editor: Vec<String>,
+    theme: Theme,
 }
 
 pub fn get() -> &'static Config {
+    use crate::theme;
     use std::{fs, sync::LazyLock};
 
     static CONFIG: LazyLock<Config> = LazyLock::new(|| {
@@ -62,9 +68,17 @@ pub fn get() -> &'static Config {
             .ok()
             .and_then(|config| toml::from_str::<ConfigModel>(&config).ok())
             .unwrap_or_default();
+        let theme_path = theme::dir_path().join(format!("{}.toml", model.theme));
+        let Some(theme) = fs::read_to_string(theme_path)
+            .ok()
+            .and_then(|theme| toml::from_str::<Theme>(&theme).ok())
+        else {
+            panic!("Failed to load theme file");
+        };
 
         Config {
             editor: model.editor,
+            theme,
         }
     });
 
