@@ -7,6 +7,7 @@ mod tui;
 async fn main() {
     use arguments::{Expected, TerminationCause};
     use std::{panic, process};
+    use tokio::process::Command;
 
     if cfg!(windows) {
         panic!("Endolphine is not supported in Windows")
@@ -32,7 +33,17 @@ async fn main() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
         }
-        Expected::OpenConfigEditor => {}
+        Expected::OpenConfigEditor => {
+            let Some(editor) = option_env!("EDITOR") else {
+                panic!("$EDITOR not initialized");
+            };
+
+            Command::new(editor)
+                .arg(config::file_path())
+                .status()
+                .await
+                .ok();
+        }
         Expected::Termination(cause) => match cause {
             TerminationCause::InvalidPath(path) => {
                 panic!("Invalid path detected: {}", path.to_string_lossy())
