@@ -303,7 +303,6 @@ cargo uninstall endolphine
 - Impl for the realtime displaying system
 - Improve input mode
 - Add a command mode
-- Replace globals into the "state"
 - Improve the rendering system to nvim like
   - Make renderings independently as one "window" per grid
   - Allow widgets to be rendered to variable size
@@ -313,6 +312,7 @@ cargo uninstall endolphine
 - Impl the layout system and logic (ratatui?)
 - Improve sys_log
 - Impl the plugin-system
+- Impl theme installer
 
 ## LICENSE
 
