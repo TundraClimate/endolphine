@@ -59,6 +59,10 @@ pub struct Config {
     theme: Theme,
 }
 
+pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
+    toml::from_str::<ConfigModel>(s).map(|_| ())
+}
+
 pub fn get() -> &'static Config {
     use crate::theme;
     use std::{fs, sync::LazyLock};

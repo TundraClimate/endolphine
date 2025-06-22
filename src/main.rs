@@ -6,7 +6,8 @@ mod tui;
 #[tokio::main]
 async fn main() {
     use arguments::{Expected, TerminationCause};
-    use std::{panic, process};
+    use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
+    use std::{fs, panic, process};
     use tokio::process::Command;
 
     if cfg!(windows) {
@@ -43,6 +44,39 @@ async fn main() {
                 .status()
                 .await
                 .ok();
+
+            let Some(config_read) = fs::read_to_string(config::file_path()).ok() else {
+                panic!("Broken configure detected: Unable to read file");
+            };
+
+            if let Err(e) = config::parse_check(&config_read) {
+                let mut size_buf = 0usize;
+                let span = e.span().unwrap();
+
+                let err_lines = config_read
+                    .lines()
+                    .enumerate()
+                    .filter_map(|(i, line)| {
+                        let before_len = size_buf;
+                        size_buf += line.len() + 1;
+
+                        (0..line.len())
+                            .any(|j| span.contains(&(j + before_len)))
+                            .then_some(format!("{} | {}\n", i + 1, line))
+                    })
+                    .collect::<String>();
+
+                eprintln!(
+                    "{}{}",
+                    SetForegroundColor(Color::DarkCyan),
+                    SetAttribute(Attribute::Bold)
+                );
+                eprintln!("{:-^39}", "Invalid syntax detected");
+                eprintln!("{}", e.message());
+                eprintln!();
+                eprintln!("{}", err_lines);
+                eprintln!("{}", "-".repeat(39));
+            }
         }
         Expected::Termination(cause) => match cause {
             TerminationCause::InvalidPath(path) => {
