@@ -27,7 +27,8 @@ pub fn parse_args() -> Expected {
     if parsed.edit_config {
         Expected::OpenConfigEditor
     } else {
-        let Ok(path) = parsed.path.canonicalize() else {
+        let path = &parsed.path;
+        let (Ok(path), true) = (path.canonicalize(), path.is_dir()) else {
             return Expected::Termination(TerminationCause::InvalidPath(parsed.path));
         };
 
