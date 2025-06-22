@@ -34,3 +34,19 @@ pub fn disable() {
         crossterm::execute!(io::stdout(), LeaveAlternateScreen, Show, EnableLineWrap,)
     });
 }
+
+pub async fn tick_loop<F: FnOnce() + Copy>(tick_ms: u64, f: F) {
+    use tokio::time::{self, Duration, Instant};
+
+    loop {
+        let start = Instant::now();
+
+        f();
+
+        let elapsed = start.elapsed();
+
+        if elapsed < Duration::from_millis(tick_ms) {
+            time::sleep(Duration::from_millis(tick_ms) - elapsed).await;
+        }
+    }
+}

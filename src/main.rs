@@ -33,6 +33,8 @@ async fn main() {
     match arguments::parse_args() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
+
+            tui::tick_loop(60, || {}).await;
         }
         Expected::OpenConfigEditor => {
             let Some(editor) = option_env!("EDITOR") else {
