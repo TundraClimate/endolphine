@@ -10,10 +10,6 @@ async fn main() {
     use std::{fs, panic, process};
     use tokio::process::Command;
 
-    if cfg!(windows) {
-        panic!("Endolphine is not supported in Windows")
-    }
-
     panic::set_hook(Box::new(|e| {
         tui::disable();
 
@@ -25,6 +21,10 @@ async fn main() {
 
         process::exit(1);
     }));
+
+    if cfg!(windows) {
+        panic!("Endolphine is not supported in Windows")
+    }
 
     if let Err(e) = config::setup_local().await {
         panic!("Failed to create configure files: {}", e.kind());
