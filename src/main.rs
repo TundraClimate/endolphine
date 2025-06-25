@@ -1,5 +1,6 @@
 mod arguments;
 mod config;
+mod event_manager;
 mod theme;
 mod tui;
 
@@ -34,7 +35,11 @@ async fn main() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
 
+            let handle = event_manager::spawn();
+
             tui::tick_loop(60, || {}).await;
+
+            handle.await.ok();
         }
         Expected::OpenConfigEditor => {
             let Some(editor) = option_env!("EDITOR") else {
