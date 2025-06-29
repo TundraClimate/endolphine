@@ -1,12 +1,14 @@
+use crate::state::State;
 use crossterm::event::{self, Event, KeyEvent};
+use std::sync::Arc;
 use tokio::task::JoinHandle;
 use viks::Key;
 
-pub fn spawn() -> JoinHandle<()> {
+pub fn spawn(state: Arc<State>) -> JoinHandle<()> {
     tokio::spawn(async move {
         loop {
             match event::read() {
-                Ok(Event::Key(key)) => handle_key(key),
+                Ok(Event::Key(key)) => handle_key(state.clone(), key),
                 Ok(Event::Resize(cols, rows)) => handle_resize(cols, rows),
                 _ => {}
             }
@@ -14,7 +16,7 @@ pub fn spawn() -> JoinHandle<()> {
     })
 }
 
-fn handle_key(key: KeyEvent) {
+fn handle_key(state: Arc<State>, key: KeyEvent) {
     let Some(key) = translate_event_to_key(key) else {
         return;
     };

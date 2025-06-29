@@ -1,3 +1,6 @@
+use crate::state::State;
+use std::sync::Arc;
+
 pub fn terminate<D: std::fmt::Display>(e: D) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
@@ -35,13 +38,13 @@ pub fn disable() {
     });
 }
 
-pub async fn tick_loop<F: FnOnce() + Copy>(tick_ms: u64, f: F) {
+pub async fn tick_loop<F: FnOnce(Arc<State>) + Copy>(state: Arc<State>, tick_ms: u64, f: F) {
     use tokio::time::{self, Duration, Instant};
 
     loop {
         let start = Instant::now();
 
-        f();
+        f(state.clone());
 
         let elapsed = start.elapsed();
 

@@ -1,6 +1,7 @@
 mod arguments;
 mod config;
 mod event_manager;
+mod state;
 mod theme;
 mod tui;
 
@@ -8,7 +9,8 @@ mod tui;
 async fn main() {
     use arguments::{Expected, TerminationCause};
     use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
-    use std::{fs, panic, process};
+    use state::State;
+    use std::{fs, panic, process, sync::Arc};
     use tokio::process::Command;
 
     panic::set_hook(Box::new(|e| {
@@ -35,9 +37,10 @@ async fn main() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
 
-            let handle = event_manager::spawn();
+            let state = Arc::new(State::default());
+            let handle = event_manager::spawn(state.clone());
 
-            tui::tick_loop(60, || {}).await;
+            tui::tick_loop(state, 60, |state| {}).await;
 
             handle.await.ok();
         }
