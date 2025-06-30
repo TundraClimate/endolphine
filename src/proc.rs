@@ -1,7 +1,7 @@
 use crate::state::State;
 use std::sync::Arc;
 
-pub trait Runnable {
+pub trait Runnable: Send + Sync {
     fn run(&'static self, state: Arc<State>);
 }
 

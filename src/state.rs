@@ -1,4 +1,6 @@
+use crate::proc::Runnable;
 use std::{
+    collections::HashMap,
     path::PathBuf,
     sync::{RwLock, atomic::AtomicU8},
 };
@@ -6,6 +8,7 @@ use std::{
 pub struct State {
     work_dir: WorkingDir,
     mode: CurrentMode,
+    mapping: KeymapRegistry,
 }
 
 impl State {
@@ -13,6 +16,7 @@ impl State {
         Self {
             work_dir: WorkingDir::new(work_dir),
             mode: CurrentMode::new(),
+            mapping: KeymapRegistry::new(),
         }
     }
 }
@@ -43,6 +47,18 @@ impl CurrentMode {
     fn new() -> Self {
         Self {
             now: AtomicU8::new(0),
+        }
+    }
+}
+
+pub struct KeymapRegistry {
+    user_defined: RwLock<HashMap<(u8, String), Box<dyn Runnable>>>,
+}
+
+impl KeymapRegistry {
+    fn new() -> Self {
+        Self {
+            user_defined: RwLock::new(HashMap::new()),
         }
     }
 }
