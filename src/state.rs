@@ -4,12 +4,13 @@ use std::{
     path::PathBuf,
     sync::{RwLock, atomic::AtomicU8},
 };
-use viks::Keymap;
+use viks::{Key, Keymap};
 
 pub struct State {
     pub work_dir: WorkingDir,
     pub mode: CurrentMode,
     pub mapping: KeymapRegistry,
+    pub key_buffer: KeyBuffer,
 }
 
 impl State {
@@ -18,6 +19,7 @@ impl State {
             work_dir: WorkingDir::new(work_dir),
             mode: CurrentMode::new(),
             mapping: KeymapRegistry::new(),
+            key_buffer: KeyBuffer::new(),
         }
     }
 }
@@ -98,5 +100,15 @@ impl KeymapRegistry {
             });
 
         &BASE_MAPPING
+    }
+}
+
+pub struct KeyBuffer {
+    buffer: Vec<Key>,
+}
+
+impl KeyBuffer {
+    fn new() -> Self {
+        KeyBuffer { buffer: vec![] }
     }
 }
