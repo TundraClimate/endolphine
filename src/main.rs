@@ -38,7 +38,7 @@ async fn main() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
 
-            let state = Arc::new(State::default());
+            let state = Arc::new(State::new(path));
             let handle = event_manager::spawn(state.clone());
 
             tui::tick_loop(state, 60, |state| {}).await;
