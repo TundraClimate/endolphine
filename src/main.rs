@@ -1,7 +1,7 @@
 mod arguments;
-mod command;
 mod config;
 mod event_manager;
+mod proc;
 mod state;
 mod theme;
 mod tui;
