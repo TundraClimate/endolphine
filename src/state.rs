@@ -4,6 +4,7 @@ use std::{
     path::PathBuf,
     sync::{RwLock, atomic::AtomicU8},
 };
+use viks::Keymap;
 
 pub struct State {
     work_dir: WorkingDir,
@@ -60,5 +61,42 @@ impl KeymapRegistry {
         Self {
             user_defined: RwLock::new(HashMap::new()),
         }
+    }
+
+    fn register<R: Runnable + 'static>(
+        register: &mut HashMap<(u8, String), Box<dyn Runnable>>,
+        mode: Mode,
+        map: viks::Result<Keymap>,
+        exec: R,
+    ) {
+        register.insert(
+            (
+                mode as u8,
+                map.expect("invalid mapping found: KeymapRegistry")
+                    .to_string(),
+            ),
+            Box::new(exec),
+        );
+    }
+
+    pub fn constants() -> &'static HashMap<(u8, String), Box<dyn Runnable>> {
+        use crate::{proc::Command, tui};
+        use std::sync::LazyLock;
+
+        static BASE_MAPPING: LazyLock<HashMap<(u8, String), Box<dyn Runnable>>> =
+            LazyLock::new(|| {
+                let mut register = HashMap::new();
+
+                KeymapRegistry::register(
+                    &mut register,
+                    Mode::Normal,
+                    Keymap::new("ZZ"),
+                    Command(|_| tui::close()),
+                );
+
+                register
+            });
+
+        &BASE_MAPPING
     }
 }

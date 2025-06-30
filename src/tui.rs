@@ -14,6 +14,14 @@ pub fn terminate<D: std::fmt::Display>(e: D) {
     eprintln!("{}", "-".repeat(41));
 }
 
+pub fn close() -> ! {
+    use std::process;
+
+    disable();
+
+    process::exit(0);
+}
+
 pub fn enable() {
     use crossterm::{
         cursor::Hide,
