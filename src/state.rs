@@ -7,9 +7,9 @@ use std::{
 use viks::Keymap;
 
 pub struct State {
-    work_dir: WorkingDir,
-    mode: CurrentMode,
-    mapping: KeymapRegistry,
+    pub work_dir: WorkingDir,
+    pub mode: CurrentMode,
+    pub mapping: KeymapRegistry,
 }
 
 impl State {
@@ -22,7 +22,7 @@ impl State {
     }
 }
 
-struct WorkingDir {
+pub struct WorkingDir {
     wd: RwLock<PathBuf>,
 }
 
@@ -40,7 +40,7 @@ pub enum Mode {
     Visual = 1,
 }
 
-struct CurrentMode {
+pub struct CurrentMode {
     now: AtomicU8,
 }
 
