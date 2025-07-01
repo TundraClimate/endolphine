@@ -147,7 +147,7 @@ pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
 }
 
 pub fn get() -> &'static Config {
-    use crate::{proc::Command, state::Mode, theme, tui};
+    use crate::theme;
     use std::{fs, sync::LazyLock};
 
     static CONFIG: LazyLock<Config> = LazyLock::new(|| {
@@ -165,11 +165,7 @@ pub fn get() -> &'static Config {
 
         let mut keymaps = KeymapRegistry::new();
 
-        keymaps.register(
-            Mode::Normal,
-            Keymap::new("ZZ"),
-            Command(|_, _| tui::close()),
-        );
+        init_keymaps(&mut keymaps);
 
         Config {
             editor: model.editor,
@@ -188,4 +184,14 @@ impl Default for ConfigModel {
             theme: "dark".to_string(),
         }
     }
+}
+
+fn init_keymaps(registry: &mut KeymapRegistry) {
+    use crate::{proc::Command, state::Mode, tui};
+
+    registry.register(
+        Mode::Normal,
+        Keymap::new("ZZ"),
+        Command(|_, _| tui::close()),
+    );
 }
