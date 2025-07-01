@@ -17,16 +17,62 @@ pub fn spawn(state: Arc<State>) -> JoinHandle<()> {
 }
 
 fn handle_key(state: Arc<State>, key: KeyEvent) {
+    use crate::{config, proc::CommandContext};
+    use viks::Keymap;
+
     let Some(key) = translate_event_to_key(key) else {
         return;
     };
 
-    // tmp
-    if key.to_string() == "Q" {
-        crate::tui::disable();
+    let buffer = &state.key_buffer;
 
-        std::process::exit(0);
-    }
+    buffer.push(key);
+
+    let keys = buffer.as_keys();
+    let current_mode = state.mode.get();
+    let keymaps = &config::get().keymaps;
+
+    keymaps
+        .split_to_maps(current_mode, keys)
+        .into_iter()
+        .for_each(|keymap| match keymap {
+            Ok(keys) => {
+                let (prenum, keys) = {
+                    (
+                        &keys
+                            .iter()
+                            .take_while(|key| key.to_string().chars().all(char::is_numeric))
+                            .map(ToString::to_string)
+                            .collect::<String>()
+                            .parse::<usize>()
+                            .ok(),
+                        keys.into_iter()
+                            .skip_while(|key| key.to_string().chars().all(char::is_numeric))
+                            .collect::<Vec<_>>(),
+                    )
+                };
+
+                let keymap = Keymap::from(keys);
+                let ctx = CommandContext::new(*prenum);
+
+                if let Some(cmd) = keymaps.get(current_mode, keymap) {
+                    cmd.run(state.clone(), ctx);
+                }
+
+                buffer.reset();
+            }
+            Err(keys) => {
+                let keys = Keymap::from(
+                    keys.into_iter()
+                        .skip_while(|key| key.to_string().chars().all(char::is_numeric))
+                        .collect::<Vec<_>>(),
+                );
+
+                if !keymaps.has_similar_map(current_mode, keys) {
+                    buffer.reset();
+                }
+            }
+        });
 }
 
 fn handle_resize(cols: u16, rows: u16) {}

@@ -1,15 +1,12 @@
-use crate::proc::Runnable;
 use std::{
-    collections::HashMap,
     path::PathBuf,
     sync::{RwLock, atomic::AtomicU8},
 };
-use viks::{Key, Keymap};
+use viks::Key;
 
 pub struct State {
     pub work_dir: WorkingDir,
     pub mode: CurrentMode,
-    pub mapping: KeymapRegistry,
     pub key_buffer: KeyBuffer,
 }
 
@@ -18,7 +15,6 @@ impl State {
         Self {
             work_dir: WorkingDir::new(work_dir),
             mode: CurrentMode::new(),
-            mapping: KeymapRegistry::new(),
             key_buffer: KeyBuffer::new(),
         }
     }
@@ -37,9 +33,22 @@ impl WorkingDir {
 }
 
 #[repr(u8)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Mode {
     Normal = 0,
     Visual = 1,
+}
+
+impl Mode {
+    pub fn from_u8(i: u8) -> Option<Mode> {
+        use std::mem;
+
+        if i == 0 || i == 1 {
+            Some(unsafe { mem::transmute::<u8, Mode>(i) })
+        } else {
+            None
+        }
+    }
 }
 
 pub struct CurrentMode {
@@ -52,63 +61,34 @@ impl CurrentMode {
             now: AtomicU8::new(0),
         }
     }
-}
 
-pub struct KeymapRegistry {
-    user_defined: RwLock<HashMap<(u8, String), Box<dyn Runnable>>>,
-}
+    pub fn get(&self) -> Mode {
+        use std::sync::atomic::Ordering;
 
-impl KeymapRegistry {
-    fn new() -> Self {
-        Self {
-            user_defined: RwLock::new(HashMap::new()),
-        }
-    }
-
-    fn register<R: Runnable + 'static>(
-        register: &mut HashMap<(u8, String), Box<dyn Runnable>>,
-        mode: Mode,
-        map: viks::Result<Keymap>,
-        exec: R,
-    ) {
-        register.insert(
-            (
-                mode as u8,
-                map.expect("invalid mapping found: KeymapRegistry")
-                    .to_string(),
-            ),
-            Box::new(exec),
-        );
-    }
-
-    pub fn constants() -> &'static HashMap<(u8, String), Box<dyn Runnable>> {
-        use crate::{proc::Command, tui};
-        use std::sync::LazyLock;
-
-        static BASE_MAPPING: LazyLock<HashMap<(u8, String), Box<dyn Runnable>>> =
-            LazyLock::new(|| {
-                let mut register = HashMap::new();
-
-                KeymapRegistry::register(
-                    &mut register,
-                    Mode::Normal,
-                    Keymap::new("ZZ"),
-                    Command(|_| tui::close()),
-                );
-
-                register
-            });
-
-        &BASE_MAPPING
+        Mode::from_u8(self.now.load(Ordering::Relaxed)).expect("Invalid mode detected")
     }
 }
 
 pub struct KeyBuffer {
-    buffer: Vec<Key>,
+    buffer: RwLock<Vec<Key>>,
 }
 
 impl KeyBuffer {
     fn new() -> Self {
-        KeyBuffer { buffer: vec![] }
+        KeyBuffer {
+            buffer: RwLock::new(vec![]),
+        }
+    }
+
+    pub fn push(&self, key: Key) {
+        self.buffer.write().unwrap().push(key);
+    }
+
+    pub fn reset(&self) {
+        self.buffer.write().unwrap().clear();
+    }
+
+    pub fn as_keys(&self) -> Vec<Key> {
+        self.buffer.read().unwrap().clone()
     }
 }

@@ -1,9 +1,11 @@
-use crate::theme::Theme;
+use crate::{proc::Runnable, state::Mode, theme::Theme};
 use serde::{Deserialize, Serialize};
 use std::{
+    collections::HashMap,
     io,
     path::{Path, PathBuf},
 };
+use viks::{Key, Keymap};
 
 pub fn file_path() -> PathBuf {
     let Some(home) = option_env!("HOME") else {
@@ -48,6 +50,86 @@ pub async fn setup_local() -> io::Result<()> {
     Ok(())
 }
 
+pub struct KeymapRegistry {
+    map: HashMap<(Mode, String), Box<dyn Runnable>>,
+}
+
+impl KeymapRegistry {
+    fn new() -> Self {
+        Self {
+            map: HashMap::new(),
+        }
+    }
+
+    fn register<R: Runnable + 'static>(&mut self, mode: Mode, map: viks::Result<Keymap>, cmd: R) {
+        self.map.insert(
+            (
+                mode,
+                map.expect("Invalid mapping found: KeymapRegistry")
+                    .to_string(),
+            ),
+            Box::new(cmd),
+        );
+    }
+
+    pub fn split_to_maps(&self, mode: Mode, keys: Vec<Key>) -> Vec<Result<Vec<Key>, Vec<Key>>> {
+        let maps = &self.map;
+        let mut res = vec![];
+        let mut prenum_buf = vec![];
+        let mut buf = vec![];
+
+        for key in keys.into_iter() {
+            let as_str = key.to_string();
+            let mut chars = as_str.chars();
+
+            if buf.is_empty() && chars.all(char::is_numeric) {
+                prenum_buf.push(key);
+
+                continue;
+            }
+
+            buf.push(key);
+
+            if maps.contains_key(&(mode, Keymap::from(buf.clone()).to_string())) {
+                let mut keymap = vec![];
+
+                keymap.append(&mut prenum_buf);
+                keymap.append(&mut buf);
+
+                res.push(Ok(keymap));
+            }
+        }
+
+        if !prenum_buf.is_empty() || !buf.is_empty() {
+            let mut keymap = vec![];
+
+            keymap.append(&mut prenum_buf);
+            keymap.append(&mut buf);
+
+            res.push(Err(keymap));
+        }
+
+        res
+    }
+
+    pub fn get(&self, mode: Mode, keys: Keymap) -> Option<&dyn Runnable> {
+        self.map.get(&(mode, keys.to_string())).map(|cmd| &**cmd)
+    }
+
+    pub fn has_similar_map(&self, mode: Mode, keys: Keymap) -> bool {
+        self.map
+            .keys()
+            .filter_map(|(m, map)| (mode == *m).then_some(map))
+            .filter_map(|map| Keymap::new(map).ok())
+            .filter(|map| map.as_vec().len() >= keys.as_vec().len())
+            .any(|map| {
+                let keys = keys.as_vec();
+
+                map.as_vec()[..keys.len()] == keys[..]
+            })
+    }
+}
+
 #[derive(Deserialize, Serialize)]
 struct ConfigModel {
     editor: Vec<String>,
@@ -55,8 +137,9 @@ struct ConfigModel {
 }
 
 pub struct Config {
-    editor: Vec<String>,
-    theme: Theme,
+    pub editor: Vec<String>,
+    pub theme: Theme,
+    pub keymaps: KeymapRegistry,
 }
 
 pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
@@ -64,7 +147,7 @@ pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
 }
 
 pub fn get() -> &'static Config {
-    use crate::theme;
+    use crate::{proc::Command, state::Mode, theme, tui};
     use std::{fs, sync::LazyLock};
 
     static CONFIG: LazyLock<Config> = LazyLock::new(|| {
@@ -80,9 +163,18 @@ pub fn get() -> &'static Config {
             panic!("Failed to load theme file");
         };
 
+        let mut keymaps = KeymapRegistry::new();
+
+        keymaps.register(
+            Mode::Normal,
+            Keymap::new("ZZ"),
+            Command(|_, _| tui::close()),
+        );
+
         Config {
             editor: model.editor,
             theme,
+            keymaps,
         }
     });
 
