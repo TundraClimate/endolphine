@@ -4,23 +4,23 @@ use std::sync::Arc;
 use tokio::task::JoinHandle;
 use viks::Key;
 
-pub fn spawn(state: Arc<State>) -> JoinHandle<()> {
+pub fn spawn_reader(state: Arc<State>) -> JoinHandle<()> {
     tokio::spawn(async move {
         loop {
             match event::read() {
-                Ok(Event::Key(key)) => handle_key(state.clone(), key),
-                Ok(Event::Resize(cols, rows)) => handle_resize(cols, rows),
+                Ok(Event::Key(key)) => on_key(state.clone(), key),
+                Ok(Event::Resize(cols, rows)) => on_resize(cols, rows),
                 _ => {}
             }
         }
     })
 }
 
-fn handle_key(state: Arc<State>, key: KeyEvent) {
-    use crate::{config, proc::CommandContext};
+fn on_key(state: Arc<State>, key: KeyEvent) {
+    use crate::config;
     use viks::Keymap;
 
-    let Some(key) = translate_event_to_key(key) else {
+    let Some(key) = translate_to_key(key) else {
         return;
     };
 
@@ -28,56 +28,33 @@ fn handle_key(state: Arc<State>, key: KeyEvent) {
 
     buffer.push(key);
 
-    let keys = buffer.as_keys();
+    let keys = buffer.drain();
     let current_mode = state.mode.get();
     let keymaps = &config::get().keymaps;
 
     keymaps
-        .split_to_maps(current_mode, keys)
+        .eval_keys(current_mode, keys)
         .into_iter()
-        .for_each(|keymap| match keymap {
-            Ok(keys) => {
-                let (prenum, keys) = {
-                    (
-                        &keys
-                            .iter()
-                            .take_while(|key| key.to_string().chars().all(char::is_numeric))
-                            .map(ToString::to_string)
-                            .collect::<String>()
-                            .parse::<usize>()
-                            .ok(),
-                        keys.into_iter()
-                            .skip_while(|key| key.to_string().chars().all(char::is_numeric))
-                            .collect::<Vec<_>>(),
-                    )
-                };
-
-                let keymap = Keymap::from(keys);
-                let ctx = CommandContext::new(*prenum);
-
-                if let Some(cmd) = keymaps.get(current_mode, keymap) {
-                    cmd.run(state.clone(), ctx);
-                }
-
-                buffer.reset();
-            }
-            Err(keys) => {
-                let keys = Keymap::from(
-                    keys.into_iter()
+        .for_each(|cmd| match cmd {
+            Ok((cmd, ctx)) => cmd.run(state.clone(), ctx),
+            Err(mut keys) => {
+                let map = Keymap::from(
+                    keys.iter()
                         .skip_while(|key| key.to_string().chars().all(char::is_numeric))
+                        .copied()
                         .collect::<Vec<_>>(),
                 );
 
-                if !keymaps.has_similar_map(current_mode, keys) {
-                    buffer.reset();
+                if keymaps.has_similar_map(current_mode, map) {
+                    buffer.append(&mut keys)
                 }
             }
         });
 }
 
-fn handle_resize(cols: u16, rows: u16) {}
+fn on_resize(cols: u16, rows: u16) {}
 
-fn translate_event_to_key(key: KeyEvent) -> Option<Key> {
+fn translate_to_key(key: KeyEvent) -> Option<Key> {
     use crossterm::event::{KeyCode, KeyModifiers};
 
     let mut key_str = match key.code {

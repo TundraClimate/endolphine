@@ -84,11 +84,11 @@ impl KeyBuffer {
         self.buffer.write().unwrap().push(key);
     }
 
-    pub fn reset(&self) {
-        self.buffer.write().unwrap().clear();
+    pub fn append(&self, keys: &mut Vec<Key>) {
+        self.buffer.write().unwrap().append(keys);
     }
 
-    pub fn as_keys(&self) -> Vec<Key> {
-        self.buffer.read().unwrap().clone()
+    pub fn drain(&self) -> Vec<Key> {
+        self.buffer.write().unwrap().drain(..).collect()
     }
 }

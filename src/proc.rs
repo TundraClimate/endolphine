@@ -9,12 +9,6 @@ pub struct CommandContext {
     prenum: Option<usize>,
 }
 
-impl Default for CommandContext {
-    fn default() -> Self {
-        Self { prenum: None }
-    }
-}
-
 impl CommandContext {
     pub fn new(prenum: Option<usize>) -> Self {
         Self { prenum }

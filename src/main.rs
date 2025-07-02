@@ -1,6 +1,6 @@
 mod arguments;
 mod config;
-mod event_manager;
+mod event;
 mod proc;
 mod state;
 mod theme;
@@ -39,7 +39,7 @@ async fn main() {
             tui::enable();
 
             let state = Arc::new(State::new(path));
-            let handle = event_manager::spawn(state.clone());
+            let handle = event::spawn_reader(state.clone());
 
             tui::tick_loop(state, 60, |state| {}).await;
 
