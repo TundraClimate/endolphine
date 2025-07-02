@@ -46,7 +46,7 @@ pub fn disable() {
     });
 }
 
-pub async fn tick_loop<F: FnOnce(Arc<State>) + Copy>(state: Arc<State>, tick_ms: u64, f: F) {
+pub async fn tick_loop<F: Fn(Arc<State>)>(state: Arc<State>, tick_ms: u64, f: F) {
     use tokio::time::{self, Duration, Instant};
 
     loop {

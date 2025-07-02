@@ -15,16 +15,16 @@ impl CommandContext {
     }
 }
 
-pub struct Command(pub fn(Arc<State>, CommandContext));
-pub struct Acommand(pub fn(Arc<State>, CommandContext));
+pub struct Command<F: Fn(Arc<State>, CommandContext)>(pub F);
+pub struct Acommand<F: Fn(Arc<State>, CommandContext)>(pub F);
 
-impl Runnable for Command {
+impl<F: Fn(Arc<State>, CommandContext) + Send + Sync> Runnable for Command<F> {
     fn run(&self, state: Arc<State>, ctx: CommandContext) {
         (self.0)(state, ctx)
     }
 }
 
-impl Runnable for Acommand {
+impl<F: Fn(Arc<State>, CommandContext) + Send + Sync> Runnable for Acommand<F> {
     fn run(&'static self, state: Arc<State>, ctx: CommandContext) {
         use tokio::task;
 
