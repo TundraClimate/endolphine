@@ -1,7 +1,7 @@
 use crate::{proc::Runnable, state::Mode, theme::Theme};
 use serde::{Deserialize, Serialize};
 use std::{
-    collections::HashMap,
+    collections::{BTreeMap, HashMap},
     io,
     path::{Path, PathBuf},
 };
@@ -131,9 +131,22 @@ impl KeymapRegistry {
 }
 
 #[derive(Deserialize, Serialize)]
+struct KeymapConfig {
+    normal: Option<NormalMaps>,
+    visual: Option<VisualMaps>,
+}
+
+#[derive(Deserialize, Serialize)]
+struct NormalMaps(BTreeMap<String, String>);
+
+#[derive(Deserialize, Serialize)]
+struct VisualMaps(BTreeMap<String, String>);
+
+#[derive(Deserialize, Serialize)]
 struct ConfigModel {
     editor: Vec<String>,
     theme: String,
+    keymap: Option<KeymapConfig>,
 }
 
 pub struct Config {
@@ -165,7 +178,7 @@ pub fn get() -> &'static Config {
 
         let mut keymaps = KeymapRegistry::new();
 
-        init_keymaps(&mut keymaps);
+        init_keymaps(&mut keymaps, &model.keymap);
 
         Config {
             editor: model.editor,
@@ -182,11 +195,12 @@ impl Default for ConfigModel {
         Self {
             editor: vec!["vim".to_string()],
             theme: "dark".to_string(),
+            keymap: None,
         }
     }
 }
 
-fn init_keymaps(registry: &mut KeymapRegistry) {
+fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
     use crate::{proc::Command, state::Mode, tui};
 
     registry.register(
@@ -194,4 +208,26 @@ fn init_keymaps(registry: &mut KeymapRegistry) {
         Keymap::new("ZZ"),
         Command(|_, _| tui::close()),
     );
+
+    if let Some(keyconf) = keyconf {
+        if let Some(ref normal) = keyconf.normal {
+            normal
+                .0
+                .iter()
+                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
+                .for_each(|(key, value)| {
+                    registry.register(Mode::Normal, key, Command(|state, _| {}))
+                });
+        }
+
+        if let Some(ref visual) = keyconf.visual {
+            visual
+                .0
+                .iter()
+                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
+                .for_each(|(key, value)| {
+                    registry.register(Mode::Visual, key, Command(|state, _| {}))
+                });
+        }
+    }
 }
