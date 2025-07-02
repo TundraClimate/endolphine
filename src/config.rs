@@ -257,7 +257,20 @@ fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
                 .iter()
                 .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
                 .for_each(|(key, value)| {
-                    registry.register(Mode::Normal, key, Command(|state, _| {}))
+                    registry.register(
+                        Mode::Normal,
+                        key,
+                        Command(move |state, _| {
+                            let keymaps = &get().keymaps;
+                            let mut cmds = keymaps
+                                .eval_keys(Mode::Normal, value.as_vec().clone())
+                                .into_iter();
+
+                            while let Some(Ok((cmd, ctx))) = cmds.next() {
+                                cmd.run(state.clone(), ctx);
+                            }
+                        }),
+                    )
                 });
         }
 
@@ -267,7 +280,20 @@ fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
                 .iter()
                 .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
                 .for_each(|(key, value)| {
-                    registry.register(Mode::Visual, key, Command(|state, _| {}))
+                    registry.register(
+                        Mode::Visual,
+                        key,
+                        Command(move |state, _| {
+                            let keymaps = &get().keymaps;
+                            let mut cmds = keymaps
+                                .eval_keys(Mode::Visual, value.as_vec().clone())
+                                .into_iter();
+
+                            while let Some(Ok((cmd, ctx))) = cmds.next() {
+                                cmd.run(state.clone(), ctx);
+                            }
+                        }),
+                    )
                 });
         }
     }
