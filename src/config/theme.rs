@@ -5,7 +5,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-pub fn dir_path() -> PathBuf {
+pub(super) fn dir_path() -> PathBuf {
     let Some(home) = option_env!("HOME") else {
         panic!("Couldn't read the $HOME");
     };
@@ -16,7 +16,7 @@ pub fn dir_path() -> PathBuf {
         .join("theme")
 }
 
-pub struct HexColor(Color);
+struct HexColor(Color);
 
 fn rgb(t: &str) -> Result<Color, String> {
     let (true, Ok(r), Ok(g), Ok(b)) = (
@@ -68,7 +68,7 @@ pub struct Theme {
     search_surround: HexColor,
 }
 
-pub async fn download_official_theme(name: &str) -> io::Result<()> {
+pub(super) async fn download_official_theme(name: &str) -> io::Result<()> {
     use std::fs;
 
     // TODO FIX URL to master

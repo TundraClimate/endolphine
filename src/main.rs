@@ -3,7 +3,6 @@ mod config;
 mod event;
 mod proc;
 mod state;
-mod theme;
 mod tui;
 
 #[tokio::main]
