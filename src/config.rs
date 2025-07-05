@@ -31,6 +31,37 @@ pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
     toml::from_str::<ConfigModel>(s).map(|_| ())
 }
 
+pub fn handle_parse_err(config_read: String, e: toml::de::Error) {
+    use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
+
+    let mut size_buf = 0usize;
+    let span = e.span().unwrap();
+
+    let err_lines = config_read
+        .lines()
+        .enumerate()
+        .filter_map(|(i, line)| {
+            let before_len = size_buf;
+            size_buf += line.len() + 1;
+
+            (0..line.len())
+                .any(|j| span.contains(&(j + before_len)))
+                .then_some(format!("{} | {}\n", i + 1, line))
+        })
+        .collect::<String>();
+
+    eprintln!(
+        "{}{}",
+        SetForegroundColor(Color::DarkCyan),
+        SetAttribute(Attribute::Bold)
+    );
+    eprintln!("{:-^39}", "Invalid syntax detected");
+    eprintln!("{}", e.message());
+    eprintln!();
+    eprintln!("{}", err_lines);
+    eprintln!("{}", "-".repeat(39));
+}
+
 impl Default for ConfigModel {
     fn default() -> Self {
         Self {
