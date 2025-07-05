@@ -1,7 +1,23 @@
 use crate::state::State;
 use std::sync::Arc;
 
-pub fn terminate<D: std::fmt::Display>(e: D) {
+pub fn set_panic_hook() {
+    use std::{panic, process};
+
+    panic::set_hook(Box::new(|e| {
+        disable();
+
+        if let Some(e) = e.payload().downcast_ref::<String>() {
+            terminate(e);
+        } else if let Some(e) = e.payload().downcast_ref::<&str>() {
+            terminate(e);
+        }
+
+        process::exit(1);
+    }));
+}
+
+fn terminate<D: std::fmt::Display>(e: D) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
     eprintln!(

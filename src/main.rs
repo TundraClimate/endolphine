@@ -10,20 +10,10 @@ async fn main() {
     use arguments::{Expected, TerminationCause};
     use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
     use state::State;
-    use std::{fs, panic, process, sync::Arc};
+    use std::{fs, sync::Arc};
     use tokio::process::Command;
 
-    panic::set_hook(Box::new(|e| {
-        tui::disable();
-
-        if let Some(e) = e.payload().downcast_ref::<String>() {
-            tui::terminate(e);
-        } else if let Some(e) = e.payload().downcast_ref::<&str>() {
-            tui::terminate(e);
-        }
-
-        process::exit(1);
-    }));
+    tui::set_panic_hook();
 
     if cfg!(windows) {
         panic!("Endolphine is not supported in Windows")
