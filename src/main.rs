@@ -1,4 +1,4 @@
-mod arguments;
+mod args;
 mod config;
 mod event;
 mod proc;
@@ -7,7 +7,7 @@ mod tui;
 
 #[tokio::main]
 async fn main() {
-    use arguments::{Expected, TerminationCause};
+    use args::{Expected, TerminationCause};
     use state::State;
     use std::{fs, sync::Arc};
     use tokio::process::Command;
@@ -22,7 +22,7 @@ async fn main() {
         panic!("Failed to create configure files: {}", e.kind());
     }
 
-    match arguments::parse_args() {
+    match args::parse_args() {
         Expected::OpenEndolphine(path) => {
             tui::enable();
 
