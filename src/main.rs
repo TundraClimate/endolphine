@@ -1,4 +1,5 @@
 mod args;
+mod canvas;
 mod config;
 mod event;
 mod proc;
@@ -29,7 +30,10 @@ async fn main() {
             let state = Arc::new(State::new(path));
             let handle = event::spawn_reader(state.clone());
 
-            tui::tick_loop(state, 60, |state| {}).await;
+            tui::tick_loop(state, 60, |state| {
+                canvas::draw(state);
+            })
+            .await;
 
             handle.await.ok();
         }
