@@ -4,6 +4,8 @@ use std::sync::Arc;
 pub fn draw(state: Arc<State>) {
     let layout = gen_layout(state.term_size.load(), state.flag.is_sidemenu_opened.get());
     let layout_key = layout.hashcode();
+
+    let hashes = &state.canvas_hashes;
 }
 
 #[derive(Hash)]

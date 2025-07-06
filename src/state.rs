@@ -1,5 +1,6 @@
 use crate::canvas::Rect;
 use std::{
+    collections::HashMap,
     path::PathBuf,
     sync::{
         RwLock,
@@ -13,6 +14,7 @@ pub struct State {
     pub mode: CurrentMode,
     pub key_buffer: KeyBuffer,
     pub term_size: TerminalRect,
+    pub canvas_hashes: CanvasHashes,
     pub flag: FlagState,
 }
 
@@ -23,6 +25,7 @@ impl State {
             mode: CurrentMode::new(),
             key_buffer: KeyBuffer::new(),
             term_size: TerminalRect::new(),
+            canvas_hashes: CanvasHashes::new(),
             flag: FlagState::new(),
         }
     }
@@ -130,6 +133,22 @@ impl TerminalRect {
 
         self.0.store(cols, Ordering::Relaxed);
         self.1.store(rows, Ordering::Relaxed);
+    }
+}
+
+pub struct CanvasHashes {
+    hashes: RwLock<HashMap<u8, u64>>,
+}
+
+impl CanvasHashes {
+    fn new() -> Self {
+        Self {
+            hashes: RwLock::new(HashMap::new()),
+        }
+    }
+
+    pub fn get(&self, id: u8) -> Option<u64> {
+        self.hashes.read().unwrap().get(&id).copied()
     }
 }
 
