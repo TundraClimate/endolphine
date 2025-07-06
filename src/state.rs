@@ -1,8 +1,9 @@
+use crate::canvas::Rect;
 use std::{
     path::PathBuf,
     sync::{
         RwLock,
-        atomic::{AtomicU8, AtomicU16},
+        atomic::{AtomicBool, AtomicU8, AtomicU16},
     },
 };
 use viks::Key;
@@ -12,6 +13,7 @@ pub struct State {
     pub mode: CurrentMode,
     pub key_buffer: KeyBuffer,
     pub term_size: TerminalRect,
+    pub flag: FlagState,
 }
 
 impl State {
@@ -21,6 +23,7 @@ impl State {
             mode: CurrentMode::new(),
             key_buffer: KeyBuffer::new(),
             term_size: TerminalRect::new(),
+            flag: FlagState::new(),
         }
     }
 }
@@ -111,10 +114,51 @@ impl TerminalRect {
         Self(AtomicU16::new(cols), AtomicU16::new(rows))
     }
 
+    pub fn load(&self) -> Rect {
+        use std::sync::atomic::Ordering;
+
+        Rect {
+            x: 0,
+            y: 0,
+            width: self.0.load(Ordering::Relaxed),
+            height: self.1.load(Ordering::Relaxed),
+        }
+    }
+
     pub fn store(&self, cols: u16, rows: u16) {
         use std::sync::atomic::Ordering;
 
         self.0.store(cols, Ordering::Relaxed);
         self.1.store(rows, Ordering::Relaxed);
+    }
+}
+
+pub struct Flag {
+    flag: AtomicBool,
+}
+
+impl Flag {
+    fn new(default: bool) -> Self {
+        Self {
+            flag: AtomicBool::new(default),
+        }
+    }
+
+    pub fn get(&self) -> bool {
+        use std::sync::atomic::Ordering;
+
+        self.flag.load(Ordering::Relaxed)
+    }
+}
+
+pub struct FlagState {
+    pub is_sidemenu_opened: Flag,
+}
+
+impl FlagState {
+    fn new() -> Self {
+        Self {
+            is_sidemenu_opened: Flag::new(true),
+        }
     }
 }

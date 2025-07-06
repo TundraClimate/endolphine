@@ -1,7 +1,10 @@
 use crate::state::State;
 use std::sync::Arc;
 
-pub fn draw(state: Arc<State>) {}
+pub fn draw(state: Arc<State>) {
+    let layout = gen_layout(state.term_size.load(), state.flag.is_sidemenu_opened.get());
+    let layout_key = layout.hashcode();
+}
 
 #[derive(Hash)]
 pub struct Layout {
