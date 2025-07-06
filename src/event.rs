@@ -9,7 +9,7 @@ pub fn spawn_reader(state: Arc<State>) -> JoinHandle<()> {
         loop {
             match event::read() {
                 Ok(Event::Key(key)) => on_key(state.clone(), key),
-                Ok(Event::Resize(cols, rows)) => on_resize(cols, rows),
+                Ok(Event::Resize(cols, rows)) => on_resize(state.clone(), cols, rows),
                 _ => {}
             }
         }
@@ -52,7 +52,9 @@ fn on_key(state: Arc<State>, key: KeyEvent) {
         });
 }
 
-fn on_resize(cols: u16, rows: u16) {}
+fn on_resize(state: Arc<State>, cols: u16, rows: u16) {
+    state.term_size.store(cols, rows);
+}
 
 fn translate_to_key(key: KeyEvent) -> Option<Key> {
     use crossterm::event::{KeyCode, KeyModifiers};

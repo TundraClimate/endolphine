@@ -1,6 +1,9 @@
 use std::{
     path::PathBuf,
-    sync::{RwLock, atomic::AtomicU8},
+    sync::{
+        RwLock,
+        atomic::{AtomicU8, AtomicU16},
+    },
 };
 use viks::Key;
 
@@ -8,6 +11,7 @@ pub struct State {
     pub work_dir: WorkingDir,
     pub mode: CurrentMode,
     pub key_buffer: KeyBuffer,
+    pub term_size: TerminalRect,
 }
 
 impl State {
@@ -16,6 +20,7 @@ impl State {
             work_dir: WorkingDir::new(work_dir),
             mode: CurrentMode::new(),
             key_buffer: KeyBuffer::new(),
+            term_size: TerminalRect::new(),
         }
     }
 }
@@ -90,5 +95,26 @@ impl KeyBuffer {
 
     pub fn drain(&self) -> Vec<Key> {
         self.buffer.write().unwrap().drain(..).collect()
+    }
+}
+
+pub struct TerminalRect(AtomicU16, AtomicU16);
+
+impl TerminalRect {
+    fn new() -> Self {
+        use crossterm::terminal;
+
+        let Ok((cols, rows)) = terminal::size() else {
+            panic!("Couldn't get a tty size");
+        };
+
+        Self(AtomicU16::new(cols), AtomicU16::new(rows))
+    }
+
+    pub fn store(&self, cols: u16, rows: u16) {
+        use std::sync::atomic::Ordering;
+
+        self.0.store(cols, Ordering::Relaxed);
+        self.1.store(rows, Ordering::Relaxed);
     }
 }
