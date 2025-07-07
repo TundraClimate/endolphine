@@ -41,6 +41,10 @@ impl WorkingDir {
             wd: RwLock::new(path),
         }
     }
+
+    pub fn get(&self) -> PathBuf {
+        self.wd.read().unwrap().clone()
+    }
 }
 
 #[repr(u8)]

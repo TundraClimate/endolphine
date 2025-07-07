@@ -1,4 +1,7 @@
+mod pwd;
+
 use crate::state::State;
+use pwd::Working;
 use std::sync::Arc;
 
 pub fn draw(state: Arc<State>) {
@@ -6,6 +9,12 @@ pub fn draw(state: Arc<State>) {
     let layout_key = layout.hashcode();
 
     let hashes = &state.canvas_hashes;
+
+    let header = Working::new(state.work_dir.get());
+
+    if hashes.get(Working::ID) != Some(header.make_hash(layout_key)) {
+        header.draw(layout.get(Working::ID));
+    }
 }
 
 #[derive(Hash)]
@@ -26,6 +35,13 @@ impl Layout {
         self.hash(&mut hasher);
 
         hasher.finish()
+    }
+
+    fn get(&self, index: u8) -> Rect {
+        self.areas
+            .get(index as usize)
+            .copied()
+            .expect("Invalid layout id detected")
     }
 }
 
@@ -69,7 +85,13 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
             x: term_rect.x,
             y: term_rect.y,
             width: term_rect.width,
-            height: term_rect.height.min(2),
+            height: term_rect.height.min(1),
+        },
+        Rect {
+            x: term_rect.x,
+            y: term_rect.y.saturating_add(1),
+            width: term_rect.width,
+            height: term_rect.height.min(1),
         },
         Rect {
             x: term_rect.x,
@@ -81,7 +103,13 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
             x: term_rect.x,
             y: term_rect.height.saturating_sub(2),
             width: term_rect.width,
-            height: term_rect.height.min(2),
+            height: term_rect.height.min(1),
+        },
+        Rect {
+            x: term_rect.x,
+            y: term_rect.height.saturating_sub(1),
+            width: term_rect.width,
+            height: term_rect.height.min(1),
         },
     ]);
 
