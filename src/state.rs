@@ -181,7 +181,7 @@ pub struct FlagState {
 impl FlagState {
     fn new() -> Self {
         Self {
-            is_sidemenu_opened: Flag::new(true),
+            is_sidemenu_opened: Flag::new(false),
         }
     }
 }

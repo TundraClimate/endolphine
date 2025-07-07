@@ -2,6 +2,7 @@ mod args;
 mod canvas;
 mod config;
 mod event;
+mod misc;
 mod proc;
 mod state;
 mod tui;

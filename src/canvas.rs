@@ -13,8 +13,56 @@ pub fn draw(state: Arc<State>) {
     let header = Working::new(state.work_dir.get());
 
     if hashes.get(Working::ID) != Some(header.make_hash(layout_key)) {
-        header.draw(layout.get(Working::ID));
+        header.draw(state.clone(), layout.get(Working::ID));
     }
+}
+
+fn print_in(rect: Rect, rel_x: u16, rel_y: u16, s: &str) {
+    use crossterm::{
+        cursor::MoveTo,
+        style::{Print, ResetColor},
+    };
+    use std::io;
+    use unicode_width::UnicodeWidthChar;
+
+    if rect.height <= rel_y || rect.width <= rel_x {
+        return;
+    }
+
+    let abs_x = rect.x + rel_x;
+    let abs_y = rect.y + rel_y;
+    let mut text = String::new();
+    let mut rem = rect.width.saturating_sub(rel_x) as usize;
+    let mut chars = s.chars().peekable();
+
+    while let Some(&c) = chars.peek() {
+        if c == '\x1b' {
+            let mut seq = String::new();
+
+            while let Some(&next) = chars.peek() {
+                seq.push(next);
+                chars.next();
+                if next == 'm' || next == 'K' {
+                    break;
+                }
+            }
+
+            text.push_str(&seq);
+        } else {
+            let w = UnicodeWidthChar::width(c).unwrap_or(0);
+
+            if w > rem {
+                text.push_str(&" ".repeat(rem));
+                break;
+            }
+
+            rem -= w;
+            text.push(c);
+            chars.next();
+        }
+    }
+
+    crossterm::queue!(io::stdout(), MoveTo(abs_x, abs_y), Print(text), ResetColor,).ok();
 }
 
 #[derive(Hash)]

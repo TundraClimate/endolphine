@@ -16,7 +16,14 @@ pub(super) fn dir_path() -> PathBuf {
         .join("theme")
 }
 
-struct HexColor(Color);
+#[derive(Clone, Copy)]
+pub struct HexColor(Color);
+
+impl From<HexColor> for Color {
+    fn from(value: HexColor) -> Self {
+        value.0
+    }
+}
 
 fn rgb(t: &str) -> Result<Color, String> {
     let (true, Ok(r), Ok(g), Ok(b)) = (
@@ -45,27 +52,27 @@ impl<'de> Deserialize<'de> for HexColor {
 
 #[derive(Deserialize)]
 pub struct Theme {
-    app_fg: HexColor,
-    app_bg: HexColor,
-    bar_fg: HexColor,
-    bar_fg_light: HexColor,
-    bar_bg: HexColor,
-    item_bg_cursor: HexColor,
-    item_bg_select: HexColor,
-    item_broken: HexColor,
-    item_dir: HexColor,
-    item_file: HexColor,
-    item_symlink: HexColor,
-    item_sidemenu: HexColor,
-    item_parts_bsize: HexColor,
-    item_parts_lmd: HexColor,
-    perm_ty: HexColor,
-    perm_r: HexColor,
-    perm_w: HexColor,
-    perm_x: HexColor,
-    pwd_view: HexColor,
-    pwd_pickouted: HexColor,
-    search_surround: HexColor,
+    pub app_fg: HexColor,
+    pub app_bg: HexColor,
+    pub bar_fg: HexColor,
+    pub bar_fg_light: HexColor,
+    pub bar_bg: HexColor,
+    pub item_bg_cursor: HexColor,
+    pub item_bg_select: HexColor,
+    pub item_broken: HexColor,
+    pub item_dir: HexColor,
+    pub item_file: HexColor,
+    pub item_symlink: HexColor,
+    pub item_sidemenu: HexColor,
+    pub item_parts_bsize: HexColor,
+    pub item_parts_lmd: HexColor,
+    pub perm_ty: HexColor,
+    pub perm_r: HexColor,
+    pub perm_w: HexColor,
+    pub perm_x: HexColor,
+    pub pwd_view: HexColor,
+    pub pwd_pickouted: HexColor,
+    pub search_surround: HexColor,
 }
 
 pub(super) async fn download_official_theme(name: &str) -> io::Result<()> {
