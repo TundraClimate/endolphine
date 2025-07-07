@@ -7,6 +7,8 @@ use pwd::Working;
 use std::sync::Arc;
 
 pub fn draw(state: Arc<State>) {
+    use std::io::{self, Write};
+
     let layout = gen_layout(state.term_size.load(), state.flag.is_sidemenu_opened.get());
     let layout_key = layout.hashcode();
 
@@ -23,6 +25,8 @@ pub fn draw(state: Arc<State>) {
     if hashes.get(InfoBar::ID) != Some(infobar.make_hash(layout_key)) {
         infobar.draw(layout.get(InfoBar::ID));
     }
+
+    io::stdout().flush().ok();
 }
 
 fn print_in(rect: Rect, rel_x: u16, rel_y: u16, s: &str) {
