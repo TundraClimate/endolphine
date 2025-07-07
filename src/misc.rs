@@ -13,3 +13,14 @@ pub fn entry_name(path: &Path) -> String {
         None => path.to_string_lossy().to_string(),
     }
 }
+
+pub fn child_files_len(path: &Path) -> usize {
+    if !path.is_dir() || !path.exists() {
+        return 0;
+    }
+
+    match path.read_dir() {
+        Ok(d) => d.count(),
+        Err(_) => 0,
+    }
+}

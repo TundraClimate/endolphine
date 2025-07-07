@@ -1,6 +1,6 @@
 use super::Rect;
-use crate::{canvas, state::State};
-use std::{path::PathBuf, sync::Arc};
+use crate::canvas;
+use std::path::PathBuf;
 
 pub(super) struct Working {
     wd: PathBuf,
@@ -24,12 +24,12 @@ impl Working {
         hasher.finish()
     }
 
-    pub(super) fn draw(&self, state: Arc<State>, rect: Rect) {
+    pub(super) fn draw(&self, rect: Rect) {
         use crate::{config, misc};
         use crossterm::style::{SetBackgroundColor, SetForegroundColor};
 
-        let wd = state.work_dir.get();
-        let entry_name = format!("{}/", misc::entry_name(&wd));
+        let wd = &self.wd;
+        let entry_name = format!("{}/", misc::entry_name(wd));
         let theme = &config::get().theme;
         let display_path = if let Some(parent) = wd.parent() {
             let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {

@@ -1,6 +1,8 @@
+mod info_bar;
 mod pwd;
 
 use crate::state::State;
+use info_bar::InfoBar;
 use pwd::Working;
 use std::sync::Arc;
 
@@ -10,10 +12,16 @@ pub fn draw(state: Arc<State>) {
 
     let hashes = &state.canvas_hashes;
 
-    let header = Working::new(state.work_dir.get());
+    let working = Working::new(state.work_dir.get());
 
-    if hashes.get(Working::ID) != Some(header.make_hash(layout_key)) {
-        header.draw(state.clone(), layout.get(Working::ID));
+    if hashes.get(Working::ID) != Some(working.make_hash(layout_key)) {
+        working.draw(layout.get(Working::ID));
+    }
+
+    let infobar = InfoBar::new(state.work_dir.get(), 0, layout.get(3).height.into());
+
+    if hashes.get(InfoBar::ID) != Some(infobar.make_hash(layout_key)) {
+        infobar.draw(layout.get(InfoBar::ID));
     }
 }
 
