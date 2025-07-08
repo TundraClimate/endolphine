@@ -1,3 +1,5 @@
+pub mod view;
+
 use crate::state::State;
 use std::sync::Arc;
 
