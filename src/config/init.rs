@@ -33,14 +33,14 @@ pub async fn setup_local() -> io::Result<()> {
     Ok(())
 }
 
+macro_rules! nmap {
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Normal, Keymap::new($keys), $exec) }};
+}
+
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
     use crate::{proc::Command, state::Mode, tui};
 
-    registry.register(
-        Mode::Normal,
-        Keymap::new("ZZ"),
-        Command(|_, _| tui::close()),
-    );
+    nmap!(registry, "ZZ", Command(|_, _| tui::close()));
 
     if let Some(keyconf) = keyconf {
         if let Some(ref normal) = keyconf.normal {
