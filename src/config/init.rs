@@ -103,4 +103,6 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "k", Command(|s, ctx| view::move_cursor(s, ctx, false)));
     nmap!(r, "G", Command(|s, _| view::move_cursor_too(s, true)));
     nmap!(r, "gg", Command(|s, _| view::move_cursor_too(s, false)));
+    nmap!(r, "gj", Command(|s, ctx| view::move_page(s, ctx, true)));
+    nmap!(r, "gk", Command(|s, ctx| view::move_page(s, ctx, false)));
 }
