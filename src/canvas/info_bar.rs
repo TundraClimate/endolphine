@@ -37,7 +37,7 @@ impl InfoBar {
         use crossterm::style::{SetBackgroundColor, SetForegroundColor};
 
         let theme = &config::get().theme;
-        let page = self.cursor_pos / self.file_view_len + 1;
+        let page = self.cursor_pos / self.file_view_len.max(1) + 1;
         let files_len = misc::child_files_len(&self.wd);
 
         canvas::print_in(

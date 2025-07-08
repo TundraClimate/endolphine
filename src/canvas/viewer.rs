@@ -35,6 +35,11 @@ impl Viewer {
     pub(super) fn draw(&self, rect: Rect) {
         let wd = &self.wd;
         let page_size = rect.height as usize;
+
+        if page_size == 0 {
+            return;
+        }
+
         let page_index = self.cursor_pos / page_size;
         let items = pagenate(wd, page_size, page_index).unwrap_or_default();
 

@@ -143,6 +143,17 @@ pub struct Rect {
     pub height: u16,
 }
 
+impl Rect {
+    fn empty() -> Self {
+        Self {
+            x: 0,
+            y: 0,
+            width: 0,
+            height: 0,
+        }
+    }
+}
+
 fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
     let mut term_rect = term_rect;
     let mut layout = vec![];
@@ -158,16 +169,11 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
         layout.push(Rect {
             x: term_rect.x,
             y: term_rect.y,
-            width: 20,
+            width: 20.min(term_rect.width),
             height: term_rect.height,
         });
     } else {
-        layout.push(Rect {
-            x: 0,
-            y: 0,
-            width: 0,
-            height: 0,
-        });
+        layout.push(Rect::empty());
     }
 
     layout.append(&mut vec![
@@ -175,13 +181,13 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
             x: term_rect.x,
             y: term_rect.y,
             width: term_rect.width,
-            height: term_rect.height.min(1),
+            height: 1.min(term_rect.height.saturating_sub(1)),
         },
         Rect {
             x: term_rect.x,
             y: term_rect.y.saturating_add(1),
             width: term_rect.width,
-            height: term_rect.height.min(1),
+            height: 2.min(term_rect.height.saturating_sub(2)),
         },
         Rect {
             x: term_rect.x,
@@ -193,13 +199,13 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
             x: term_rect.x,
             y: term_rect.height.saturating_sub(2),
             width: term_rect.width,
-            height: term_rect.height.min(1),
+            height: 1.min(term_rect.height.saturating_sub(1)),
         },
         Rect {
             x: term_rect.x,
             y: term_rect.height.saturating_sub(1),
             width: term_rect.width,
-            height: term_rect.height.min(1),
+            height: 1.min(term_rect.height.saturating_sub(1)),
         },
     ]);
 
