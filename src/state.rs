@@ -23,13 +23,13 @@ pub struct State {
 impl State {
     pub fn new(work_dir: PathBuf) -> State {
         Self {
-            work_dir: WorkingDir::new(work_dir),
+            work_dir: WorkingDir::new(work_dir.clone()),
             mode: CurrentMode::new(),
             key_buffer: KeyBuffer::new(),
             term_size: TerminalRect::new(),
             canvas_hashes: CanvasHashes::new(),
             flag: FlagState::new(),
-            file_view: FileView::new(),
+            file_view: FileView::new(work_dir.clone()),
             proc_counter: ProcessCounter::new(),
         }
     }
@@ -195,10 +195,16 @@ pub struct FileView {
 }
 
 impl FileView {
-    fn new() -> Self {
-        Self {
+    fn new(wd: PathBuf) -> Self {
+        use crate::misc;
+
+        let s = Self {
             cursor: Cursor::default(),
-        }
+        };
+
+        s.cursor.resize(misc::child_files_len(&wd));
+
+        s
     }
 }
 

@@ -38,9 +38,9 @@ macro_rules! nmap {
 }
 
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
-    use crate::{proc::Command, state::Mode, tui};
+    use crate::{proc::Command, state::Mode};
 
-    nmap!(registry, "ZZ", Command(|_, _| tui::close()));
+    init_builtin_keymaps(registry);
 
     if let Some(keyconf) = keyconf {
         if let Some(ref normal) = keyconf.normal {
@@ -89,4 +89,12 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
                 });
         }
     }
+}
+
+fn init_builtin_keymaps(r: &mut KeymapRegistry) {
+    use crate::{proc::Command, state::Mode, tui};
+
+    nmap!(r, "ZZ", Command(|_, _| tui::close()));
+    nmap!(r, "j", Command(|s, _| s.file_view.cursor.next()));
+    nmap!(r, "k", Command(|s, _| s.file_view.cursor.previous()));
 }
