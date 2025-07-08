@@ -9,10 +9,15 @@ pub struct Args {
 
     #[arg(short = 'e')]
     pub edit_config: bool,
+
+    #[arg(long = "dbg")]
+    pub dbg: bool,
 }
 
+type IsDbg = bool;
+
 pub enum Expected {
-    OpenEndolphine(PathBuf),
+    OpenEndolphine(PathBuf, IsDbg),
     OpenConfigEditor,
     Termination(TerminationCause),
 }
@@ -32,6 +37,6 @@ pub fn parse_args() -> Expected {
             return Expected::Termination(TerminationCause::InvalidPath(parsed.path));
         };
 
-        Expected::OpenEndolphine(path)
+        Expected::OpenEndolphine(path, parsed.dbg)
     }
 }

@@ -26,7 +26,11 @@ async fn main() {
     }
 
     match args::parse_args() {
-        Expected::OpenEndolphine(path) => {
+        Expected::OpenEndolphine(path, is_dbg) => {
+            if is_dbg {
+                tui::set_dbg_hook();
+            }
+
             tui::enable();
 
             let state = Arc::new(State::new(path));

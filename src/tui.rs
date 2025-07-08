@@ -17,6 +17,22 @@ pub fn set_panic_hook() {
     }));
 }
 
+pub fn set_dbg_hook() {
+    use std::{panic, process};
+
+    panic::set_hook(Box::new(|e| {
+        disable();
+
+        if let Some(msg) = e.payload().downcast_ref::<String>() {
+            dbg_terminate(msg, e);
+        } else if let Some(msg) = e.payload().downcast_ref::<&str>() {
+            dbg_terminate(msg, e);
+        }
+
+        process::exit(1);
+    }));
+}
+
 fn terminate<D: std::fmt::Display>(e: D) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
@@ -27,6 +43,27 @@ fn terminate<D: std::fmt::Display>(e: D) {
     );
     eprintln!("{:-^41}", "Endolphine terminated");
     eprintln!(" {}", e);
+    eprintln!("{}", "-".repeat(41));
+}
+
+fn dbg_terminate<D: std::fmt::Display>(msg: D, e: &std::panic::PanicHookInfo) {
+    use crossterm::style::{SetAttribute, SetForegroundColor};
+
+    let location = e.location().unwrap();
+
+    eprintln!(
+        "{}{}",
+        SetForegroundColor(crossterm::style::Color::Red),
+        SetAttribute(crossterm::style::Attribute::Bold),
+    );
+    eprintln!("{:-^41}", "Endolphine terminated");
+    eprintln!(" Cause: {}", msg);
+    eprintln!(
+        " From: '{}' at {}:{}",
+        location.file(),
+        location.line(),
+        location.column()
+    );
     eprintln!("{}", "-".repeat(41));
 }
 
