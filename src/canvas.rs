@@ -1,10 +1,12 @@
 mod info_bar;
 mod pwd;
+mod state_bar;
 mod viewer;
 
 use crate::state::State;
 use info_bar::InfoBar;
 use pwd::Working;
+use state_bar::StateBar;
 use std::sync::Arc;
 use viewer::Viewer;
 
@@ -40,6 +42,12 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.get(Viewer::ID) != Some(viewer.make_hash(layout_key)) {
         viewer.draw(layout.get(Viewer::ID));
+    }
+
+    let statebar = StateBar::new(state.proc_counter.now());
+
+    if hashes.get(StateBar::ID) != Some(statebar.make_hash(layout_key)) {
+        statebar.draw(layout.get(StateBar::ID));
     }
 
     io::stdout().flush().ok();

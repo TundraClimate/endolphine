@@ -4,7 +4,7 @@ use std::{
     path::PathBuf,
     sync::{
         RwLock,
-        atomic::{AtomicBool, AtomicU8, AtomicU16},
+        atomic::{AtomicBool, AtomicU8, AtomicU16, AtomicUsize},
     },
 };
 use viks::Key;
@@ -17,6 +17,7 @@ pub struct State {
     pub canvas_hashes: CanvasHashes,
     pub flag: FlagState,
     pub file_view: FileView,
+    pub proc_counter: ProcessCounter,
 }
 
 impl State {
@@ -29,6 +30,7 @@ impl State {
             canvas_hashes: CanvasHashes::new(),
             flag: FlagState::new(),
             file_view: FileView::new(),
+            proc_counter: ProcessCounter::new(),
         }
     }
 }
@@ -197,5 +199,23 @@ impl FileView {
         Self {
             cursor: Cursor::default(),
         }
+    }
+}
+
+pub struct ProcessCounter {
+    count: AtomicUsize,
+}
+
+impl ProcessCounter {
+    fn new() -> Self {
+        Self {
+            count: AtomicUsize::new(0),
+        }
+    }
+
+    pub fn now(&self) -> usize {
+        use std::sync::atomic::Ordering;
+
+        self.count.load(Ordering::Relaxed)
     }
 }
