@@ -64,11 +64,7 @@ impl Viewer {
 fn pagenate(wd: &Path, page_size: usize, page_index: usize) -> Option<Vec<PathBuf>> {
     use crate::misc;
 
-    let usable_paths = misc::sorted_child_files(wd)
-        .iter()
-        .filter(|path| path.exists())
-        .cloned()
-        .collect::<Vec<_>>();
+    let usable_paths = misc::sorted_child_files(wd).to_vec();
 
     let pages = usable_paths.chunks(page_size).collect::<Vec<_>>();
 
@@ -212,7 +208,7 @@ fn render_item_row(
             }
         },
         match item.read_link() {
-            Ok(link) => link.to_string_lossy().to_string(),
+            Ok(link) => format!(" -> {}", link.to_string_lossy()),
             Err(_) => "".to_string(),
         }
     );
