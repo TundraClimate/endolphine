@@ -1,4 +1,4 @@
-use crate::canvas::Rect;
+use crate::{canvas::Rect, component::Cursor};
 use std::{
     collections::HashMap,
     path::PathBuf,
@@ -16,6 +16,7 @@ pub struct State {
     pub term_size: TerminalRect,
     pub canvas_hashes: CanvasHashes,
     pub flag: FlagState,
+    pub file_view: FileView,
 }
 
 impl State {
@@ -27,6 +28,7 @@ impl State {
             term_size: TerminalRect::new(),
             canvas_hashes: CanvasHashes::new(),
             flag: FlagState::new(),
+            file_view: FileView::new(),
         }
     }
 }
@@ -182,6 +184,18 @@ impl FlagState {
     fn new() -> Self {
         Self {
             is_sidemenu_opened: Flag::new(false),
+        }
+    }
+}
+
+pub struct FileView {
+    pub cursor: Cursor,
+}
+
+impl FileView {
+    fn new() -> Self {
+        Self {
+            cursor: Cursor::default(),
         }
     }
 }

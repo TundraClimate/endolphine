@@ -20,7 +20,11 @@ pub fn draw(state: Arc<State>) {
         working.draw(layout.get(Working::ID));
     }
 
-    let infobar = InfoBar::new(state.work_dir.get(), 0, layout.get(3).height.into());
+    let infobar = InfoBar::new(
+        state.work_dir.get(),
+        state.file_view.cursor.current(),
+        layout.get(3).height.into(),
+    );
 
     if hashes.get(InfoBar::ID) != Some(infobar.make_hash(layout_key)) {
         infobar.draw(layout.get(InfoBar::ID));
