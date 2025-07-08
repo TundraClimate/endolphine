@@ -1,14 +1,14 @@
 mod info_bar;
+mod log_area;
 mod pwd;
 mod state_bar;
 mod viewer;
 
+use self::{
+    info_bar::InfoBar, log_area::LogArea, pwd::Working, state_bar::StateBar, viewer::Viewer,
+};
 use crate::state::State;
-use info_bar::InfoBar;
-use pwd::Working;
-use state_bar::StateBar;
 use std::sync::Arc;
-use viewer::Viewer;
 
 pub fn draw(state: Arc<State>) {
     use std::io::{self, Write};
@@ -48,6 +48,12 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.get(StateBar::ID) != Some(statebar.make_hash(layout_key)) {
         statebar.draw(layout.get(StateBar::ID));
+    }
+
+    let logarea = LogArea;
+
+    if hashes.get(LogArea::ID) != Some(logarea.make_hash(layout_key)) {
+        logarea.draw(layout.get(LogArea::ID));
     }
 
     io::stdout().flush().ok();
