@@ -1,10 +1,12 @@
 mod info_bar;
 mod pwd;
+mod viewer;
 
 use crate::state::State;
 use info_bar::InfoBar;
 use pwd::Working;
 use std::sync::Arc;
+use viewer::Viewer;
 
 pub fn draw(state: Arc<State>) {
     use std::io::{self, Write};
@@ -23,11 +25,21 @@ pub fn draw(state: Arc<State>) {
     let infobar = InfoBar::new(
         state.work_dir.get(),
         state.file_view.cursor.current(),
-        layout.get(3).height.into(),
+        layout.get(Viewer::ID).height.into(),
     );
 
     if hashes.get(InfoBar::ID) != Some(infobar.make_hash(layout_key)) {
         infobar.draw(layout.get(InfoBar::ID));
+    }
+
+    let viewer = Viewer::new(
+        state.work_dir.get(),
+        state.file_view.cursor.current(),
+        String::new(),
+    );
+
+    if hashes.get(Viewer::ID) != Some(viewer.make_hash(layout_key)) {
+        viewer.draw(layout.get(Viewer::ID));
     }
 
     io::stdout().flush().ok();
