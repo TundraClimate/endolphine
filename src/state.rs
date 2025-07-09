@@ -1,7 +1,10 @@
-use crate::{canvas::Rect, component::Cursor};
+use crate::{
+    canvas::Rect,
+    component::{Cursor, CursorCache},
+};
 use std::{
     collections::HashMap,
-    path::PathBuf,
+    path::{Path, PathBuf},
     sync::{
         RwLock,
         atomic::{AtomicBool, AtomicU8, AtomicU16, AtomicUsize},
@@ -49,6 +52,12 @@ impl WorkingDir {
     pub fn get(&self) -> PathBuf {
         self.wd.read().unwrap().clone()
     }
+
+    pub fn store<P: AsRef<Path>>(&self, path: P) {
+        let path = path.as_ref();
+
+        *self.wd.write().unwrap() = path.to_path_buf();
+    }
 }
 
 #[repr(u8)]
@@ -85,6 +94,12 @@ impl CurrentMode {
         use std::sync::atomic::Ordering;
 
         Mode::from_u8(self.now.load(Ordering::Relaxed)).expect("Invalid mode detected")
+    }
+
+    pub fn switch(&self, mode: Mode) {
+        use std::sync::atomic::Ordering;
+
+        self.now.store(mode as u8, Ordering::Relaxed);
     }
 }
 
@@ -192,6 +207,7 @@ impl FlagState {
 
 pub struct FileView {
     pub cursor: Cursor,
+    pub cursor_cache: CursorCache,
 }
 
 impl FileView {
@@ -200,6 +216,7 @@ impl FileView {
 
         let s = Self {
             cursor: Cursor::default(),
+            cursor_cache: CursorCache::new(),
         };
 
         s.cursor.resize(misc::child_files_len(&wd));
