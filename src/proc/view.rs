@@ -73,3 +73,34 @@ pub fn move_parent(state: Arc<State>) {
         cursor.shift_p(pos);
     }
 }
+
+pub fn attach_child(state: Arc<State>) {
+    use crate::misc;
+
+    let wd = state.work_dir.get();
+    let child_files = misc::sorted_child_files(&wd);
+
+    if child_files.is_empty() {
+        return;
+    }
+
+    let cursor = &state.file_view.cursor;
+
+    let Some(target_path) = child_files.get(cursor.current()) else {
+        return;
+    };
+
+    if target_path.is_dir() {
+        move_dir(state.clone(), target_path);
+
+        let child_files = misc::sorted_child_files(target_path);
+        let cursor_cache = &state.file_view.cursor_cache;
+
+        if let Some(pos) = child_files.iter().position(|e| cursor_cache.inner_equal(e)) {
+            cursor.shift_p(pos);
+            cursor_cache.unwrap_surface();
+        } else {
+            cursor_cache.reset();
+        }
+    }
+}

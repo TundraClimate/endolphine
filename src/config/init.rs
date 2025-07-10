@@ -106,4 +106,5 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "gj", Command(|s, ctx| view::move_page(s, ctx, true)));
     nmap!(r, "gk", Command(|s, ctx| view::move_page(s, ctx, false)));
     nmap!(r, "h", Command(|s, _| view::move_parent(s)));
+    nmap!(r, "l", Command(|s, _| view::attach_child(s)));
 }
