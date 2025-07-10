@@ -58,7 +58,7 @@ pub fn handle_parse_err(config_read: String, e: toml::de::Error) {
     eprintln!("{:-^39}", "Invalid syntax detected");
     eprintln!("{}", e.message());
     eprintln!();
-    eprintln!("{}", err_lines);
+    eprintln!("{err_lines}");
     eprintln!("{}", "-".repeat(39));
 }
 
