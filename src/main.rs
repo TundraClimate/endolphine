@@ -58,8 +58,9 @@ async fn main() {
                         panic!("Broken configure detected: Unable to read file");
                     };
 
-                    if let Err(e) = config::parse_check(&config_read) {
-                        config::handle_parse_err(config_read, e);
+                    match config::parse_check(&config_read) {
+                        Ok(_) => config::print_success_message(),
+                        Err(e) => config::handle_parse_err(config_read, e),
                     }
                 }
                 Expected::EnableDebugMode => {

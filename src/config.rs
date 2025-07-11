@@ -64,6 +64,23 @@ pub fn handle_parse_err(config_read: String, e: toml::de::Error) {
     eprintln!("{}", "-".repeat(39));
 }
 
+pub fn print_success_message() {
+    use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
+
+    let path = file_path();
+
+    println!(
+        "{}{}",
+        SetAttribute(Attribute::Bold),
+        SetForegroundColor(Color::Green),
+    );
+    println!("{}", "-".repeat(39));
+    println!(" New config save successful");
+    println!();
+    println!(" > {}", path.to_string_lossy());
+    println!("{}", "-".repeat(39));
+}
+
 impl Default for ConfigModel {
     fn default() -> Self {
         Self {
