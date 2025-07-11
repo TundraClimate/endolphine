@@ -75,7 +75,9 @@ pub fn move_parent(state: Arc<State>) {
 }
 
 pub fn attach_child(state: Arc<State>) {
-    use crate::misc;
+    use crate::{config, misc, tui};
+    use std::process::{Command, Stdio};
+    use tokio::task;
 
     let wd = state.work_dir.get();
     let child_files = misc::sorted_child_files(&wd);
@@ -101,6 +103,49 @@ pub fn attach_child(state: Arc<State>) {
             cursor_cache.unwrap_surface();
         } else {
             cursor_cache.reset();
+        }
+    } else {
+        let config = config::get();
+
+        let mut hijack_tui = true;
+
+        let exec = match config.hijack.get(target_path) {
+            Some(info) => {
+                hijack_tui = info.hijack;
+                &info.cmd
+            }
+            None => &config.editor,
+        };
+
+        if hijack_tui {
+            tui::disable();
+
+            Command::new(&exec.cmd)
+                .args(&exec.args)
+                .arg(target_path)
+                .status()
+                .ok();
+
+            tui::enable();
+
+            state.canvas_hashes.refresh();
+        } else {
+            let target_path = target_path.clone();
+            let state = state.clone();
+
+            task::spawn_blocking(move || {
+                state.proc_counter.increment();
+
+                Command::new(&exec.cmd)
+                    .args(&exec.args)
+                    .arg(&target_path)
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status()
+                    .ok();
+
+                state.proc_counter.decrement();
+            });
         }
     }
 }

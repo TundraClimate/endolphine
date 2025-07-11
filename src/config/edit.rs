@@ -7,11 +7,11 @@ pub(super) struct EditConfig(BTreeMap<String, HijackInfo>);
 
 #[derive(Deserialize, Serialize)]
 pub struct HijackInfo {
-    cmd: Exec,
-    hijack: bool,
+    pub cmd: Exec,
+    pub hijack: bool,
 }
 
-pub(super) struct HijackMapping(BTreeMap<String, HijackInfo>);
+pub struct HijackMapping(BTreeMap<String, HijackInfo>);
 
 impl HijackMapping {
     pub(super) fn new(config: Option<EditConfig>) -> Self {

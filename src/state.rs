@@ -173,6 +173,10 @@ impl CanvasHashes {
     pub fn update(&self, id: u8, hash: u64) -> Option<u64> {
         self.hashes.write().unwrap().insert(id, hash)
     }
+
+    pub fn refresh(&self) {
+        self.hashes.write().unwrap().clear();
+    }
 }
 
 pub struct Flag {
@@ -240,5 +244,17 @@ impl ProcessCounter {
         use std::sync::atomic::Ordering;
 
         self.count.load(Ordering::Relaxed)
+    }
+
+    pub fn increment(&self) {
+        use std::sync::atomic::Ordering;
+
+        self.count.fetch_add(1, Ordering::Relaxed);
+    }
+
+    pub fn decrement(&self) {
+        use std::sync::atomic::Ordering;
+
+        self.count.fetch_sub(1, Ordering::Relaxed);
     }
 }
