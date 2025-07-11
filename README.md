@@ -302,17 +302,11 @@ cargo uninstall endolphine
 
 - Impl for the realtime displaying system
 - Improve input mode
-- Add a command mode
-- Improve the rendering system to nvim like
-  - Make renderings independently as one "window" per grid
-  - Allow widgets to be rendered to variable size
-    - When viewed from inside the renderer, it is assumed that (0, 0) to (x, y) of the "window" to be rendered can be used
-  - Impl for the floating window
-  - Add component rendering
-- Impl the layout system and logic (ratatui?)
-- Improve sys_log
+- Impl the .log output-system
 - Impl the plugin-system
 - Impl theme installer
+- Move an "editor" config to the "edit" section with rename it to the "default"
+- Improve argument parsing, the Expected will be can multiple process runs
 
 ## LICENSE
 
