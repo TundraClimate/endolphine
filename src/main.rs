@@ -66,6 +66,16 @@ async fn main() {
                 Expected::EnableDebugMode => {
                     tui::set_dbg_hook();
                 }
+                Expected::DownloadUnofficialTheme(url) => {
+                    if let Err(e) = config::download_unofficial_theme(&url).await {
+                        panic!("The theme downloading failed: {}", e.kind());
+                    };
+                }
+                Expected::DownloadOfficialTheme(name) => {
+                    if let Err(e) = config::download_official_theme(&name).await {
+                        panic!("The theme downloading failed: {}", e.kind());
+                    };
+                }
             },
             Err(cause) => match cause {
                 TerminationCause::InvalidPath(path) => {

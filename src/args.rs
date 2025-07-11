@@ -30,6 +30,8 @@ pub enum Expected {
     OpenEndolphine(PathBuf),
     OpenConfigEditor,
     EnableDebugMode,
+    DownloadUnofficialTheme(String),
+    DownloadOfficialTheme(String),
 }
 
 pub enum TerminationCause {
@@ -42,6 +44,14 @@ pub fn parse_args() -> Vec<Result<Expected, TerminationCause>> {
 
     if parsed.dbg {
         res.push(Ok(Expected::EnableDebugMode));
+    }
+
+    if let Some(url) = parsed.dl_theme_from_url {
+        res.push(Ok(Expected::DownloadUnofficialTheme(url)));
+    }
+
+    if let Some(name) = parsed.dl_theme_official {
+        res.push(Ok(Expected::DownloadOfficialTheme(name)));
     }
 
     if parsed.edit_config {

@@ -9,7 +9,7 @@ use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
 pub use init::setup_local;
-pub use theme::Theme;
+pub use theme::{Theme, download_official_theme, download_unofficial_theme};
 
 pub fn file_path() -> PathBuf {
     let Some(home) = option_env!("HOME") else {

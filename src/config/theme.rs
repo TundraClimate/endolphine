@@ -32,7 +32,7 @@ fn rgb(t: &str) -> Result<Color, String> {
         u8::from_str_radix(&t[3..5], 16),
         u8::from_str_radix(&t[5..], 16),
     ) else {
-        return Err(format!("Invalid token: {}", t));
+        return Err(format!("Invalid token: {t}"));
     };
 
     Ok(Color::Rgb { r, g, b })
@@ -75,13 +75,18 @@ pub struct Theme {
     pub search_surround: HexColor,
 }
 
-pub(super) async fn download_official_theme(name: &str) -> io::Result<()> {
+pub async fn download_official_theme(name: &str) -> io::Result<()> {
     use std::fs;
+
+    let dest_path = dir_path().join(format!("{name}.toml"));
+
+    if dest_path.exists() {
+        panic!("{name} is already exists");
+    }
 
     // TODO FIX URL to master
     let official_url = format!(
-        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/feature/render/theme/{}.toml",
-        name
+        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/feature/render/theme/{name}.toml",
     );
 
     let Ok(res) = reqwest::get(official_url).await else {
@@ -89,14 +94,57 @@ pub(super) async fn download_official_theme(name: &str) -> io::Result<()> {
     };
 
     if res.status().is_client_error() {
-        panic!("\"{}\" is invalid token", name);
+        panic!("\"{name}\" is invalid token");
     }
 
     let Ok(bytes) = res.bytes().await else {
         panic!("Couldn't read bytes");
     };
 
-    let dest_path = dir_path().join(format!("{}.toml", name));
+    fs::write(dest_path, bytes)?;
+
+    Ok(())
+}
+
+pub async fn download_unofficial_theme(url: &str) -> io::Result<()> {
+    use std::fs;
+
+    let Some(name) = url
+        .split('/')
+        .next_back()
+        .and_then(|name| Path::new(name).file_stem())
+        .and_then(|name| name.to_str())
+    else {
+        panic!("{url} is not valid");
+    };
+
+    let dest_path = dir_path().join(format!("{name}.toml"));
+
+    if dest_path.exists() {
+        panic!("{name} is already exists");
+    }
+
+    let Ok(res) = reqwest::get(url).await else {
+        panic!("Cannot access to {url}");
+    };
+
+    if res.status().is_client_error() {
+        panic!("\"{name}\" is invalid url");
+    }
+
+    let Ok(bytes) = res.bytes().await else {
+        panic!("Couldn't read bytes");
+    };
+
+    let Ok(content) = str::from_utf8(&bytes) else {
+        panic!("Invalid token found");
+    };
+
+    let is_valid = toml::from_str::<Theme>(content).is_ok();
+
+    if !is_valid {
+        panic!("The {url} content is cannot be parse");
+    }
 
     fs::write(dest_path, bytes)?;
 
