@@ -42,7 +42,7 @@ fn terminate<D: std::fmt::Display>(e: D) {
         SetAttribute(crossterm::style::Attribute::Bold),
     );
     eprintln!("{:-^41}", "Endolphine terminated");
-    eprintln!(" {}", e);
+    eprintln!(" {e}");
     eprintln!("{}", "-".repeat(41));
 }
 
@@ -57,7 +57,7 @@ fn dbg_terminate<D: std::fmt::Display>(msg: D, e: &std::panic::PanicHookInfo) {
         SetAttribute(crossterm::style::Attribute::Bold),
     );
     eprintln!("{:-^41}", "Endolphine terminated");
-    eprintln!(" Cause: {}", msg);
+    eprintln!(" Cause: {msg}");
     eprintln!(
         " From: '{}' at {}:{}",
         location.file(),

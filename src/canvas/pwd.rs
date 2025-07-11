@@ -34,7 +34,7 @@ impl Working {
         let display_path = if let Some(parent) = wd.parent() {
             let usr = option_env!("USER").map_or("/root".to_string(), |u| match u {
                 "root" => "/root".to_string(),
-                user => format!("/home/{}", user),
+                user => format!("/home/{user}"),
             });
             let replaced = parent.to_string_lossy().replacen(&usr, "~", 1);
 

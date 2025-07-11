@@ -167,15 +167,15 @@ fn translate_to_key(key: KeyEvent) -> Option<Key> {
     let is_big_alpha = key_str.len() == 1 && matches!(key_str.chars().next(), Some('A'..='Z'));
 
     if !is_big_alpha && key.modifiers.contains(KeyModifiers::SHIFT) {
-        key_str = format!("s-{}", key_str);
+        key_str = format!("s-{key_str}");
     } else if key.modifiers.contains(KeyModifiers::ALT) {
-        key_str = format!("a-{}", key_str);
+        key_str = format!("a-{key_str}");
     } else if key.modifiers.contains(KeyModifiers::CONTROL) {
-        key_str = format!("c-{}", key_str);
+        key_str = format!("c-{key_str}");
     }
 
     let key_str = if key_str.len() > 1 {
-        format!("<{}>", key_str)
+        format!("<{key_str}>")
     } else {
         key_str
     };
