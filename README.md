@@ -304,8 +304,7 @@ cargo uninstall endolphine
 - Improve input mode
 - Impl the .log output-system
 - Impl the plugin-system
-- Impl theme installer
-- Improve argument parsing, the Expected will be can multiple process runs
+- Add check to keymap config on numeric keys
 
 ## LICENSE
 
