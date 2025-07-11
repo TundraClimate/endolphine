@@ -3,7 +3,7 @@ mod init;
 mod mapping;
 mod theme;
 
-use edit::EditConfig;
+use edit::{EditConfig, HijackMapping};
 use mapping::{KeymapConfig, KeymapRegistry};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
@@ -153,6 +153,7 @@ pub struct Config {
     pub editor: Exec,
     pub theme: Theme,
     pub keymaps: KeymapRegistry,
+    pub hijack: HijackMapping,
 }
 
 pub fn get() -> &'static Config {
@@ -175,10 +176,13 @@ pub fn get() -> &'static Config {
 
         init::init_keymaps(&mut keymaps, &model.keymap);
 
+        let hijack = HijackMapping::new(model.edit);
+
         Config {
             editor: model.editor,
             theme,
             keymaps,
+            hijack,
         }
     });
 
