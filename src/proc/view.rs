@@ -107,15 +107,12 @@ pub fn attach_child(state: Arc<State>) {
     } else {
         let config = config::get();
 
-        let mut hijack_tui = true;
-
-        let exec = match config.hijack.get(target_path) {
-            Some(info) => {
-                hijack_tui = info.hijack;
-                &info.cmd
-            }
-            None => &config.editor,
-        };
+        let info = config
+            .hijack
+            .get(target_path)
+            .unwrap_or(config.hijack.default_ed());
+        let hijack_tui = info.hijack;
+        let exec = &info.cmd;
 
         if hijack_tui {
             tui::disable();

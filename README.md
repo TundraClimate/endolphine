@@ -305,7 +305,6 @@ cargo uninstall endolphine
 - Impl the .log output-system
 - Impl the plugin-system
 - Impl theme installer
-- Move an "editor" config to the "edit" section with rename it to the "default"
 - Improve argument parsing, the Expected will be can multiple process runs
 
 ## LICENSE
