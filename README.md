@@ -306,6 +306,7 @@ cargo uninstall endolphine
 - Impl the plugin-system
 - Add check to keymap config on numeric keys
 - Add mode views to statebar on left side
+- Improve Visual-selection(pick select, multiple area)
 
 ## LICENSE
 
