@@ -46,6 +46,8 @@ pub fn parse_args() -> Vec<Result<Expected, TerminationCause>> {
 
     if parsed.edit_config {
         res.push(Ok(Expected::OpenConfigEditor));
+
+        return res;
     }
 
     let path = &parsed.path;
