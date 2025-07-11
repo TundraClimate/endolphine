@@ -5,13 +5,16 @@ use std::path::PathBuf;
 #[command(version, about, long_about = None)]
 pub struct Args {
     #[arg(default_value = ".", value_parser = clap::value_parser!(PathBuf))]
-    pub path: PathBuf,
+    path: PathBuf,
 
     #[arg(short = 'e')]
-    pub edit_config: bool,
+    edit_config: bool,
 
     #[arg(long = "dbg")]
-    pub dbg: bool,
+    dbg: bool,
+
+    #[arg(short = 'T', long)]
+    theme: Option<String>,
 }
 
 pub enum Expected {
