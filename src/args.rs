@@ -14,29 +14,34 @@ pub struct Args {
     pub dbg: bool,
 }
 
-type IsDbg = bool;
-
 pub enum Expected {
-    OpenEndolphine(PathBuf, IsDbg),
+    OpenEndolphine(PathBuf),
     OpenConfigEditor,
-    Termination(TerminationCause),
+    EnableDebugMode,
 }
 
 pub enum TerminationCause {
     InvalidPath(PathBuf),
 }
 
-pub fn parse_args() -> Expected {
+pub fn parse_args() -> Vec<Result<Expected, TerminationCause>> {
     let parsed = Args::parse();
+    let mut res = vec![];
+
+    if parsed.dbg {
+        res.push(Ok(Expected::EnableDebugMode));
+    }
 
     if parsed.edit_config {
-        Expected::OpenConfigEditor
-    } else {
-        let path = &parsed.path;
-        let (Ok(path), true) = (path.canonicalize(), path.is_dir()) else {
-            return Expected::Termination(TerminationCause::InvalidPath(parsed.path));
-        };
-
-        Expected::OpenEndolphine(path, parsed.dbg)
+        res.push(Ok(Expected::OpenConfigEditor));
     }
+
+    let path = &parsed.path;
+
+    match path.canonicalize() {
+        Ok(path) => res.push(Ok(Expected::OpenEndolphine(path))),
+        Err(_) => res.push(Err(TerminationCause::InvalidPath(path.to_path_buf()))),
+    }
+
+    res
 }

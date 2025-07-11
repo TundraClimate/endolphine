@@ -25,47 +25,52 @@ async fn main() {
         panic!("Failed to create configure files: {}", e.kind());
     }
 
-    match args::parse_args() {
-        Expected::OpenEndolphine(path, is_dbg) => {
-            if is_dbg {
-                tui::set_dbg_hook();
-            }
+    let args = args::parse_args();
 
-            tui::enable();
+    for arg in args.into_iter() {
+        match arg {
+            Ok(expected) => match expected {
+                Expected::OpenEndolphine(path) => {
+                    tui::enable();
 
-            let state = Arc::new(State::new(path));
-            let handle = event::spawn_reader(state.clone());
+                    let state = Arc::new(State::new(path));
+                    let handle = event::spawn_reader(state.clone());
 
-            tui::tick_loop(state, 60, |state| {
-                canvas::draw(state);
-            })
-            .await;
+                    tui::tick_loop(state, 60, |state| {
+                        canvas::draw(state);
+                    })
+                    .await;
 
-            handle.await.ok();
+                    handle.await.ok();
+                }
+                Expected::OpenConfigEditor => {
+                    let Some(editor) = option_env!("EDITOR") else {
+                        panic!("$EDITOR not initialized");
+                    };
+
+                    Command::new(editor)
+                        .arg(config::file_path())
+                        .status()
+                        .await
+                        .ok();
+
+                    let Some(config_read) = fs::read_to_string(config::file_path()).ok() else {
+                        panic!("Broken configure detected: Unable to read file");
+                    };
+
+                    if let Err(e) = config::parse_check(&config_read) {
+                        config::handle_parse_err(config_read, e);
+                    }
+                }
+                Expected::EnableDebugMode => {
+                    tui::set_dbg_hook();
+                }
+            },
+            Err(cause) => match cause {
+                TerminationCause::InvalidPath(path) => {
+                    panic!("Invalid path detected: {}", path.to_string_lossy())
+                }
+            },
         }
-        Expected::OpenConfigEditor => {
-            let Some(editor) = option_env!("EDITOR") else {
-                panic!("$EDITOR not initialized");
-            };
-
-            Command::new(editor)
-                .arg(config::file_path())
-                .status()
-                .await
-                .ok();
-
-            let Some(config_read) = fs::read_to_string(config::file_path()).ok() else {
-                panic!("Broken configure detected: Unable to read file");
-            };
-
-            if let Err(e) = config::parse_check(&config_read) {
-                config::handle_parse_err(config_read, e);
-            }
-        }
-        Expected::Termination(cause) => match cause {
-            TerminationCause::InvalidPath(path) => {
-                panic!("Invalid path detected: {}", path.to_string_lossy())
-            }
-        },
     }
 }
