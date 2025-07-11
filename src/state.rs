@@ -170,8 +170,8 @@ impl CanvasHashes {
         }
     }
 
-    pub fn get(&self, id: u8) -> Option<u64> {
-        self.hashes.read().unwrap().get(&id).copied()
+    pub fn update(&self, id: u8, hash: u64) -> Option<u64> {
+        self.hashes.write().unwrap().insert(id, hash)
     }
 }
 

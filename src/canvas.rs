@@ -19,8 +19,9 @@ pub fn draw(state: Arc<State>) {
     let hashes = &state.canvas_hashes;
 
     let working = Working::new(state.work_dir.get());
+    let working_hash = working.make_hash(layout_key);
 
-    if hashes.get(Working::ID) != Some(working.make_hash(layout_key)) {
+    if hashes.update(Working::ID, working_hash) != Some(working_hash) {
         working.draw(layout.get(Working::ID));
     }
 
@@ -29,8 +30,9 @@ pub fn draw(state: Arc<State>) {
         state.file_view.cursor.current(),
         layout.get(Viewer::ID).height.into(),
     );
+    let infobar_hash = infobar.make_hash(layout_key);
 
-    if hashes.get(InfoBar::ID) != Some(infobar.make_hash(layout_key)) {
+    if hashes.update(InfoBar::ID, infobar_hash) != Some(infobar_hash) {
         infobar.draw(layout.get(InfoBar::ID));
     }
 
@@ -39,20 +41,23 @@ pub fn draw(state: Arc<State>) {
         state.file_view.cursor.current(),
         String::new(),
     );
+    let viewer_hash = viewer.make_hash(layout_key);
 
-    if hashes.get(Viewer::ID) != Some(viewer.make_hash(layout_key)) {
+    if hashes.update(Viewer::ID, viewer_hash) != Some(viewer_hash) {
         viewer.draw(layout.get(Viewer::ID));
     }
 
     let statebar = StateBar::new(state.proc_counter.now());
+    let statebar_hash = statebar.make_hash(layout_key);
 
-    if hashes.get(StateBar::ID) != Some(statebar.make_hash(layout_key)) {
+    if hashes.update(StateBar::ID, statebar_hash) != Some(statebar_hash) {
         statebar.draw(layout.get(StateBar::ID));
     }
 
     let logarea = LogArea;
+    let logarea_hash = logarea.make_hash(layout_key);
 
-    if hashes.get(LogArea::ID) != Some(logarea.make_hash(layout_key)) {
+    if hashes.update(LogArea::ID, logarea_hash) != Some(logarea_hash) {
         logarea.draw(layout.get(LogArea::ID));
     }
 
