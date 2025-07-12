@@ -1,6 +1,13 @@
 use crate::{proc::CommandContext, state::State};
 use std::{path::Path, sync::Arc};
 
+fn select_cursor_pos(state: &State) {
+    state
+        .file_view
+        .selection
+        .select(state.file_view.cursor.current());
+}
+
 pub fn move_cursor(state: Arc<State>, ctx: CommandContext, positive: bool) {
     let cursor = &state.file_view.cursor;
     let point = ctx.prenum.unwrap_or(1);
@@ -10,6 +17,8 @@ pub fn move_cursor(state: Arc<State>, ctx: CommandContext, positive: bool) {
     } else {
         cursor.shift_n(point);
     }
+
+    select_cursor_pos(&state);
 }
 
 pub fn move_cursor_too(state: Arc<State>, positive: bool) {
@@ -21,6 +30,8 @@ pub fn move_cursor_too(state: Arc<State>, positive: bool) {
     } else {
         cursor.shift_n(point);
     }
+
+    select_cursor_pos(&state);
 }
 
 pub fn move_page(state: Arc<State>, ctx: CommandContext, positive: bool) {
@@ -33,6 +44,8 @@ pub fn move_page(state: Arc<State>, ctx: CommandContext, positive: bool) {
     } else {
         cursor.shift_n(point);
     }
+
+    select_cursor_pos(&state);
 }
 
 fn move_dir(state: Arc<State>, path: &Path) {
@@ -42,6 +55,8 @@ fn move_dir(state: Arc<State>, path: &Path) {
     state.work_dir.store(path);
 
     let cursor = &state.file_view.cursor;
+
+    state.file_view.selection.disable();
 
     cursor.resize(misc::child_files_len(path));
     cursor.reset();
@@ -144,5 +159,19 @@ pub fn attach_child(state: Arc<State>) {
                 state.proc_counter.decrement();
             });
         }
+    }
+}
+
+pub fn toggle_vis(state: Arc<State>) {
+    use crate::state::Mode;
+
+    let selection = &state.file_view.selection;
+
+    if selection.is_enable() {
+        selection.disable();
+        state.mode.switch(Mode::Normal);
+    } else {
+        selection.enable(state.file_view.cursor.current());
+        state.mode.switch(Mode::Visual);
     }
 }

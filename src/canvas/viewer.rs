@@ -5,16 +5,18 @@ use std::path::{Path, PathBuf};
 pub(super) struct Viewer {
     wd: PathBuf,
     cursor_pos: usize,
+    selection: Vec<usize>,
     grep: String,
 }
 
 impl Viewer {
     pub(super) const ID: u8 = 3;
 
-    pub(super) fn new(wd: PathBuf, cursor_pos: usize, grep: String) -> Self {
+    pub(super) fn new(wd: PathBuf, cursor_pos: usize, selection: Vec<usize>, grep: String) -> Self {
         Self {
             wd,
             cursor_pos,
+            selection,
             grep,
         }
     }
@@ -27,6 +29,7 @@ impl Viewer {
         layout_hash.hash(&mut hasher);
         self.wd.to_string_lossy().to_string().hash(&mut hasher);
         self.cursor_pos.hash(&mut hasher);
+        self.selection.hash(&mut hasher);
         self.grep.hash(&mut hasher);
 
         hasher.finish()
@@ -52,7 +55,7 @@ impl Viewer {
                     rel_i,
                     item,
                     self.cursor_pos == abs_i,
-                    false,
+                    self.selection.contains(&abs_i),
                     &self.grep,
                 ),
                 None => render_empty_row(rect, rel_i),

@@ -1,6 +1,6 @@
 use crate::{
     canvas::Rect,
-    component::{Cursor, CursorCache},
+    component::{Cursor, CursorCache, Selection},
 };
 use std::{
     collections::HashMap,
@@ -212,6 +212,7 @@ impl FlagState {
 pub struct FileView {
     pub cursor: Cursor,
     pub cursor_cache: CursorCache,
+    pub selection: Selection,
 }
 
 impl FileView {
@@ -221,6 +222,7 @@ impl FileView {
         let s = Self {
             cursor: Cursor::default(),
             cursor_cache: CursorCache::new(),
+            selection: Selection::new(),
         };
 
         s.cursor.resize(misc::child_files_len(&wd));

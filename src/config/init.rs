@@ -37,6 +37,10 @@ macro_rules! nmap {
     ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Normal, Keymap::new($keys), $exec) }};
 }
 
+macro_rules! vmap {
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Visual, Keymap::new($keys), $exec) }};
+}
+
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
     use crate::{proc::Command, state::Mode};
 
@@ -107,4 +111,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "gk", Command(|s, ctx| view::move_page(s, ctx, false)));
     nmap!(r, "h", Command(|s, _| view::move_parent(s)));
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
+    nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
+
+    vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
 }

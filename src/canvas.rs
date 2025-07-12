@@ -39,6 +39,7 @@ pub fn draw(state: Arc<State>) {
     let viewer = Viewer::new(
         state.work_dir.get(),
         state.file_view.cursor.current(),
+        state.file_view.selection.collect(),
         String::new(),
     );
     let viewer_hash = viewer.make_hash(layout_key);
