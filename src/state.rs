@@ -1,6 +1,6 @@
 use crate::{
     canvas::Rect,
-    component::{Cursor, CursorCache, Selection},
+    component::{Cursor, CursorCache, Input, Selection},
 };
 use std::{
     collections::HashMap,
@@ -21,6 +21,7 @@ pub struct State {
     pub flag: FlagState,
     pub file_view: FileView,
     pub proc_counter: ProcessCounter,
+    pub input: InputController,
 }
 
 impl State {
@@ -34,6 +35,7 @@ impl State {
             flag: FlagState::new(),
             file_view: FileView::new(work_dir.clone()),
             proc_counter: ProcessCounter::new(),
+            input: InputController::new(),
         }
     }
 }
@@ -258,5 +260,35 @@ impl ProcessCounter {
         use std::sync::atomic::Ordering;
 
         self.count.fetch_sub(1, Ordering::Relaxed);
+    }
+}
+
+pub struct InputController {
+    pub input: Input,
+    tag: RwLock<Option<String>>,
+}
+
+impl InputController {
+    fn new() -> Self {
+        Self {
+            input: Input::new(),
+            tag: RwLock::new(None),
+        }
+    }
+
+    pub fn is_enable(&self) -> bool {
+        self.tag.read().unwrap().is_some()
+    }
+
+    pub fn enable(&self, tag: &str) {
+        *self.tag.write().unwrap() = Some(tag.to_string());
+    }
+
+    pub fn disable(&self) {
+        *self.tag.write().unwrap() = None;
+    }
+
+    pub fn tag(&self) -> Option<String> {
+        self.tag.read().unwrap().clone()
     }
 }
