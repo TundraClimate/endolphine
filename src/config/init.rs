@@ -113,5 +113,14 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
 
+    vmap!(r, "ZZ", Command(|_, _| tui::close()));
+    vmap!(r, "j", Command(|s, ctx| view::move_cursor(s, ctx, true)));
+    vmap!(r, "k", Command(|s, ctx| view::move_cursor(s, ctx, false)));
+    vmap!(r, "G", Command(|s, _| view::move_cursor_too(s, true)));
+    vmap!(r, "gg", Command(|s, _| view::move_cursor_too(s, false)));
+    vmap!(r, "gj", Command(|s, ctx| view::move_page(s, ctx, true)));
+    vmap!(r, "gk", Command(|s, ctx| view::move_page(s, ctx, false)));
+    vmap!(r, "h", Command(|s, _| view::move_parent(s)));
+    vmap!(r, "l", Command(|s, _| view::attach_child(s)));
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
 }
