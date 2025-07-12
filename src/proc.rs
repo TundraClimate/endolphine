@@ -30,6 +30,13 @@ impl<F: Fn(Arc<State>, CommandContext) + Send + Sync> Runnable for Acommand<F> {
     fn run(&'static self, state: Arc<State>, ctx: CommandContext) {
         use tokio::task;
 
-        task::spawn_blocking(|| (self.0)(state, ctx));
+        task::spawn_blocking(move || {
+            state.proc_counter.increment();
+
+            (self.0)(state.clone(), ctx);
+            std::thread::sleep(std::time::Duration::from_secs(3));
+
+            state.proc_counter.decrement();
+        });
     }
 }
