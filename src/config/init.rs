@@ -102,6 +102,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
         tui,
     };
 
+    nmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     nmap!(r, "ZZ", Command(|_, _| tui::close()));
     nmap!(r, "j", Command(|s, ctx| view::move_cursor(s, ctx, true)));
     nmap!(r, "k", Command(|s, ctx| view::move_cursor(s, ctx, false)));
@@ -113,6 +114,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
 
+    vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
     vmap!(r, "j", Command(|s, ctx| view::move_cursor(s, ctx, true)));
     vmap!(r, "k", Command(|s, ctx| view::move_cursor(s, ctx, false)));

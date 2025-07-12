@@ -1,6 +1,15 @@
 use crate::{proc::CommandContext, state::State};
 use std::{path::Path, sync::Arc};
 
+pub fn refresh(state: Arc<State>) {
+    use crate::state::Mode;
+
+    state.file_view.selection.disable();
+    state.mode.switch(Mode::Normal);
+
+    state.canvas_hashes.refresh();
+}
+
 fn select_cursor_pos(state: &State) {
     state
         .file_view
