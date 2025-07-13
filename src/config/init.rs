@@ -101,7 +101,7 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
 
 fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Command, view},
+        proc::{Command, fs, view},
         state::Mode,
         tui,
     };
@@ -117,6 +117,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "h", Command(|s, _| view::move_parent(s)));
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
+    nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -129,6 +130,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "h", Command(|s, _| view::move_parent(s)));
     vmap!(r, "l", Command(|s, _| view::attach_child(s)));
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
+    nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
 
     imap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
 }

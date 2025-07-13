@@ -13,4 +13,6 @@ fn input_start(state: &State, tag: &str) {
     state.mode.switch(Mode::Input);
 }
 
-fn ask_create(state: Arc<State>) {}
+pub fn ask_create(state: Arc<State>) {
+    input_start(&state, "CreateFileOrDir");
+}
