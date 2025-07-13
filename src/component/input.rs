@@ -70,4 +70,8 @@ impl Input {
 
         mem::take(&mut input)
     }
+
+    pub fn buf_clone(&self) -> String {
+        self.input.read().unwrap().clone()
+    }
 }
