@@ -307,6 +307,10 @@ cargo uninstall endolphine
 - Add check to keymap config on numeric keys
 - Add mode views to statebar on left side
 - Improve Visual-selection(pick select, multiple area)
+- Improve Input location
+  - Create: page last, tmp item wrapping
+  - Delete, Rename: that item wrapping
+  - Search: infobar right side
 
 ## LICENSE
 

@@ -1,3 +1,4 @@
+pub mod fs;
 pub mod view;
 
 use crate::state::State;
