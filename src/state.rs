@@ -67,13 +67,14 @@ impl WorkingDir {
 pub enum Mode {
     Normal = 0,
     Visual = 1,
+    Input = 2,
 }
 
 impl Mode {
     pub fn from_u8(i: u8) -> Option<Mode> {
         use std::mem;
 
-        if i == 0 || i == 1 {
+        if i == 0 || i == 1 || i == 2 {
             Some(unsafe { mem::transmute::<u8, Mode>(i) })
         } else {
             None

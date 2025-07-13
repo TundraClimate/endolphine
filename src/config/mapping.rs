@@ -52,6 +52,14 @@ impl KeymapRegistry {
         let mut buf = vec![];
 
         for key in keys.into_iter() {
+            if mode == Mode::Input {
+                if maps.contains_key(&(mode, key.to_string())) {
+                    res.push(Ok(vec![key]));
+                }
+
+                continue;
+            }
+
             let as_str = key.to_string();
             let mut chars = as_str.chars();
 
@@ -113,17 +121,24 @@ impl KeymapRegistry {
         parsed
             .into_iter()
             .map(|map| match map {
+                Ok(keys) if mode == Mode::Input => {
+                    let cmd = self
+                        .get(mode, Keymap::from(keys))
+                        .expect("Incorrect code found");
+
+                    Ok((cmd, CommandContext::new(None)))
+                }
                 Ok(keys) => {
                     let prenum = &keys
                         .iter()
-                        .take_while(|key| key.to_string().chars().all(char::is_numeric))
+                        .take_while(|key| key.is_digit())
                         .map(ToString::to_string)
                         .collect::<String>()
                         .parse::<usize>()
                         .ok();
                     let keys = keys
                         .into_iter()
-                        .skip_while(|key| key.to_string().chars().all(char::is_numeric))
+                        .skip_while(|key| key.is_digit())
                         .collect::<Vec<_>>();
 
                     let item = (
