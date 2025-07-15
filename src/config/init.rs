@@ -130,7 +130,24 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "h", Command(|s, _| view::move_parent(s)));
     vmap!(r, "l", Command(|s, _| view::attach_child(s)));
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
-    nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
+    vmap!(r, "a", Command(|s, _| fs::ask_create(s)));
 
     imap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
+    imap!(r, "<ENTER>", Command(|_s, _| todo!()));
+    imap!(r, "<BS>", Command(|s, _| s.input.input.pop()));
+    imap!(r, "<DEL>", Command(|s, _| s.input.input.pop_front()));
+
+    imap!(r, "<c-h>", Command(|s, _| s.input.input.shift_back()));
+    imap!(r, "<c-l>", Command(|s, _| s.input.input.shift()));
+
+    imap!(r, "<SPACE>", Command(|s, _| s.input.input.put(' ')));
+    imap!(r, "<LT>", Command(|s, _| s.input.input.put('<')));
+
+    for i_key in ('!'..='~').filter(|c| *c != '<') {
+        imap!(
+            r,
+            &i_key.to_string(),
+            Command(move |s, _| s.input.input.put(i_key))
+        );
+    }
 }

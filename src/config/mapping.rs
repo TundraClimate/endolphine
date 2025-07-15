@@ -38,8 +38,10 @@ impl KeymapRegistry {
         self.map.insert(
             (
                 mode,
-                map.expect("Invalid mapping found: KeymapRegistry")
-                    .to_string(),
+                map.unwrap_or_else(|e| {
+                    panic!("Invalid mapping found: '{}' is {}", e.format(), e.cause())
+                })
+                .to_string(),
             ),
             Box::new(cmd),
         );

@@ -19,27 +19,41 @@ impl Input {
         let cursor = &self.cursor;
 
         input.insert(cursor.current(), c);
+
         cursor.resize(input.len() + 1);
-        self.shift();
+        cursor.next();
     }
 
     pub fn pop(&self) {
         let mut input = self.input.write().unwrap();
         let cursor = &self.cursor;
 
-        *input = input
-            .char_indices()
-            .flat_map(|(i, c)| (i != cursor.current()).then_some(c))
-            .collect::<String>();
+        if cursor.current() == 0 {
+            return;
+        }
+
+        input.remove(cursor.current() - 1);
+
+        cursor.previous();
         cursor.resize(input.len() + 1);
-        self.shift_back();
+    }
+
+    pub fn pop_front(&self) {
+        let mut input = self.input.write().unwrap();
+        let cursor = &self.cursor;
+
+        if input.len() > self.cursor.current() {
+            input.remove(self.cursor.current());
+        }
+
+        cursor.resize(input.len() + 1);
     }
 
     pub fn insert(&self, s: &str) {
         let mut input = self.input.write().unwrap();
         let cursor = &self.cursor;
 
-        cursor.resize(input.len() + s.len() + 1);
+        cursor.resize(input.len() + s.len());
 
         *input = format!(
             "{}{}{}",

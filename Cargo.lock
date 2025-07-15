@@ -1643,9 +1643,9 @@ checksum = "accd4ea62f7bb7a82fe23066fb0957d48ef677f6eeb8215f372f52e48bb32426"
 
 [[package]]
 name = "viks"
-version = "1.0.3"
+version = "1.0.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "83f4625df1b0d8ece1eb99f136307330980dbff3598a3f7349cf914f60dccfbe"
+checksum = "f158c078bce57f8d417961c54b764935f475020919e7a6a5ef38c8627ab8a353"
 dependencies = [
  "serde",
 ]
