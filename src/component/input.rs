@@ -53,7 +53,7 @@ impl Input {
         let mut input = self.input.write().unwrap();
         let cursor = &self.cursor;
 
-        cursor.resize(input.len() + s.len());
+        cursor.resize(input.len() + s.len() + 1);
 
         *input = format!(
             "{}{}{}",

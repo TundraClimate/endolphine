@@ -41,5 +41,17 @@ pub fn ask_paste(state: Arc<State>) {
 }
 
 pub fn ask_rename(state: Arc<State>) {
+    use crate::misc;
+
     input_start(&state, "RenameThisItem");
+
+    let files = misc::sorted_child_files(&state.work_dir.get());
+    let file = &files[state.file_view.cursor.current()];
+    let input = &state.input.input;
+
+    input.insert(&misc::entry_name(file));
+
+    if let Some(e) = file.extension().and_then(|e| e.to_str()) {
+        format!(".{e}").chars().for_each(|_| input.shift_back())
+    }
 }
