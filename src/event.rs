@@ -150,7 +150,7 @@ fn translate_to_key(key: KeyEvent) -> Option<Key> {
         KeyCode::Char('Y') => "Y",
         KeyCode::Char('Z') => "Z",
         KeyCode::Char('[') => "[",
-        KeyCode::Char('\\') => "\"",
+        KeyCode::Char('\\') => "\\",
         KeyCode::Char(']') => "]",
         KeyCode::Char('^') => "^",
         KeyCode::Char('_') => "_",
