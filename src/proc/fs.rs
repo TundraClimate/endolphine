@@ -1,5 +1,5 @@
 use crate::state::State;
-use std::sync::Arc;
+use std::{fs, io, path::Path, sync::Arc};
 
 fn input_start(state: &State, tag: &str) {
     use crate::state::Mode;
@@ -53,5 +53,46 @@ pub fn ask_rename(state: Arc<State>) {
 
     if let Some(e) = file.extension().and_then(|e| e.to_str()) {
         format!(".{e}").chars().for_each(|_| input.shift_back())
+    }
+}
+
+fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
+    if path.exists() {
+        return Ok(());
+    }
+
+    if is_dir {
+        fs::create_dir(path)
+    } else {
+        fs::write(path, b"")
+    }
+}
+
+pub fn complete_input(state: Arc<State>) {
+    use crate::state::Mode;
+
+    let input = &state.input;
+
+    let Some(tag) = input.tag() else {
+        return;
+    };
+
+    let content = { input.input.take() };
+
+    input.disable();
+    state.mode.switch(Mode::Normal);
+
+    match tag.trim() {
+        "CreateThisItem" => {
+            let is_dir = content.ends_with("/");
+            let path = state.work_dir.get().join(content);
+
+            if let Err(e) = create_item(&path, is_dir) {
+                // TODO Log error message for app
+                panic!("FAILED CREATE THE '{tag}': {}", e.kind());
+            }
+        }
+
+        _ => panic!("Unknown input tag found: {tag}"),
     }
 }

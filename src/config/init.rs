@@ -101,7 +101,7 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
 
 fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Command, fs, view},
+        proc::{Acommand, Command, fs, view},
         state::Mode,
         tui,
     };
@@ -139,7 +139,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
 
     imap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
-    imap!(r, "<ENTER>", Command(|_s, _| todo!()));
+    imap!(r, "<ENTER>", Acommand(|s, _| fs::complete_input(s)));
     imap!(r, "<BS>", Command(|s, _| s.input.input.pop()));
     imap!(r, "<DEL>", Command(|s, _| s.input.input.pop_front()));
 
