@@ -20,14 +20,17 @@ impl InfoBar {
     }
 
     pub(super) fn make_hash(&self, layout_hash: u64) -> u64 {
+        use crate::misc;
         use std::hash::{DefaultHasher, Hash, Hasher};
 
         let mut hasher = DefaultHasher::new();
 
         layout_hash.hash(&mut hasher);
-        self.wd.to_string_lossy().to_string().hash(&mut hasher);
+        self.wd.hash(&mut hasher);
         self.cursor_pos.hash(&mut hasher);
         self.file_view_len.hash(&mut hasher);
+
+        misc::child_files_len(&self.wd).hash(&mut hasher);
 
         hasher.finish()
     }
