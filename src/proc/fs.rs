@@ -69,7 +69,7 @@ fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
 }
 
 pub fn complete_input(state: Arc<State>) {
-    use crate::state::Mode;
+    use super::view;
 
     let input = &state.input;
 
@@ -78,9 +78,6 @@ pub fn complete_input(state: Arc<State>) {
     };
 
     let content = { input.input.take() };
-
-    input.disable();
-    state.mode.switch(Mode::Normal);
 
     match tag.trim() {
         "CreateThisItem" => {
@@ -95,4 +92,6 @@ pub fn complete_input(state: Arc<State>) {
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
+
+    view::refresh(state);
 }

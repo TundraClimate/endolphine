@@ -2,12 +2,17 @@ use crate::{proc::CommandContext, state::State};
 use std::{path::Path, sync::Arc};
 
 pub fn refresh(state: Arc<State>) {
-    use crate::state::Mode;
+    use crate::{misc, state::Mode};
 
     state.file_view.selection.disable();
     state.mode.switch(Mode::Normal);
+    state.input.disable();
 
     state.canvas_hashes.refresh();
+    state
+        .file_view
+        .cursor
+        .resize(misc::child_files_len(&state.work_dir.get()));
 }
 
 fn select_cursor_pos(state: &State) {
