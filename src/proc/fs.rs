@@ -84,6 +84,10 @@ fn delete_item(path: &Path) -> io::Result<()> {
     }
 }
 
+fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
+    paths.iter().try_for_each(|path| delete_item(path))
+}
+
 pub fn complete_input(state: Arc<State>) {
     use super::view;
     use crate::misc;
@@ -129,6 +133,28 @@ pub fn complete_input(state: Arc<State>) {
                     path.to_string_lossy(),
                     e.kind()
                 );
+            }
+        }
+        "DeleteItems" => {
+            if !content.to_ascii_lowercase().starts_with("y") {
+                view::refresh(state);
+
+                return;
+            }
+
+            let child_files = misc::sorted_child_files(&state.work_dir.get());
+            let paths = state
+                .file_view
+                .selection
+                .collect()
+                .into_iter()
+                .filter_map(|idx| child_files.get(idx))
+                .map(|path| path.as_path())
+                .collect::<Vec<_>>();
+
+            if let Err(e) = delete_items(paths) {
+                // TODO Log error message for app
+                panic!("FAILED DELETE THE paths: {}", e.kind());
             }
         }
 
