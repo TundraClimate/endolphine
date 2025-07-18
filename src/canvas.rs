@@ -217,3 +217,25 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
 
     Layout::new(layout)
 }
+
+#[macro_export]
+macro_rules! log {
+    ($out:expr) => {{
+        use crossterm::cursor::MoveTo;
+        use crossterm::style::ResetColor;
+        use crossterm::terminal::{self, Clear, ClearType};
+
+        let Ok((cols, rows)) = terminal::size() else {
+            panic!("Couldn't get a tty size");
+        };
+
+        print!(
+            "{}{} {}{}{}",
+            MoveTo(0, rows),
+            Clear(ClearType::CurrentLine),
+            format_args!($out),
+            ResetColor,
+            " ".repeat(cols.into())
+        )
+    }};
+}
