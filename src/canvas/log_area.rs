@@ -2,17 +2,17 @@ use super::Rect;
 use crate::canvas;
 
 pub(super) struct LogArea {
-    is_input_enable: bool,
     input_buf: String,
+    input_tag: Option<String>,
 }
 
 impl LogArea {
     pub(super) const ID: u8 = 5;
 
-    pub(super) fn new(is_input_enable: bool, input_buf: String) -> Self {
+    pub(super) fn new(input_buf: String, input_tag: Option<String>) -> Self {
         Self {
-            is_input_enable,
             input_buf,
+            input_tag,
         }
     }
 
@@ -22,8 +22,8 @@ impl LogArea {
         let mut hasher = DefaultHasher::new();
 
         layout_hash.hash(&mut hasher);
-        self.is_input_enable.hash(&mut hasher);
         self.input_buf.hash(&mut hasher);
+        self.input_tag.hash(&mut hasher);
 
         hasher.finish()
     }
@@ -31,8 +31,16 @@ impl LogArea {
     pub(super) fn draw(&self, rect: Rect) {
         use crossterm::style::ResetColor;
 
-        let input_buf = if self.is_input_enable {
-            &self.input_buf
+        let input_buf = if let Some(ref tag) = self.input_tag {
+            let (tag, ctx) = tag.split_once(":").unwrap_or((tag, ""));
+
+            let prefix = match tag {
+                "DeleteThisItem" => &format!("Delete the '{ctx}' (y/N)"),
+
+                _ => "",
+            };
+
+            &format!("{}: {}", prefix, self.input_buf)
         } else {
             ""
         };

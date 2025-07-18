@@ -109,7 +109,62 @@ fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
 }
 
 pub fn ask_delete(state: Arc<State>) {
-    input_start(&state, "DeleteThisItem");
+    use crate::misc;
+
+    let child_files = misc::sorted_child_files(&state.work_dir.get());
+
+    if let Some(item) = child_files.get(state.file_view.cursor.current()) {
+        let target_name = misc::entry_name(item);
+
+        input_start(&state, &format!("DeleteThisItem:{target_name}"));
+    }
+}
+
+fn restore_delete(state: Arc<State>) {
+    use super::view;
+
+    view::refresh(state.clone());
+}
+
+fn complete_delete(state: Arc<State>, content: &str) {
+    use super::view;
+    use crate::misc;
+
+    if !content.starts_with("y") {
+        view::refresh(state.clone());
+
+        return;
+    }
+
+    let child_files = misc::sorted_child_files(&state.work_dir.get());
+    let path = child_files.get(state.file_view.cursor.current());
+
+    if let Some(path) = path
+        && let Err(e) = delete_item(path)
+    {
+        // TODO Log error message for app
+        panic!(
+            "FAILED DELETE THE '{}': {}",
+            path.to_string_lossy(),
+            e.kind()
+        );
+    }
+}
+
+fn delete_item(path: &Path) -> io::Result<()> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let Ok(metadata) = path.symlink_metadata() else {
+        return Ok(());
+    };
+
+    if metadata.is_symlink() || metadata.is_file() {
+        fs::remove_file(path)
+    } else {
+        fs::remove_dir_all(path)
+    }
 }
 
 pub fn ask_delete_selects(state: Arc<State>) {
@@ -136,22 +191,6 @@ pub fn ask_rename(state: Arc<State>) {
     }
 }
 
-fn delete_item(path: &Path) -> io::Result<()> {
-    if !path.exists() {
-        return Ok(());
-    }
-
-    let Ok(metadata) = path.symlink_metadata() else {
-        return Ok(());
-    };
-
-    if metadata.is_symlink() || metadata.is_file() {
-        fs::remove_file(path)
-    } else {
-        fs::remove_dir_all(path)
-    }
-}
-
 fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
     paths.iter().try_for_each(|path| delete_item(path))
 }
@@ -170,27 +209,7 @@ pub fn complete_input(state: Arc<State>) {
 
     match tag.trim() {
         tag if tag.starts_with("CreateThisItem") => complete_create(&state, &content),
-        tag if tag.starts_with("DeleteThisItem") => {
-            if !content.to_ascii_lowercase().starts_with("y") {
-                view::refresh(state);
-
-                return;
-            }
-
-            let child_files = misc::sorted_child_files(&state.work_dir.get());
-            let path = child_files.get(state.file_view.cursor.current());
-
-            if let Some(path) = path
-                && let Err(e) = delete_item(path)
-            {
-                // TODO Log error message for app
-                panic!(
-                    "FAILED DELETE THE '{}': {}",
-                    path.to_string_lossy(),
-                    e.kind()
-                );
-            }
-        }
+        tag if tag.starts_with("DeleteThisItem") => complete_delete(state.clone(), &content),
         tag if tag.starts_with("DeleteItems") => {
             if !content.to_ascii_lowercase().starts_with("y") {
                 view::refresh(state);
@@ -232,6 +251,7 @@ pub fn restore(state: Arc<State>) {
             let start_idx = ctx.parse::<usize>().unwrap_or(0);
             restore_create(state, start_idx);
         }
+        "DeleteThisItem" => restore_delete(state),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
