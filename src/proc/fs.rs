@@ -68,8 +68,25 @@ fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
     }
 }
 
+fn delete_item(path: &Path) -> io::Result<()> {
+    if !path.exists() {
+        return Ok(());
+    }
+
+    let Ok(metadata) = path.symlink_metadata() else {
+        return Ok(());
+    };
+
+    if metadata.is_symlink() || metadata.is_file() {
+        fs::remove_file(path)
+    } else {
+        fs::remove_dir_all(path)
+    }
+}
+
 pub fn complete_input(state: Arc<State>) {
     use super::view;
+    use crate::misc;
 
     let input = &state.input;
 
@@ -86,7 +103,32 @@ pub fn complete_input(state: Arc<State>) {
 
             if let Err(e) = create_item(&path, is_dir) {
                 // TODO Log error message for app
-                panic!("FAILED CREATE THE '{tag}': {}", e.kind());
+                panic!(
+                    "FAILED CREATE THE '{}': {}",
+                    path.to_string_lossy(),
+                    e.kind()
+                );
+            }
+        }
+        "DeleteThisItem" => {
+            if !content.to_ascii_lowercase().starts_with("y") {
+                view::refresh(state);
+
+                return;
+            }
+
+            let child_files = misc::sorted_child_files(&state.work_dir.get());
+            let path = child_files.get(state.file_view.cursor.current());
+
+            if let Some(path) = path
+                && let Err(e) = delete_item(path)
+            {
+                // TODO Log error message for app
+                panic!(
+                    "FAILED DELETE THE '{}': {}",
+                    path.to_string_lossy(),
+                    e.kind()
+                );
             }
         }
 

@@ -118,7 +118,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
     nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
-    nmap!(r, "dd", Command(|s, _| fs::ask_delete(s)));
+    nmap!(r, "d", Command(|s, _| fs::ask_delete(s)));
     nmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
     nmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
 
