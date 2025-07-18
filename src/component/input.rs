@@ -88,4 +88,8 @@ impl Input {
     pub fn buf_clone(&self) -> String {
         self.input.read().unwrap().clone()
     }
+
+    pub fn cursor(&self) -> usize {
+        self.cursor.current()
+    }
 }

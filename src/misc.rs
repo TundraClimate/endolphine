@@ -40,6 +40,10 @@ fn sort_files(files: &mut [PathBuf]) {
     files.sort_by_key(|path| {
         let entry_name = entry_name(path);
 
+        if &entry_name == ".ep.ed" {
+            return (9999, entry_name.to_owned());
+        }
+
         (
             match entry_name.chars().next() {
                 Some(c) if c.is_lowercase() => 0,

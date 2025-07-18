@@ -25,7 +25,87 @@ fn input_start_with_select(state: &State, tag: &str) {
 }
 
 pub fn ask_create(state: Arc<State>) {
-    input_start(&state, "CreateThisItem");
+    use crate::misc;
+    use std::fs;
+
+    let wd = state.work_dir.get();
+    let dummy = wd.join(".ep.ed");
+
+    if fs::write(&dummy, b"").is_err() {
+        crate::log!("Failed to generate a dummy file");
+
+        return;
+    };
+
+    let cursor = &state.file_view.cursor;
+    let start_idx = cursor.current();
+
+    cursor.resize(misc::child_files_len(&wd));
+    cursor.shift_p(misc::child_files_len(&wd));
+
+    input_start(&state, &format!("CreateThisItem:{start_idx}"));
+}
+
+fn restore_create(state: Arc<State>, start_idx: usize) {
+    use super::view;
+    use std::fs;
+
+    if fs::remove_file(state.work_dir.get().join(".ep.ed")).is_err() {
+        crate::log!("Failed to remove a dummy file");
+    }
+
+    view::refresh(state.clone());
+    let cursor = &state.file_view.cursor;
+
+    cursor.reset();
+    cursor.shift_p(start_idx);
+}
+
+fn complete_create(state: &State, content: &str) {
+    use crate::misc;
+
+    let is_dir = content.ends_with("/");
+    let path = state.work_dir.get().join(content);
+
+    match create_item(&path, is_dir) {
+        Ok(_) => {
+            if fs::remove_file(state.work_dir.get().join(".ep.ed")).is_err() {
+                crate::log!("Failed to remove a dummy file");
+            }
+
+            let cursor = &state.file_view.cursor;
+
+            cursor.reset();
+
+            let child_files = misc::sorted_child_files(&state.work_dir.get());
+            if let Some(pos) = child_files
+                .iter()
+                .position(|item| misc::entry_name(item) == content)
+            {
+                cursor.shift_p(pos);
+            }
+        }
+        Err(e) => {
+            // TODO Log error message for app
+            panic!(
+                "FAILED CREATE THE '{}': {}",
+                path.to_string_lossy(),
+                e.kind()
+            )
+        }
+    }
+}
+
+fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
+    if path.exists() {
+        return Ok(());
+    }
+
+    if is_dir {
+        fs::create_dir(path)
+    } else {
+        fs::write(path, b"")
+    }
 }
 
 pub fn ask_delete(state: Arc<State>) {
@@ -53,18 +133,6 @@ pub fn ask_rename(state: Arc<State>) {
 
     if let Some(e) = file.extension().and_then(|e| e.to_str()) {
         format!(".{e}").chars().for_each(|_| input.shift_back())
-    }
-}
-
-fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
-    if path.exists() {
-        return Ok(());
-    }
-
-    if is_dir {
-        fs::create_dir(path)
-    } else {
-        fs::write(path, b"")
     }
 }
 
@@ -101,20 +169,8 @@ pub fn complete_input(state: Arc<State>) {
     let content = { input.input.take() };
 
     match tag.trim() {
-        "CreateThisItem" => {
-            let is_dir = content.ends_with("/");
-            let path = state.work_dir.get().join(content);
-
-            if let Err(e) = create_item(&path, is_dir) {
-                // TODO Log error message for app
-                panic!(
-                    "FAILED CREATE THE '{}': {}",
-                    path.to_string_lossy(),
-                    e.kind()
-                );
-            }
-        }
-        "DeleteThisItem" => {
+        tag if tag.starts_with("CreateThisItem") => complete_create(&state, &content),
+        tag if tag.starts_with("DeleteThisItem") => {
             if !content.to_ascii_lowercase().starts_with("y") {
                 view::refresh(state);
 
@@ -135,7 +191,7 @@ pub fn complete_input(state: Arc<State>) {
                 );
             }
         }
-        "DeleteItems" => {
+        tag if tag.starts_with("DeleteItems") => {
             if !content.to_ascii_lowercase().starts_with("y") {
                 view::refresh(state);
 
@@ -162,4 +218,21 @@ pub fn complete_input(state: Arc<State>) {
     }
 
     view::refresh(state);
+}
+
+pub fn restore(state: Arc<State>) {
+    let Some(tag) = state.input.tag() else {
+        return;
+    };
+
+    let (tag, ctx) = tag.split_once(":").unwrap_or((tag.as_str(), ""));
+
+    match tag {
+        "CreateThisItem" => {
+            let start_idx = ctx.parse::<usize>().unwrap_or(0);
+            restore_create(state, start_idx);
+        }
+
+        _ => panic!("Unknown input tag found: {tag}"),
+    }
 }

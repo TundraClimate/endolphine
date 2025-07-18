@@ -41,6 +41,11 @@ pub fn draw(state: Arc<State>) {
         state.file_view.cursor.current(),
         state.file_view.selection.collect(),
         String::new(),
+        state
+            .input
+            .is_enable()
+            .then_some(state.input.input.buf_clone()),
+        state.input.input.cursor(),
     );
     let viewer_hash = viewer.make_hash(layout_key);
 

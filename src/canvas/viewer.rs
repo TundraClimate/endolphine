@@ -7,17 +7,28 @@ pub(super) struct Viewer {
     cursor_pos: usize,
     selection: Vec<usize>,
     grep: String,
+    input_buf: Option<String>,
+    input_cursor: usize,
 }
 
 impl Viewer {
     pub(super) const ID: u8 = 3;
 
-    pub(super) fn new(wd: PathBuf, cursor_pos: usize, selection: Vec<usize>, grep: String) -> Self {
+    pub(super) fn new(
+        wd: PathBuf,
+        cursor_pos: usize,
+        selection: Vec<usize>,
+        grep: String,
+        input_buf: Option<String>,
+        input_cursor: usize,
+    ) -> Self {
         Self {
             wd,
             cursor_pos,
             selection,
             grep,
+            input_buf,
+            input_cursor,
         }
     }
 
@@ -32,6 +43,8 @@ impl Viewer {
         self.cursor_pos.hash(&mut hasher);
         self.selection.hash(&mut hasher);
         self.grep.hash(&mut hasher);
+        self.input_buf.hash(&mut hasher);
+        self.input_cursor.hash(&mut hasher);
 
         misc::child_files(&self.wd).hash(&mut hasher);
 
@@ -39,6 +52,8 @@ impl Viewer {
     }
 
     pub(super) fn draw(&self, rect: Rect) {
+        use crate::misc;
+
         let wd = &self.wd;
         let page_size = rect.height as usize;
 
@@ -53,6 +68,11 @@ impl Viewer {
             let abs_i = rel_i + page_size * page_index;
 
             match items.get(rel_i) {
+                Some(item) if &misc::entry_name(item) == ".ep.ed" => {
+                    if let Some(ref input_buf) = self.input_buf {
+                        render_input_row(rect, rel_i, input_buf, self.input_cursor);
+                    }
+                }
                 Some(item) => render_item_row(
                     rect,
                     rel_i,
@@ -267,4 +287,47 @@ fn render_empty_row(rect: Rect, index: usize) {
             ),
         )
     }
+}
+
+fn render_input_row(rect: Rect, index: usize, input_buf: &str, input_cursor: usize) {
+    use crate::config;
+    use crossterm::style::{ResetColor, SetBackgroundColor, SetForegroundColor};
+
+    let theme = &config::get().theme;
+    let mut input = input_buf.to_string();
+
+    input.insert(input_cursor, '▏');
+    input.push_str(&" ".repeat(13usize.saturating_sub(input_buf.len())));
+
+    let perm = (0..3)
+        .flat_map(|_| {
+            [0, 1, 2].map(|perm_shift| {
+                format!(
+                    "{}?",
+                    [
+                        SetForegroundColor(theme.perm_r.into()),
+                        SetForegroundColor(theme.perm_w.into()),
+                        SetForegroundColor(theme.perm_x.into())
+                    ][perm_shift],
+                )
+            })
+        })
+        .collect::<String>();
+
+    canvas::print_in(
+        rect,
+        0,
+        index as u16,
+        &format!(
+            "{}{}> | {}?{} {}???????? {}?? ??/?? ??:?? {}{}",
+            SetBackgroundColor(theme.app_bg.into()),
+            SetForegroundColor(theme.app_fg.into()),
+            SetForegroundColor(theme.perm_ty.into()),
+            perm,
+            SetForegroundColor(theme.item_parts_bsize.into()),
+            SetForegroundColor(theme.item_parts_lmd.into()),
+            ResetColor,
+            input
+        ),
+    );
 }

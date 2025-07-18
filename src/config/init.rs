@@ -138,7 +138,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
     vmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
 
-    imap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
+    imap!(r, "<ESC>", Command(|s, _| fs::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| fs::complete_input(s)));
     imap!(r, "<BS>", Command(|s, _| s.input.input.pop()));
     imap!(r, "<DEL>", Command(|s, _| s.input.input.pop_front()));
