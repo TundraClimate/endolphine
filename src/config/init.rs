@@ -101,7 +101,7 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
 
 fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Acommand, Command, fs, view},
+        proc::{Acommand, Command, input, view},
         state::Mode,
         tui,
     };
@@ -117,11 +117,11 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "h", Command(|s, _| view::move_parent(s)));
     nmap!(r, "l", Command(|s, _| view::attach_child(s)));
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
-    nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
-    nmap!(r, "dd", Command(|s, _| fs::ask_delete(s)));
+    nmap!(r, "a", Command(|s, _| input::ask_create(s)));
+    nmap!(r, "dd", Command(|s, _| input::ask_delete(s)));
     nmap!(r, "yy", Command(|_s, _| todo!()));
-    nmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
-    nmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
+    nmap!(r, "r", Command(|s, _| input::ask_rename(s)));
+    nmap!(r, "p", Command(|s, _| input::ask_paste(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -134,14 +134,14 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "h", Command(|s, _| view::move_parent(s)));
     vmap!(r, "l", Command(|s, _| view::attach_child(s)));
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
-    vmap!(r, "a", Command(|s, _| fs::ask_create(s)));
-    vmap!(r, "d", Command(|s, _| fs::ask_delete_selects(s)));
+    vmap!(r, "a", Command(|s, _| input::ask_create(s)));
+    vmap!(r, "d", Command(|s, _| input::ask_delete_selects(s)));
     vmap!(r, "y", Command(|_s, _| todo!()));
-    vmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
-    vmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
+    vmap!(r, "r", Command(|s, _| input::ask_rename(s)));
+    vmap!(r, "p", Command(|s, _| input::ask_paste(s)));
 
-    imap!(r, "<ESC>", Command(|s, _| fs::restore(s)));
-    imap!(r, "<ENTER>", Acommand(|s, _| fs::complete_input(s)));
+    imap!(r, "<ESC>", Command(|s, _| input::restore(s)));
+    imap!(r, "<ENTER>", Acommand(|s, _| input::complete_input(s)));
     imap!(r, "<BS>", Command(|s, _| s.input.input.pop()));
     imap!(r, "<DEL>", Command(|s, _| s.input.input.pop_front()));
 
