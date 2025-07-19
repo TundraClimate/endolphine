@@ -170,19 +170,27 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
     let mut term_rect = term_rect;
     let mut layout = vec![];
 
+    let log = Rect {
+        y: term_rect.height.saturating_sub(1),
+        height: 1.min(term_rect.height),
+        ..term_rect
+    };
+
+    term_rect = Rect {
+        height: term_rect.height.saturating_sub(1),
+        ..term_rect
+    };
+
     if is_sidemenu_opened {
         term_rect = Rect {
             x: term_rect.x.saturating_add(20),
-            y: term_rect.y,
             width: term_rect.width.saturating_sub(20),
-            height: term_rect.height,
+            ..term_rect
         };
 
         layout.push(Rect {
-            x: term_rect.x,
-            y: term_rect.y,
             width: 20.min(term_rect.width),
-            height: term_rect.height,
+            ..term_rect
         });
     } else {
         layout.push(Rect::empty());
@@ -190,36 +198,27 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
 
     layout.append(&mut vec![
         Rect {
-            x: term_rect.x,
-            y: term_rect.y,
-            width: term_rect.width,
-            height: 1.min(term_rect.height.saturating_sub(1)),
+            height: 1.min(term_rect.height),
+            ..term_rect
         },
         Rect {
-            x: term_rect.x,
             y: term_rect.y.saturating_add(1),
-            width: term_rect.width,
-            height: 2.min(term_rect.height.saturating_sub(2)),
+            height: 1.min(term_rect.height),
+            ..term_rect
         },
         Rect {
-            x: term_rect.x,
             y: term_rect.y.saturating_add(2),
-            width: term_rect.width,
-            height: term_rect.height.saturating_sub(4),
+            height: term_rect.height.saturating_sub(3),
+            ..term_rect
         },
         Rect {
-            x: term_rect.x,
-            y: term_rect.height.saturating_sub(2),
-            width: term_rect.width,
-            height: 1.min(term_rect.height.saturating_sub(1)),
-        },
-        Rect {
-            x: term_rect.x,
             y: term_rect.height.saturating_sub(1),
-            width: term_rect.width,
-            height: 1.min(term_rect.height.saturating_sub(1)),
+            height: 1.min(term_rect.height),
+            ..term_rect
         },
     ]);
+
+    layout.push(log);
 
     Layout::new(layout)
 }
