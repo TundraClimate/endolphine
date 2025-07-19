@@ -168,7 +168,56 @@ fn delete_item(path: &Path) -> io::Result<()> {
 }
 
 pub fn ask_delete_selects(state: Arc<State>) {
-    input_start_with_select(&state, "DeleteItems");
+    let selection = state.file_view.selection.collect();
+    let start_idx = *selection
+        .first()
+        .unwrap_or(&state.file_view.cursor.current());
+
+    input_start_with_select(
+        &state,
+        &format!("DeleteItems:{};{start_idx}", selection.len()),
+    );
+}
+
+fn restore_delete_selects(state: Arc<State>, start_idx: usize) {
+    use super::view;
+
+    let cursor = &state.file_view.cursor;
+
+    cursor.reset();
+    cursor.shift_p(start_idx);
+
+    view::refresh(state.clone());
+}
+
+fn complete_delete_selects(state: Arc<State>, content: &str) {
+    use super::view;
+    use crate::misc;
+
+    if !content.to_ascii_lowercase().starts_with("y") {
+        view::refresh(state);
+
+        return;
+    }
+
+    let child_files = misc::sorted_child_files(&state.work_dir.get());
+    let paths = state
+        .file_view
+        .selection
+        .collect()
+        .into_iter()
+        .filter_map(|idx| child_files.get(idx))
+        .map(|path| path.as_path())
+        .collect::<Vec<_>>();
+
+    if let Err(e) = delete_items(paths) {
+        // TODO Log error message for app
+        panic!("FAILED DELETE THE paths: {}", e.kind());
+    }
+}
+
+fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
+    paths.iter().try_for_each(|path| delete_item(path))
 }
 
 pub fn ask_paste(state: Arc<State>) {
@@ -191,13 +240,8 @@ pub fn ask_rename(state: Arc<State>) {
     }
 }
 
-fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
-    paths.iter().try_for_each(|path| delete_item(path))
-}
-
 pub fn complete_input(state: Arc<State>) {
     use super::view;
-    use crate::misc;
 
     let input = &state.input;
 
@@ -210,28 +254,7 @@ pub fn complete_input(state: Arc<State>) {
     match tag.trim() {
         tag if tag.starts_with("CreateThisItem") => complete_create(&state, &content),
         tag if tag.starts_with("DeleteThisItem") => complete_delete(state.clone(), &content),
-        tag if tag.starts_with("DeleteItems") => {
-            if !content.to_ascii_lowercase().starts_with("y") {
-                view::refresh(state);
-
-                return;
-            }
-
-            let child_files = misc::sorted_child_files(&state.work_dir.get());
-            let paths = state
-                .file_view
-                .selection
-                .collect()
-                .into_iter()
-                .filter_map(|idx| child_files.get(idx))
-                .map(|path| path.as_path())
-                .collect::<Vec<_>>();
-
-            if let Err(e) = delete_items(paths) {
-                // TODO Log error message for app
-                panic!("FAILED DELETE THE paths: {}", e.kind());
-            }
-        }
+        tag if tag.starts_with("DeleteItems") => complete_delete_selects(state.clone(), &content),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
@@ -252,6 +275,16 @@ pub fn restore(state: Arc<State>) {
             restore_create(state, start_idx);
         }
         "DeleteThisItem" => restore_delete(state),
+        "DeleteItems" => {
+            let Some(start_idx) = ctx
+                .split_once(";")
+                .and_then(|(_, start_idx)| start_idx.parse::<usize>().ok())
+            else {
+                panic!("Cannot parse the 'DeleteItems' context");
+            };
+
+            restore_delete_selects(state, start_idx);
+        }
 
         _ => panic!("Unknown input tag found: {tag}"),
     }

@@ -36,6 +36,13 @@ impl LogArea {
 
             let prefix = match tag {
                 "DeleteThisItem" => &format!("Delete the '{ctx}' (y/N)"),
+                "DeleteItems" => {
+                    let Some((count, _)) = ctx.split_once(";") else {
+                        panic!("Cannot parse the 'DeleteItems' context");
+                    };
+
+                    &format!("Delete {count} items (y/N)")
+                }
 
                 _ => "",
             };
