@@ -225,7 +225,7 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
 
 #[macro_export]
 macro_rules! log {
-    ($out:expr) => {{
+    ($($out:expr),+) => {{
         use crossterm::cursor::MoveTo;
         use crossterm::style::ResetColor;
         use crossterm::terminal::{self, Clear, ClearType};
@@ -238,7 +238,7 @@ macro_rules! log {
             "{}{} {}{}{}",
             MoveTo(0, rows),
             Clear(ClearType::CurrentLine),
-            format_args!($out),
+            format_args!($($out),+),
             ResetColor,
             " ".repeat(cols.into())
         )

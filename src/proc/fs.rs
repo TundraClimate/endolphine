@@ -86,12 +86,11 @@ fn complete_create(state: &State, content: &str) {
             }
         }
         Err(e) => {
-            // TODO Log error message for app
-            panic!(
-                "FAILED CREATE THE '{}': {}",
-                path.to_string_lossy(),
+            crate::log!(
+                "Failed to create the '{}': {}",
+                misc::entry_name(&path),
                 e.kind()
-            )
+            );
         }
     }
 }
@@ -142,10 +141,9 @@ fn complete_delete(state: Arc<State>, content: &str) {
     if let Some(path) = path
         && let Err(e) = delete_item(path)
     {
-        // TODO Log error message for app
-        panic!(
-            "FAILED DELETE THE '{}': {}",
-            path.to_string_lossy(),
+        crate::log!(
+            "Failed to delete the '{}': {}",
+            misc::entry_name(path),
             e.kind()
         );
     }
@@ -211,8 +209,7 @@ fn complete_delete_selects(state: Arc<State>, content: &str) {
         .collect::<Vec<_>>();
 
     if let Err(e) = delete_items(paths) {
-        // TODO Log error message for app
-        panic!("FAILED DELETE THE paths: {}", e.kind());
+        crate::log!("Failed to delete items: {}", e.kind());
     }
 }
 
