@@ -44,6 +44,8 @@ pub fn ask_create(state: Arc<State>) {
     cursor.shift_p(misc::child_files_len(&wd));
 
     input_start(&state, &format!("CreateThisItem:{start_idx}"));
+
+    crate::log!("Enter name for new File or Directory (for Directory, end with '/')");
 }
 
 fn restore_create(state: Arc<State>, start_idx: usize) {

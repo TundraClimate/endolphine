@@ -44,7 +44,7 @@ impl LogArea {
                     &format!("Delete {count} items (y/N)")
                 }
 
-                _ => "",
+                _ => return,
             };
 
             &format!("{}: {}", prefix, self.input_buf)
