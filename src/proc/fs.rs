@@ -222,17 +222,47 @@ fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
 pub fn ask_rename(state: Arc<State>) {
     use crate::misc;
 
-    input_start(&state, "RenameThisItem");
-
     let files = misc::sorted_child_files(&state.work_dir.get());
-    let file = &files[state.file_view.cursor.current()];
+    let pos = state.file_view.cursor.current();
+    let file = &files[pos];
     let input = &state.input.input;
+
+    input_start(&state, &format!("RenameThisItem:{pos}"));
 
     input.insert(&misc::entry_name(file));
 
     if let Some(e) = file.extension().and_then(|e| e.to_str()) {
         format!(".{e}").chars().for_each(|_| input.shift_back())
     }
+}
+
+fn restore_rename(state: Arc<State>) {
+    use super::view;
+
+    view::refresh(state.clone());
+}
+
+fn complete_rename(state: Arc<State>, content: &str) {
+    use crate::misc;
+
+    let wd = state.work_dir.get();
+    let child_files = misc::sorted_child_files(&wd);
+
+    if let Some(target) = child_files.get(state.file_view.cursor.current()) {
+        let into = wd.join(content);
+
+        if let Err(e) = rename_item(target, &into) {
+            crate::log!("Failed to rename item: {}", e.kind());
+        }
+    }
+}
+
+fn rename_item(path: &Path, into: &Path) -> io::Result<()> {
+    if !path.exists() || into.exists() {
+        return Ok(());
+    }
+
+    fs::rename(path, into)
 }
 
 pub fn ask_paste(state: Arc<State>) {
@@ -254,6 +284,7 @@ pub fn complete_input(state: Arc<State>) {
         tag if tag.starts_with("CreateThisItem") => complete_create(&state, &content),
         tag if tag.starts_with("DeleteThisItem") => complete_delete(state.clone(), &content),
         tag if tag.starts_with("DeleteItems") => complete_delete_selects(state.clone(), &content),
+        tag if tag.starts_with("RenameThisItem") => complete_rename(state.clone(), &content),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
@@ -284,6 +315,7 @@ pub fn restore(state: Arc<State>) {
 
             restore_delete_selects(state, start_idx);
         }
+        "RenameThisItem" => restore_rename(state),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }

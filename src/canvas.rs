@@ -41,6 +41,7 @@ pub fn draw(state: Arc<State>) {
         state.file_view.cursor.current(),
         state.file_view.selection.collect(),
         String::new(),
+        state.input.tag(),
         state
             .input
             .is_enable()

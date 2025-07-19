@@ -7,6 +7,7 @@ pub(super) struct Viewer {
     cursor_pos: usize,
     selection: Vec<usize>,
     grep: String,
+    input_tag: Option<String>,
     input_buf: Option<String>,
     input_cursor: usize,
 }
@@ -19,6 +20,7 @@ impl Viewer {
         cursor_pos: usize,
         selection: Vec<usize>,
         grep: String,
+        input_tag: Option<String>,
         input_buf: Option<String>,
         input_cursor: usize,
     ) -> Self {
@@ -27,6 +29,7 @@ impl Viewer {
             cursor_pos,
             selection,
             grep,
+            input_tag,
             input_buf,
             input_cursor,
         }
@@ -43,6 +46,7 @@ impl Viewer {
         self.cursor_pos.hash(&mut hasher);
         self.selection.hash(&mut hasher);
         self.grep.hash(&mut hasher);
+        self.input_tag.hash(&mut hasher);
         self.input_buf.hash(&mut hasher);
         self.input_cursor.hash(&mut hasher);
 
@@ -64,10 +68,24 @@ impl Viewer {
         let page_index = self.cursor_pos / page_size;
         let items = pagenate(wd, page_size, page_index).unwrap_or_default();
 
+        let (tag, ctx) = self
+            .input_tag
+            .as_ref()
+            .and_then(|tag| tag.split_once(":"))
+            .unzip();
+
+        let is_input_active = tag == Some("RenameThisItem");
+        let input_idx = ctx.and_then(|ctx| ctx.parse::<usize>().ok());
+
         for rel_i in 0..page_size {
             let abs_i = rel_i + page_size * page_index;
 
             match items.get(rel_i) {
+                Some(_) if is_input_active && input_idx == Some(abs_i) => {
+                    if let Some(ref input_buf) = self.input_buf {
+                        render_input_row(rect, rel_i, input_buf, self.input_cursor);
+                    }
+                }
                 Some(item) if &misc::entry_name(item) == ".ep.ed" => {
                     if let Some(ref input_buf) = self.input_buf {
                         render_input_row(rect, rel_i, input_buf, self.input_cursor);
