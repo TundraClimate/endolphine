@@ -119,8 +119,9 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
     nmap!(r, "a", Command(|s, _| fs::ask_create(s)));
     nmap!(r, "dd", Command(|s, _| fs::ask_delete(s)));
-    nmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
+    nmap!(r, "yy", Command(|_s, _| todo!()));
     nmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
+    nmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -135,8 +136,9 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
     vmap!(r, "a", Command(|s, _| fs::ask_create(s)));
     vmap!(r, "d", Command(|s, _| fs::ask_delete_selects(s)));
-    vmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
+    vmap!(r, "y", Command(|_s, _| todo!()));
     vmap!(r, "r", Command(|s, _| fs::ask_rename(s)));
+    vmap!(r, "p", Command(|s, _| fs::ask_paste(s)));
 
     imap!(r, "<ESC>", Command(|s, _| fs::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| fs::complete_input(s)));

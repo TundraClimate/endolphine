@@ -217,10 +217,6 @@ fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
     paths.iter().try_for_each(|path| delete_item(path))
 }
 
-pub fn ask_paste(state: Arc<State>) {
-    input_start(&state, "PasteItems");
-}
-
 pub fn ask_rename(state: Arc<State>) {
     use crate::misc;
 
@@ -235,6 +231,10 @@ pub fn ask_rename(state: Arc<State>) {
     if let Some(e) = file.extension().and_then(|e| e.to_str()) {
         format!(".{e}").chars().for_each(|_| input.shift_back())
     }
+}
+
+pub fn ask_paste(state: Arc<State>) {
+    input_start(&state, "PasteItems");
 }
 
 pub fn complete_input(state: Arc<State>) {
