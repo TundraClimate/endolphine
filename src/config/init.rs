@@ -121,7 +121,6 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "dd", Command(|s, _| input::ask_delete(s)));
     nmap!(r, "yy", Command(|_s, _| todo!()));
     nmap!(r, "r", Command(|s, _| input::ask_rename(s)));
-    nmap!(r, "p", Command(|s, _| input::ask_paste(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -138,7 +137,6 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "d", Command(|s, _| input::ask_delete_selects(s)));
     vmap!(r, "y", Command(|_s, _| todo!()));
     vmap!(r, "r", Command(|s, _| input::ask_rename(s)));
-    vmap!(r, "p", Command(|s, _| input::ask_paste(s)));
 
     imap!(r, "<ESC>", Command(|s, _| input::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| input::complete_input(s)));
