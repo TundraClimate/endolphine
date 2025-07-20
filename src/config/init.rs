@@ -101,7 +101,7 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
 
 fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Acommand, Command, input, view},
+        proc::{Acommand, Command, input, view, yank},
         state::Mode,
         tui,
     };
@@ -119,7 +119,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
     nmap!(r, "a", Command(|s, _| input::ask_create(s)));
     nmap!(r, "dd", Command(|s, _| input::ask_delete(s)));
-    nmap!(r, "yy", Command(|_s, _| todo!()));
+    nmap!(r, "yy", Command(|s, _| yank::yank(s)));
     nmap!(r, "r", Command(|s, _| input::ask_rename(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
@@ -135,7 +135,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "V", Command(|s, _| view::toggle_vis(s)));
     vmap!(r, "a", Command(|s, _| input::ask_create(s)));
     vmap!(r, "d", Command(|s, _| input::ask_delete_selects(s)));
-    vmap!(r, "y", Command(|_s, _| todo!()));
+    vmap!(r, "y", Command(|s, _| yank::yank_selects(s)));
     vmap!(r, "r", Command(|s, _| input::ask_rename(s)));
 
     imap!(r, "<ESC>", Command(|s, _| input::restore(s)));

@@ -1,5 +1,6 @@
 pub mod input;
 pub mod view;
+pub mod yank;
 
 use crate::state::State;
 use std::sync::Arc;
