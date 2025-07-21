@@ -3,7 +3,7 @@ use std::io;
 use viks::Keymap;
 
 pub async fn setup_local() -> io::Result<()> {
-    use std::fs;
+    use std::{fs, path::Path};
 
     let config_path = super::file_path();
 
@@ -28,6 +28,12 @@ pub async fn setup_local() -> io::Result<()> {
 
     if theme_dir.read_dir().is_ok_and(|dir| dir.count() == 0) {
         theme::download_official_theme("dark").await?;
+    }
+
+    let tmp_dir = Path::new("/tmp").join("endolphine");
+
+    if !tmp_dir.exists() {
+        fs::create_dir_all(&tmp_dir)?;
     }
 
     Ok(())

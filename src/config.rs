@@ -25,6 +25,7 @@ pub fn file_path() -> PathBuf {
 #[derive(Deserialize, Serialize)]
 struct ConfigModel {
     theme: String,
+    native_cb: bool,
     keymap: Option<KeymapConfig>,
     edit: EditConfig,
 }
@@ -85,6 +86,7 @@ impl Default for ConfigModel {
     fn default() -> Self {
         Self {
             theme: "dark".to_string(),
+            native_cb: false,
             keymap: None,
             edit: EditConfig::default(),
         }
@@ -93,6 +95,7 @@ impl Default for ConfigModel {
 
 pub struct Config {
     pub theme: Theme,
+    pub native_cb: bool,
     pub keymaps: KeymapRegistry,
     pub hijack: HijackMapping,
 }
@@ -113,6 +116,8 @@ pub fn get() -> &'static Config {
             panic!("Failed to load theme file");
         };
 
+        let native_cb = model.native_cb;
+
         let mut keymaps = KeymapRegistry::new();
 
         init::init_keymaps(&mut keymaps, &model.keymap);
@@ -121,6 +126,7 @@ pub fn get() -> &'static Config {
 
         Config {
             theme,
+            native_cb,
             keymaps,
             hijack,
         }

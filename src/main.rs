@@ -1,5 +1,6 @@
 mod args;
 mod canvas;
+mod clipboard;
 mod component;
 mod config;
 mod event;
