@@ -47,15 +47,9 @@ pub fn complete_input(state: Arc<State>) {
 
     match tag.trim() {
         tag if tag.starts_with("CreateThisItem") => create::complete_create(&state, &content),
-        tag if tag.starts_with("DeleteThisItem") => {
-            delete::complete_delete(state.clone(), &content)
-        }
-        tag if tag.starts_with("DeleteItems") => {
-            delete::complete_delete_selects(state.clone(), &content)
-        }
-        tag if tag.starts_with("RenameThisItem") => {
-            rename::complete_rename(state.clone(), &content)
-        }
+        tag if tag.starts_with("DeleteThisItem") => delete::complete_delete(&state, &content),
+        tag if tag.starts_with("DeleteItems") => delete::complete_delete_selects(&state, &content),
+        tag if tag.starts_with("RenameThisItem") => rename::complete_rename(&state, &content),
         tag if tag.starts_with("PasteFromCb") => paste::complete_paste(&state, &content),
 
         _ => panic!("Unknown input tag found: {tag}"),

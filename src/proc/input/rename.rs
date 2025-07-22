@@ -24,7 +24,7 @@ pub(super) fn restore_rename(state: Arc<State>) {
     view::refresh(state.clone());
 }
 
-pub(super) fn complete_rename(state: Arc<State>, content: &str) {
+pub(super) fn complete_rename(state: &State, content: &str) {
     use crate::misc;
 
     let wd = state.work_dir.get();

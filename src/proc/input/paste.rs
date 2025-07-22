@@ -12,7 +12,7 @@ pub(super) fn restore_paste(state: Arc<State>) {
 }
 
 pub(super) fn complete_paste(state: &State, content: &str) {
-    if !content.is_empty() && !content.starts_with("y") {
+    if !content.is_empty() && !content.to_ascii_lowercase().starts_with("y") {
         return;
     }
 

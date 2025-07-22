@@ -19,12 +19,10 @@ pub(super) fn restore_delete(state: Arc<State>) {
     view::refresh(state.clone());
 }
 
-pub(super) fn complete_delete(state: Arc<State>, content: &str) {
-    use crate::{misc, proc::view};
+pub(super) fn complete_delete(state: &State, content: &str) {
+    use crate::misc;
 
-    if !content.starts_with("y") {
-        view::refresh(state.clone());
-
+    if !content.to_ascii_lowercase().starts_with("y") {
         return;
     }
 
@@ -81,12 +79,10 @@ pub(super) fn restore_delete_selects(state: Arc<State>, start_idx: usize) {
     view::refresh(state.clone());
 }
 
-pub(super) fn complete_delete_selects(state: Arc<State>, content: &str) {
-    use crate::{misc, proc::view};
+pub(super) fn complete_delete_selects(state: &State, content: &str) {
+    use crate::misc;
 
     if !content.to_ascii_lowercase().starts_with("y") {
-        view::refresh(state);
-
         return;
     }
 
