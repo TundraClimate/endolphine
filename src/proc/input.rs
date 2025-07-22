@@ -1,5 +1,6 @@
 mod create;
 mod delete;
+mod paste;
 mod rename;
 
 use crate::state::State;
@@ -7,6 +8,7 @@ use std::sync::Arc;
 
 pub use create::ask_create;
 pub use delete::{ask_delete, ask_delete_selects};
+pub use paste::ask_paste;
 pub use rename::ask_rename;
 
 fn input_start(state: &State, tag: &str) {
@@ -54,6 +56,7 @@ pub fn complete_input(state: Arc<State>) {
         tag if tag.starts_with("RenameThisItem") => {
             rename::complete_rename(state.clone(), &content)
         }
+        tag if tag.starts_with("PasteFromCb") => paste::complete_paste(&state, &content),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
@@ -86,6 +89,7 @@ pub fn restore(state: Arc<State>) {
             delete::restore_delete_selects(state, start_idx);
         }
         "RenameThisItem" => rename::restore_rename(state),
+        "PasteFromCb" => paste::restore_paste(state),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }

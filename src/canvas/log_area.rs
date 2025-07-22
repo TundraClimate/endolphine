@@ -43,6 +43,7 @@ impl LogArea {
 
                     &format!("Delete {count} items (y/N)")
                 }
+                "PasteFromCb" => "Overwrite a file (Y/n)",
 
                 _ => return,
             };

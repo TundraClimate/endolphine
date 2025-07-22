@@ -38,6 +38,14 @@ pub fn clip_native<S: AsRef<str>>(s: S, ty: &str) -> io::Result<()> {
     }
 }
 
+pub fn is_cmd_installed() -> bool {
+    match WindowSystem::load() {
+        WindowSystem::Macos => is_macos_cmd_installed(),
+        WindowSystem::Wayland => is_wayland_cmd_installed(),
+        WindowSystem::X11 => is_x11_cmd_installed(),
+    }
+}
+
 enum WindowSystem {
     Macos,
     Wayland,
@@ -152,4 +160,43 @@ fn clip_x11<S: AsRef<str>>(s: S, ty: &str) -> io::Result<()> {
     }
 
     Ok(())
+}
+
+fn is_macos_cmd_installed() -> bool {
+    use std::process::{Command, Stdio};
+
+    Command::new("clipboard")
+        .arg("--version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+}
+
+fn is_wayland_cmd_installed() -> bool {
+    use std::process::{Command, Stdio};
+
+    Command::new("wl-copy")
+        .arg("--version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
+        && Command::new("wl-paste")
+            .arg("--version")
+            .stdout(Stdio::null())
+            .stderr(Stdio::null())
+            .status()
+            .is_ok_and(|s| s.success())
+}
+
+fn is_x11_cmd_installed() -> bool {
+    use std::process::{Command, Stdio};
+
+    Command::new("xclip")
+        .arg("-version")
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
+        .status()
+        .is_ok_and(|s| s.success())
 }
