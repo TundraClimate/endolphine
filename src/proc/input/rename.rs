@@ -35,7 +35,7 @@ pub(super) fn complete_rename(state: &State, content: &str) {
 
         match rename_item(target, &into) {
             Ok(_) => crate::log!(
-                "\"{}\" renamed to \"{}\"",
+                "'{}' renamed to '{}'",
                 misc::entry_name(target),
                 misc::entry_name(&into)
             ),

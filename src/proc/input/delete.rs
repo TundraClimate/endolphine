@@ -34,7 +34,7 @@ pub(super) fn complete_delete(state: &State, content: &str) {
         let name = misc::entry_name(path);
 
         match delete_item(path) {
-            Ok(_) => crate::log!("\"{name}\" delete successful"),
+            Ok(_) => crate::log!("'{name}' delete successful"),
             Err(e) => crate::log!(
                 "Failed to delete the '{}': {}",
                 misc::entry_name(path),

@@ -25,7 +25,7 @@ pub fn yank(state: Arc<State>) {
 
     if let Some(target) = child_files.get(state.file_view.cursor.current()) {
         match clip_files(&[target]) {
-            Ok(_) => crate::log!("Yanked \"{}\"", misc::entry_name(target)),
+            Ok(_) => crate::log!("Yanked '{}'", misc::entry_name(target)),
             Err(e) => crate::log!(
                 "Failed to yank the '{}': {}",
                 target.to_string_lossy(),

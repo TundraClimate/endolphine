@@ -64,7 +64,7 @@ pub(super) fn complete_create(state: &State, content: &str) {
                 cursor.shift_p(pos);
             }
 
-            crate::log!("\"{content}\" create successful");
+            crate::log!("'{content}' create successful");
         }
         Err(e) => {
             crate::log!(
