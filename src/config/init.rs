@@ -164,4 +164,9 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
             Command(move |s, _| s.input.input.put(i_key))
         );
     }
+
+    imap!(r, "y", Command(|s, _| input::answer_or_put(s, 'y')));
+    imap!(r, "n", Command(|s, _| input::answer_or_put(s, 'n')));
+    imap!(r, "Y", Command(|s, _| input::answer_or_put(s, 'Y')));
+    imap!(r, "N", Command(|s, _| input::answer_or_put(s, 'N')));
 }

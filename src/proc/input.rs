@@ -88,3 +88,17 @@ pub fn restore(state: Arc<State>) {
         _ => panic!("Unknown input tag found: {tag}"),
     }
 }
+
+pub fn answer_or_put(state: Arc<State>, c: char) {
+    state.input.input.put(c);
+
+    let Some(tag) = state.input.tag() else {
+        return;
+    };
+
+    let (tag, _) = tag.split_once(":").unwrap_or((tag.as_str(), ""));
+
+    if matches!(tag, "DeleteThisItem" | "DeleteItems" | "PasteFromCb") {
+        complete_input(state);
+    }
+}
