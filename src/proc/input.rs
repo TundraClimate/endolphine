@@ -55,7 +55,7 @@ pub fn complete_input(state: Arc<State>) {
         _ => panic!("Unknown input tag found: {tag}"),
     }
 
-    view::refresh(state);
+    view::initialize(&state);
 }
 
 pub fn restore(state: Arc<State>) {

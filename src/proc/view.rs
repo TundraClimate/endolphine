@@ -2,13 +2,18 @@ use crate::{proc::CommandContext, state::State};
 use std::{path::Path, sync::Arc};
 
 pub fn refresh(state: Arc<State>) {
+    initialize(&state);
+
+    state.canvas_hashes.refresh();
+}
+
+pub fn initialize(state: &State) {
     use crate::{misc, state::Mode};
 
     state.file_view.selection.disable();
     state.mode.switch(Mode::Normal);
     state.input.disable();
 
-    state.canvas_hashes.refresh();
     state
         .file_view
         .cursor
