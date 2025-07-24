@@ -21,7 +21,7 @@ pub fn ask_rename(state: Arc<State>) {
 pub(super) fn restore_rename(state: Arc<State>) {
     use crate::proc::view;
 
-    view::refresh(state.clone());
+    view::initialize(&state);
 }
 
 pub(super) fn complete_rename(state: &State, content: &str) {

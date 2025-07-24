@@ -51,7 +51,7 @@ pub fn yank_selects(state: Arc<State>) {
     }
 
     if !selected.is_empty() {
-        view::refresh(state.clone());
+        view::initialize(&state);
 
         let cursor = &state.file_view.cursor;
         let first = selected[0];
