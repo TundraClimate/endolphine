@@ -61,7 +61,7 @@ pub fn draw(state: Arc<State>) {
         statebar.draw(layout.get(StateBar::ID));
     }
 
-    let logarea = LogArea::new(state.input.input.buf_clone(), state.input.tag());
+    let logarea = LogArea::new();
     let logarea_hash = logarea.make_hash(layout_key);
 
     if hashes.update(LogArea::ID, logarea_hash) != Some(logarea_hash) {

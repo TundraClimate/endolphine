@@ -148,20 +148,20 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
 
     imap!(r, "<ESC>", Command(|s, _| input::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| input::complete_input(s)));
-    imap!(r, "<BS>", Command(|s, _| s.input.input.pop()));
-    imap!(r, "<DEL>", Command(|s, _| s.input.input.pop_front()));
+    imap!(r, "<BS>", Command(|s, _| input::pop(s)));
+    imap!(r, "<DEL>", Command(|s, _| input::pop_front(s)));
 
     imap!(r, "<c-h>", Command(|s, _| s.input.input.shift_back()));
     imap!(r, "<c-l>", Command(|s, _| s.input.input.shift()));
 
-    imap!(r, "<SPACE>", Command(|s, _| s.input.input.put(' ')));
-    imap!(r, "<LT>", Command(|s, _| s.input.input.put('<')));
+    imap!(r, "<SPACE>", Command(|s, _| input::put(s, ' ')));
+    imap!(r, "<LT>", Command(|s, _| input::put(s, '<')));
 
     for i_key in ('!'..='~').filter(|c| *c != '<') {
         imap!(
             r,
             &i_key.to_string(),
-            Command(move |s, _| s.input.input.put(i_key))
+            Command(move |s, _| input::put(s, i_key))
         );
     }
 

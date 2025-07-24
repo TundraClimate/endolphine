@@ -89,8 +89,56 @@ pub fn restore(state: Arc<State>) {
     }
 }
 
-pub fn answer_or_put(state: Arc<State>, c: char) {
+fn is_logging_tag(tag: &str) -> bool {
+    matches!(tag, "DeleteThisItem" | "DeleteItems" | "PasteFromCb")
+}
+
+fn logging_input(state: &State) {
+    let Some(tag) = state.input.tag() else {
+        return;
+    };
+
+    let (tag, ctx) = tag.split_once(":").unwrap_or((tag.as_str(), ""));
+
+    if is_logging_tag(tag) {
+        let prefix = match tag {
+            "DeleteThisItem" => &format!("Delete the '{ctx}' (y/N)"),
+            "DeleteItems" => {
+                let Some((count, _)) = ctx.split_once(";") else {
+                    panic!("Cannot parse the 'DeleteItems' context");
+                };
+
+                &format!("Delete {count} items (y/N)")
+            }
+            "PasteFromCb" => "Overwrite a file (Y/n)",
+
+            _ => return,
+        };
+
+        crate::log!("{prefix}: {}", state.input.input.buf_clone());
+    }
+}
+
+pub fn put(state: Arc<State>, c: char) {
     state.input.input.put(c);
+
+    logging_input(&state);
+}
+
+pub fn pop(state: Arc<State>) {
+    state.input.input.pop();
+
+    logging_input(&state);
+}
+
+pub fn pop_front(state: Arc<State>) {
+    state.input.input.pop_front();
+
+    logging_input(&state);
+}
+
+pub fn answer_or_put(state: Arc<State>, c: char) {
+    put(state.clone(), c);
 
     let Some(tag) = state.input.tag() else {
         return;
@@ -98,7 +146,7 @@ pub fn answer_or_put(state: Arc<State>, c: char) {
 
     let (tag, _) = tag.split_once(":").unwrap_or((tag.as_str(), ""));
 
-    if matches!(tag, "DeleteThisItem" | "DeleteItems" | "PasteFromCb") {
+    if is_logging_tag(tag) {
         complete_input(state);
     }
 }
