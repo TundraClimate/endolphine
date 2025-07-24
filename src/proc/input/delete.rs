@@ -10,6 +10,7 @@ pub fn ask_delete(state: Arc<State>) {
         let target_name = misc::entry_name(item);
 
         super::input_start(&state, &format!("DeleteThisItem:{target_name}"));
+        crate::log!("Delete the '{target_name}' (y/N): ");
     }
 }
 
@@ -66,6 +67,7 @@ pub fn ask_delete_selects(state: Arc<State>) {
         &state,
         &format!("DeleteItems:{};{start_idx}", selection.len()),
     );
+    crate::log!("Delete {} items (y/N): ", selection.len());
 }
 
 pub(super) fn restore_delete_selects(state: Arc<State>, start_idx: usize) {

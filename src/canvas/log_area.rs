@@ -23,7 +23,6 @@ impl LogArea {
 
         layout_hash.hash(&mut hasher);
         self.input_buf.hash(&mut hasher);
-        self.input_tag.hash(&mut hasher);
 
         hasher.finish()
     }

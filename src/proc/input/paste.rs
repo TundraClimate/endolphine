@@ -3,6 +3,7 @@ use std::{io, path::Path, sync::Arc};
 
 pub fn ask_paste(state: Arc<State>) {
     super::input_start(&state, "PasteFromCb");
+    crate::log!("Overwrite a file (Y/n): ")
 }
 
 pub(super) fn restore_paste(state: Arc<State>) {
