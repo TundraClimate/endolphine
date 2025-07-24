@@ -30,14 +30,17 @@ pub(super) fn complete_delete(state: &State, content: &str) {
     let child_files = misc::sorted_child_files(&state.work_dir.get());
     let path = child_files.get(state.file_view.cursor.current());
 
-    if let Some(path) = path
-        && let Err(e) = delete_item(path)
-    {
-        crate::log!(
-            "Failed to delete the '{}': {}",
-            misc::entry_name(path),
-            e.kind()
-        );
+    if let Some(path) = path {
+        let name = misc::entry_name(path);
+
+        match delete_item(path) {
+            Ok(_) => crate::log!("\"{name}\" delete successful"),
+            Err(e) => crate::log!(
+                "Failed to delete the '{}': {}",
+                misc::entry_name(path),
+                e.kind()
+            ),
+        }
     }
 }
 
@@ -98,8 +101,9 @@ pub(super) fn complete_delete_selects(state: &State, content: &str) {
         .map(|path| path.as_path())
         .collect::<Vec<_>>();
 
-    if let Err(e) = delete_items(paths) {
-        crate::log!("Failed to delete items: {}", e.kind());
+    match delete_items(paths.clone()) {
+        Ok(_) => crate::log!("{} items delete successful", paths.len()),
+        Err(e) => crate::log!("Failed to delete items: {}", e.kind()),
     }
 }
 

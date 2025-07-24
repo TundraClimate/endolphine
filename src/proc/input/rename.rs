@@ -33,8 +33,13 @@ pub(super) fn complete_rename(state: &State, content: &str) {
     if let Some(target) = child_files.get(state.file_view.cursor.current()) {
         let into = wd.join(content);
 
-        if let Err(e) = rename_item(target, &into) {
-            crate::log!("Failed to rename item: {}", e.kind());
+        match rename_item(target, &into) {
+            Ok(_) => crate::log!(
+                "\"{}\" renamed to \"{}\"",
+                misc::entry_name(target),
+                misc::entry_name(&into)
+            ),
+            Err(e) => crate::log!("Failed to rename item: {}", e.kind()),
         }
     }
 }

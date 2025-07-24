@@ -24,12 +24,13 @@ pub fn yank(state: Arc<State>) {
     let child_files = misc::sorted_child_files(&state.work_dir.get());
 
     if let Some(target) = child_files.get(state.file_view.cursor.current()) {
-        if let Err(e) = clip_files(&[target]) {
-            crate::log!(
+        match clip_files(&[target]) {
+            Ok(_) => crate::log!("Yanked \"{}\"", misc::entry_name(target)),
+            Err(e) => crate::log!(
                 "Failed to yank the '{}': {}",
                 target.to_string_lossy(),
                 e.kind()
-            );
+            ),
         }
     }
 }
@@ -46,8 +47,9 @@ pub fn yank_selects(state: Arc<State>) {
         .filter_map(|(i, c)| selected.contains(&i).then_some(c))
         .collect::<Vec<_>>();
 
-    if let Err(e) = clip_files(&targets) {
-        crate::log!("Failed to yank {} files: {}", targets.len(), e.kind());
+    match clip_files(&targets) {
+        Ok(_) => crate::log!("Yanked {} items", targets.len()),
+        Err(e) => crate::log!("Failed to yank {} files: {}", targets.len(), e.kind()),
     }
 
     if !selected.is_empty() {

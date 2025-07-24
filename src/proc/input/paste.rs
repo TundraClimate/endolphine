@@ -17,8 +17,9 @@ pub(super) fn complete_paste(state: &State, content: &str) {
         return;
     }
 
-    if let Err(e) = paste_from_cb(&state.work_dir.get()) {
-        crate::log!("Failed to paste from the clipboard: {}", e.kind());
+    match paste_from_cb(&state.work_dir.get()) {
+        Ok(_) => crate::log!("Paste from the clipboard successful"),
+        Err(e) => crate::log!("Failed to paste from the clipboard: {}", e.kind()),
     }
 }
 
