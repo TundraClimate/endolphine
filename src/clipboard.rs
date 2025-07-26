@@ -2,6 +2,14 @@ use std::io;
 
 const LOCAL_CLIPBOARD: &str = "/tmp/endolphine/cb.txt";
 
+pub fn command() -> &'static str {
+    match WindowSystem::load() {
+        WindowSystem::Macos => "clipboard",
+        WindowSystem::Wayland => "wl-copy, wl-paste",
+        WindowSystem::X11 => "xclip",
+    }
+}
+
 pub fn read() -> io::Result<String> {
     use std::{fs, path::Path};
 

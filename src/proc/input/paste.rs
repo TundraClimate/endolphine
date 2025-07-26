@@ -27,6 +27,15 @@ fn paste_from_cb(dir: &Path, overwrite: bool) -> io::Result<usize> {
     let config = config::get();
 
     let files = if config.native_cb {
+        if !clipboard::is_cmd_installed() {
+            crate::log!(
+                "Failed to paste from the clipboard: {} is not installed",
+                clipboard::command()
+            );
+
+            return Ok(0);
+        }
+
         clipboard::read_native("text/uri-list")
     } else {
         clipboard::read()
