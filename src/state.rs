@@ -71,13 +71,14 @@ pub enum Mode {
     Visual = 1,
     Input = 2,
     Search = 3,
+    Menu = 4,
 }
 
 impl Mode {
     pub fn from_u8(i: u8) -> Option<Mode> {
         use std::mem;
 
-        if (0..=3).contains(&i) {
+        if (0..=4).contains(&i) {
             Some(unsafe { mem::transmute::<u8, Mode>(i) })
         } else {
             None
@@ -200,6 +201,18 @@ impl Flag {
         use std::sync::atomic::Ordering;
 
         self.flag.load(Ordering::Relaxed)
+    }
+
+    pub fn up(&self) {
+        use std::sync::atomic::Ordering;
+
+        self.flag.store(true, Ordering::Relaxed);
+    }
+
+    pub fn down(&self) {
+        use std::sync::atomic::Ordering;
+
+        self.flag.store(false, Ordering::Relaxed);
     }
 }
 

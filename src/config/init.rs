@@ -55,6 +55,10 @@ macro_rules! smap {
     ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Search, Keymap::new($keys), $exec) }};
 }
 
+macro_rules! mmap {
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Menu, Keymap::new($keys), $exec) }};
+}
+
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
     use crate::{proc::Command, state::Mode};
 
@@ -114,7 +118,7 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
         proc::{
             Acommand, Command,
             input::{self, search},
-            view, yank,
+            menu, view, yank,
         },
         state::Mode,
         tui,
@@ -138,6 +142,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "p", Command(|s, _| input::ask_paste(s)));
     nmap!(r, "/", Command(|s, _| search::start_search(s)));
     nmap!(r, "n", Command(|s, _| search::search_next(s)));
+    nmap!(r, "M", Command(|s, _| menu::toggle_menu_open(s)));
+    nmap!(r, "m", Command(|s, _| menu::toggle_menu(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -157,6 +163,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "p", Command(|s, _| input::ask_paste(s)));
     vmap!(r, "/", Command(|s, _| search::start_search(s)));
     vmap!(r, "n", Command(|s, _| search::search_next(s)));
+    vmap!(r, "M", Command(|s, _| menu::toggle_menu_open(s)));
+    vmap!(r, "m", Command(|s, _| menu::toggle_menu(s)));
 
     imap!(r, "<ESC>", Command(|s, _| input::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| input::complete_input(s)));
@@ -200,4 +208,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
             Command(move |s, _| search::put(s, i_key))
         );
     }
+
+    mmap!(r, "ZZ", Command(|_, _| tui::close()));
+    mmap!(r, "M", Command(|s, _| menu::toggle_menu_open(s)));
+    mmap!(r, "m", Command(|s, _| menu::toggle_menu(s)));
 }

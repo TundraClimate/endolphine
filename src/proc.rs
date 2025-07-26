@@ -1,4 +1,5 @@
 pub mod input;
+pub mod menu;
 pub mod view;
 pub mod yank;
 
