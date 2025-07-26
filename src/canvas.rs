@@ -40,7 +40,7 @@ pub fn draw(state: Arc<State>) {
         state.work_dir.get(),
         state.file_view.cursor.current(),
         state.file_view.selection.collect(),
-        String::new(),
+        state.grep.load(),
         state.input.tag(),
         state
             .input

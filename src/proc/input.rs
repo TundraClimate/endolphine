@@ -2,6 +2,7 @@ mod create;
 mod delete;
 mod paste;
 mod rename;
+pub mod search;
 
 use crate::state::State;
 use std::sync::Arc;
@@ -51,6 +52,7 @@ pub fn complete_input(state: Arc<State>) {
         tag if tag.starts_with("DeleteItems") => delete::complete_delete_selects(&state, &content),
         tag if tag.starts_with("RenameThisItem") => rename::complete_rename(&state, &content),
         tag if tag.starts_with("PasteFromCb") => paste::complete_paste(&state, &content),
+        tag if tag.starts_with("Search") => search::complete_search(&state, &content),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
@@ -84,6 +86,7 @@ pub fn restore(state: Arc<State>) {
         }
         "RenameThisItem" => rename::restore_rename(state),
         "PasteFromCb" => paste::restore_paste(state),
+        "Search" => search::restore_search(state),
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
@@ -102,20 +105,20 @@ fn logging_input(state: &State) {
 
     if is_logging_tag(tag) {
         let prefix = match tag {
-            "DeleteThisItem" => &format!("Delete the '{ctx}' (y/N)"),
+            "DeleteThisItem" => &format!("Delete the '{ctx}' (y/N): "),
             "DeleteItems" => {
                 let Some((count, _)) = ctx.split_once(";") else {
                     panic!("Cannot parse the 'DeleteItems' context");
                 };
 
-                &format!("Delete {count} items (y/N)")
+                &format!("Delete {count} items (y/N): ")
             }
-            "PasteFromCb" => "Overwrite a file (Y/n)",
+            "PasteFromCb" => "Overwrite a file (Y/n): ",
 
             _ => return,
         };
 
-        crate::log!("{prefix}: {}", state.input.input.buf_clone());
+        crate::log!("{prefix}{}", state.input.input.buf_clone());
     }
 }
 

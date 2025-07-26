@@ -51,6 +51,10 @@ macro_rules! imap {
     ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Input, Keymap::new($keys), $exec) }};
 }
 
+macro_rules! smap {
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Search, Keymap::new($keys), $exec) }};
+}
+
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
     use crate::{proc::Command, state::Mode};
 
@@ -107,7 +111,11 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
 
 fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Acommand, Command, input, view, yank},
+        proc::{
+            Acommand, Command,
+            input::{self, search},
+            view, yank,
+        },
         state::Mode,
         tui,
     };
@@ -128,6 +136,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     nmap!(r, "yy", Command(|s, _| yank::yank(s)));
     nmap!(r, "r", Command(|s, _| input::ask_rename(s)));
     nmap!(r, "p", Command(|s, _| input::ask_paste(s)));
+    nmap!(r, "/", Command(|s, _| search::start_search(s)));
+    nmap!(r, "n", Command(|s, _| search::search_next(s)));
 
     vmap!(r, "<ESC>", Command(|s, _| view::refresh(s)));
     vmap!(r, "ZZ", Command(|_, _| tui::close()));
@@ -145,6 +155,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     vmap!(r, "y", Command(|s, _| yank::yank_selects(s)));
     vmap!(r, "r", Command(|s, _| input::ask_rename(s)));
     vmap!(r, "p", Command(|s, _| input::ask_paste(s)));
+    vmap!(r, "/", Command(|s, _| search::start_search(s)));
+    vmap!(r, "n", Command(|s, _| search::search_next(s)));
 
     imap!(r, "<ESC>", Command(|s, _| input::restore(s)));
     imap!(r, "<ENTER>", Acommand(|s, _| input::complete_input(s)));
@@ -169,4 +181,23 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     imap!(r, "n", Command(|s, _| input::answer_or_put(s, 'n')));
     imap!(r, "Y", Command(|s, _| input::answer_or_put(s, 'Y')));
     imap!(r, "N", Command(|s, _| input::answer_or_put(s, 'N')));
+
+    smap!(r, "<ESC>", Command(|s, _| input::restore(s)));
+    smap!(r, "<ENTER>", Command(|s, _| input::complete_input(s)));
+    smap!(r, "<BS>", Command(|s, _| search::pop(s)));
+    smap!(r, "<DEL>", Command(|s, _| search::pop_front(s)));
+
+    smap!(r, "<c-h>", Command(|s, _| s.input.input.shift_back()));
+    smap!(r, "<c-l>", Command(|s, _| s.input.input.shift()));
+
+    smap!(r, "<SPACE>", Command(|s, _| search::put(s, ' ')));
+    smap!(r, "<LT>", Command(|s, _| search::put(s, '<')));
+
+    for i_key in ('!'..='~').filter(|c| *c != '<') {
+        smap!(
+            r,
+            &i_key.to_string(),
+            Command(move |s, _| search::put(s, i_key))
+        );
+    }
 }

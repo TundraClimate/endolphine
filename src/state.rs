@@ -22,6 +22,7 @@ pub struct State {
     pub file_view: FileView,
     pub proc_counter: ProcessCounter,
     pub input: InputController,
+    pub grep: Grep,
 }
 
 impl State {
@@ -36,6 +37,7 @@ impl State {
             file_view: FileView::new(work_dir.clone()),
             proc_counter: ProcessCounter::new(),
             input: InputController::new(),
+            grep: Grep::new(),
         }
     }
 }
@@ -68,13 +70,14 @@ pub enum Mode {
     Normal = 0,
     Visual = 1,
     Input = 2,
+    Search = 3,
 }
 
 impl Mode {
     pub fn from_u8(i: u8) -> Option<Mode> {
         use std::mem;
 
-        if i == 0 || i == 1 || i == 2 {
+        if (0..=3).contains(&i) {
             Some(unsafe { mem::transmute::<u8, Mode>(i) })
         } else {
             None
@@ -291,5 +294,29 @@ impl InputController {
 
     pub fn tag(&self) -> Option<String> {
         self.tag.read().unwrap().clone()
+    }
+}
+
+pub struct Grep {
+    buf: RwLock<String>,
+}
+
+impl Grep {
+    fn new() -> Self {
+        Self {
+            buf: RwLock::new(String::new()),
+        }
+    }
+
+    pub fn load(&self) -> String {
+        self.buf.read().unwrap().clone()
+    }
+
+    pub fn update(&self, new: String) {
+        *self.buf.write().unwrap() = new;
+    }
+
+    pub fn clear(&self) {
+        self.buf.write().unwrap().clear()
     }
 }
