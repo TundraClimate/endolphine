@@ -1,11 +1,13 @@
 mod info_bar;
 mod log_area;
 mod pwd;
+mod sidemenu;
 mod state_bar;
 mod viewer;
 
 use self::{
-    info_bar::InfoBar, log_area::LogArea, pwd::Working, state_bar::StateBar, viewer::Viewer,
+    info_bar::InfoBar, log_area::LogArea, pwd::Working, sidemenu::Sidemenu, state_bar::StateBar,
+    viewer::Viewer,
 };
 use crate::state::State;
 use std::sync::Arc;
@@ -17,6 +19,13 @@ pub fn draw(state: Arc<State>) {
     let layout_key = layout.hashcode();
 
     let hashes = &state.canvas_hashes;
+
+    let sidemenu = Sidemenu::new();
+    let sidemenu_hash = sidemenu.make_hash(layout_key);
+
+    if hashes.update(Sidemenu::ID, sidemenu_hash) != Some(sidemenu_hash) {
+        sidemenu.draw(layout.get(Sidemenu::ID));
+    }
 
     let working = Working::new(state.work_dir.get());
     let working_hash = working.make_hash(layout_key);
@@ -182,16 +191,16 @@ fn gen_layout(term_rect: Rect, is_sidemenu_opened: bool) -> Layout {
     };
 
     if is_sidemenu_opened {
+        layout.push(Rect {
+            width: 20.min(term_rect.width),
+            ..term_rect
+        });
+
         term_rect = Rect {
             x: term_rect.x.saturating_add(20),
             width: term_rect.width.saturating_sub(20),
             ..term_rect
         };
-
-        layout.push(Rect {
-            width: 20.min(term_rect.width),
-            ..term_rect
-        });
     } else {
         layout.push(Rect::empty());
     }
