@@ -37,6 +37,41 @@ impl Sidemenu {
             ),
         );
 
+        canvas::printin(
+            rect,
+            (0, 1),
+            format!(
+                "{}{}{}",
+                SetBackgroundColor(theme.bar_bg.into()),
+                SetForegroundColor(theme.bar_fg.into()),
+                " ".repeat(rect.width.into()),
+            ),
+        );
+
+        for i in 2..rect.height.saturating_sub(1) {
+            canvas::printin(
+                rect,
+                (0, i),
+                format!(
+                    "{}{}{}",
+                    SetBackgroundColor(theme.app_bg.into()),
+                    SetForegroundColor(theme.app_fg.into()),
+                    " ".repeat(rect.width.into()),
+                ),
+            );
+        }
+
+        canvas::printin(
+            rect,
+            (0, rect.height.saturating_sub(1)),
+            format!(
+                "{}{}{}",
+                SetBackgroundColor(theme.bar_bg.into()),
+                SetForegroundColor(theme.bar_fg.into()),
+                " ".repeat(rect.width.into()),
+            ),
+        );
+
         for i in 0..rect.height {
             canvas::printin(
                 rect,
