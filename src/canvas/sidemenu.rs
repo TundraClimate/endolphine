@@ -26,11 +26,10 @@ impl Sidemenu {
 
         let theme = &config::get().theme;
 
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            0,
-            &format!(
+            (0, 0),
+            format!(
                 "{}{} Select to Cd {}",
                 SetBackgroundColor(theme.app_bg.into()),
                 SetForegroundColor(theme.app_fg.into()),
@@ -39,11 +38,10 @@ impl Sidemenu {
         );
 
         for i in 0..rect.height {
-            canvas::print_in(
+            canvas::printin(
                 rect,
-                rect.width.saturating_sub(1),
-                i,
-                &format!(
+                (rect.width.saturating_sub(1), i),
+                format!(
                     "{}{}|",
                     SetBackgroundColor(theme.bar_bg.into()),
                     SetForegroundColor(theme.bar_fg_light.into())

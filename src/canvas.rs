@@ -80,13 +80,15 @@ pub fn draw(state: Arc<State>) {
     io::stdout().flush().ok();
 }
 
-fn print_in(rect: Rect, rel_x: u16, rel_y: u16, s: &str) {
+fn printin<S: AsRef<str>>(rect: Rect, (rel_x, rel_y): (u16, u16), s: S) {
     use crossterm::{
         cursor::MoveTo,
         style::{Print, ResetColor},
     };
     use std::io;
     use unicode_width::UnicodeWidthChar;
+
+    let s = s.as_ref();
 
     if rect.height <= rel_y || rect.width <= rel_x {
         return;

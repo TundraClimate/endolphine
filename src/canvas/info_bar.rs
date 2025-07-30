@@ -43,11 +43,10 @@ impl InfoBar {
         let page = self.cursor_pos / self.file_view_len.max(1) + 1;
         let files_len = misc::child_files_len(&self.wd);
 
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            0,
-            &format!(
+            (0, 0),
+            format!(
                 "{}{} Page {} {}(All {} items){}",
                 SetBackgroundColor(theme.bar_bg.into()),
                 SetForegroundColor(theme.bar_fg.into()),

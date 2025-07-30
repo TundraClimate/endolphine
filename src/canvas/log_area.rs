@@ -23,11 +23,10 @@ impl LogArea {
     pub(super) fn draw(&self, rect: Rect) {
         use crossterm::style::ResetColor;
 
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            0,
-            &format!("{} {}", ResetColor, " ".repeat(rect.width.into())),
+            (0, 0),
+            format!("{} {}", ResetColor, " ".repeat(rect.width.into())),
         )
     }
 }

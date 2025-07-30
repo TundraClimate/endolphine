@@ -50,11 +50,10 @@ impl Working {
             format!("{}/", SetForegroundColor(theme.pwd_pickouted.into()))
         };
 
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            0,
-            &format!(
+            (0, 0),
+            format!(
                 "{}{} {} in {}{}",
                 SetForegroundColor(theme.pwd_view.into()),
                 SetBackgroundColor(theme.app_bg.into()),

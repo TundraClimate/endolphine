@@ -29,11 +29,10 @@ impl StateBar {
 
         let theme = &config::get().theme;
 
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            0,
-            &format!(
+            (0, 0),
+            format!(
                 "{}{} {} procs running{}",
                 SetBackgroundColor(theme.bar_bg.into()),
                 SetForegroundColor(theme.bar_fg.into()),

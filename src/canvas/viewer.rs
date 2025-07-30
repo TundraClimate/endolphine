@@ -144,11 +144,10 @@ fn render_item_row(
     );
 
     let Ok(metadata) = item.symlink_metadata() else {
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            index as u16,
-            &format!(
+            (0, index as u16),
+            format!(
                 "{}{} | Permission denied{}",
                 SetForegroundColor(theme.item_broken.into()),
                 SetBackgroundColor(theme.app_bg.into()),
@@ -257,11 +256,10 @@ fn render_item_row(
         }
     );
 
-    canvas::print_in(
+    canvas::printin(
         rect,
-        0,
-        index as u16,
-        &format!(
+        (0, index as u16),
+        format!(
             "{}{}{} | {}{} {} {} {}{}{}{}",
             SetBackgroundColor(theme.app_bg.into()),
             SetForegroundColor(theme.app_fg.into()),
@@ -292,13 +290,12 @@ fn render_empty_row(rect: Rect, index: usize) {
             " ".repeat(rect.width.into())
         );
 
-        canvas::print_in(rect, 0, 0, &empty_msg);
+        canvas::printin(rect, (0, 0), empty_msg);
     } else {
-        canvas::print_in(
+        canvas::printin(
             rect,
-            0,
-            index as u16,
-            &format!(
+            (0, index as u16),
+            format!(
                 "{}{}",
                 SetBackgroundColor(theme.app_bg.into()),
                 " ".repeat(rect.width.into())
@@ -332,11 +329,10 @@ fn render_input_row(rect: Rect, index: usize, input_buf: &str, input_cursor: usi
         })
         .collect::<String>();
 
-    canvas::print_in(
+    canvas::printin(
         rect,
-        0,
-        index as u16,
-        &format!(
+        (0, index as u16),
+        format!(
             "{}{}> | {}?{} {}???????? {}?? ??/?? ??:?? {}{}",
             SetBackgroundColor(theme.app_bg.into()),
             SetForegroundColor(theme.app_fg.into()),
