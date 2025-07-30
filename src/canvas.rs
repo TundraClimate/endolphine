@@ -20,7 +20,7 @@ pub fn draw(state: Arc<State>) {
 
     let hashes = &state.canvas_hashes;
 
-    let sidemenu = Sidemenu::new();
+    let sidemenu = Sidemenu::new(state.sidemenu.cursor.current());
     let sidemenu_hash = sidemenu.make_hash(layout_key);
 
     if hashes.update(Sidemenu::ID, sidemenu_hash) != Some(sidemenu_hash) {

@@ -23,6 +23,7 @@ pub struct State {
     pub proc_counter: ProcessCounter,
     pub input: InputController,
     pub grep: Grep,
+    pub sidemenu: Menu,
 }
 
 impl State {
@@ -38,6 +39,7 @@ impl State {
             proc_counter: ProcessCounter::new(),
             input: InputController::new(),
             grep: Grep::new(),
+            sidemenu: Menu::new(),
         }
     }
 }
@@ -331,5 +333,23 @@ impl Grep {
 
     pub fn clear(&self) {
         self.buf.write().unwrap().clear()
+    }
+}
+
+pub struct Menu {
+    pub cursor: Cursor,
+}
+
+impl Menu {
+    fn new() -> Self {
+        use crate::config;
+
+        let menu = Self {
+            cursor: Cursor::default(),
+        };
+
+        menu.cursor.resize(config::get().menu_elements.len());
+
+        menu
     }
 }

@@ -1,13 +1,15 @@
 use super::Rect;
 use crate::canvas;
 
-pub(super) struct Sidemenu {}
+pub(super) struct Sidemenu {
+    cursor_pos: usize,
+}
 
 impl Sidemenu {
     pub(super) const ID: u8 = 0;
 
-    pub(super) fn new() -> Self {
-        Self {}
+    pub(super) fn new(cursor_pos: usize) -> Self {
+        Self { cursor_pos }
     }
 
     pub(super) fn make_hash(&self, layout_hash: u64) -> u64 {
@@ -16,6 +18,7 @@ impl Sidemenu {
         let mut hasher = DefaultHasher::new();
 
         layout_hash.hash(&mut hasher);
+        self.cursor_pos.hash(&mut hasher);
 
         hasher.finish()
     }
@@ -54,15 +57,25 @@ impl Sidemenu {
 
             match config.menu_elements.get(rel_i) {
                 Some(element) => {
+                    let cursor = if rel_i == self.cursor_pos { ">" } else { " " };
+                    let under_cursor = if rel_i == self.cursor_pos {
+                        SetBackgroundColor(theme.item_bg_cursor.into())
+                    } else {
+                        SetBackgroundColor(theme.app_bg.into())
+                    };
+
                     canvas::printin(
                         rect,
                         (0, i),
                         format!(
-                            "{}{} | {}{}{}",
+                            "{}{}{} | {}{} {} {}{}",
                             SetBackgroundColor(theme.app_bg.into()),
                             SetForegroundColor(theme.app_fg.into()),
+                            cursor,
+                            under_cursor,
                             SetForegroundColor(theme.item_sidemenu.into()),
                             element.tag,
+                            SetBackgroundColor(theme.app_bg.into()),
                             " ".repeat(rect.width.into()),
                         ),
                     );
