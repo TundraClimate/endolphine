@@ -21,9 +21,34 @@ impl Sidemenu {
     }
 
     pub(super) fn draw(&self, rect: Rect) {
-        // mock
+        use crate::config;
+        use crossterm::style::{SetBackgroundColor, SetForegroundColor};
+
+        let theme = &config::get().theme;
+
+        canvas::print_in(
+            rect,
+            0,
+            0,
+            &format!(
+                "{}{} Select to Cd {}",
+                SetBackgroundColor(theme.app_bg.into()),
+                SetForegroundColor(theme.app_fg.into()),
+                " ".repeat(rect.width.into()),
+            ),
+        );
+
         for i in 0..rect.height {
-            canvas::print_in(rect, 0, i, &" ".repeat(rect.width.into()));
+            canvas::print_in(
+                rect,
+                rect.width.saturating_sub(1),
+                i,
+                &format!(
+                    "{}{}|",
+                    SetBackgroundColor(theme.bar_bg.into()),
+                    SetForegroundColor(theme.bar_fg_light.into())
+                ),
+            );
         }
     }
 }
