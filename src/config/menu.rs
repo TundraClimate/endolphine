@@ -26,8 +26,8 @@ impl Default for MenuConfig {
 }
 
 pub struct MenuElement {
-    tag: String,
-    path: PathBuf,
+    pub tag: String,
+    pub path: PathBuf,
 }
 
 impl MenuElement {

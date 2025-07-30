@@ -24,7 +24,8 @@ impl Sidemenu {
         use crate::config;
         use crossterm::style::{SetBackgroundColor, SetForegroundColor};
 
-        let theme = &config::get().theme;
+        let config = config::get();
+        let theme = &config.theme;
 
         canvas::printin(
             rect,
@@ -49,16 +50,36 @@ impl Sidemenu {
         );
 
         for i in 2..rect.height.saturating_sub(1) {
-            canvas::printin(
-                rect,
-                (0, i),
-                format!(
-                    "{}{}{}",
-                    SetBackgroundColor(theme.app_bg.into()),
-                    SetForegroundColor(theme.app_fg.into()),
-                    " ".repeat(rect.width.into()),
-                ),
-            );
+            let rel_i = i.saturating_sub(2) as usize;
+
+            match config.menu_elements.get(rel_i) {
+                Some(element) => {
+                    canvas::printin(
+                        rect,
+                        (0, i),
+                        format!(
+                            "{}{} | {}{}{}",
+                            SetBackgroundColor(theme.app_bg.into()),
+                            SetForegroundColor(theme.app_fg.into()),
+                            SetForegroundColor(theme.item_sidemenu.into()),
+                            element.tag,
+                            " ".repeat(rect.width.into()),
+                        ),
+                    );
+                }
+                None => {
+                    canvas::printin(
+                        rect,
+                        (0, i),
+                        format!(
+                            "{}{}{}",
+                            SetBackgroundColor(theme.app_bg.into()),
+                            SetForegroundColor(theme.app_fg.into()),
+                            " ".repeat(rect.width.into()),
+                        ),
+                    );
+                }
+            }
         }
 
         canvas::printin(
