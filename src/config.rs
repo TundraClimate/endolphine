@@ -1,10 +1,12 @@
 mod edit;
 mod init;
 mod mapping;
+mod menu;
 mod theme;
 
 use edit::{EditConfig, HijackMapping};
 use mapping::{KeymapConfig, KeymapRegistry};
+use menu::{MenuConfig, MenuElement};
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -28,6 +30,7 @@ struct ConfigModel {
     native_cb: bool,
     keymap: Option<KeymapConfig>,
     edit: EditConfig,
+    menu: MenuConfig,
 }
 
 pub fn parse_check(s: &str) -> Result<(), toml::de::Error> {
@@ -89,6 +92,7 @@ impl Default for ConfigModel {
             native_cb: false,
             keymap: None,
             edit: EditConfig::default(),
+            menu: MenuConfig::default(),
         }
     }
 }
@@ -98,6 +102,7 @@ pub struct Config {
     pub native_cb: bool,
     pub keymaps: KeymapRegistry,
     pub hijack: HijackMapping,
+    pub menu_elements: Vec<MenuElement>,
 }
 
 pub fn get() -> &'static Config {
@@ -124,11 +129,14 @@ pub fn get() -> &'static Config {
 
         let hijack = HijackMapping::new(model.edit);
 
+        let menu_elements = model.menu.items;
+
         Config {
             theme,
             native_cb,
             keymaps,
             hijack,
+            menu_elements,
         }
     });
 
