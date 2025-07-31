@@ -216,4 +216,5 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     mmap!(r, "k", Command(|s, ctx| menu::move_cursor(s, ctx, false)));
     mmap!(r, "G", Command(|s, _| menu::move_cursor_too(s, true)));
     mmap!(r, "gg", Command(|s, _| menu::move_cursor_too(s, false)));
+    mmap!(r, "l", Command(|s, _| menu::enter(s)));
 }

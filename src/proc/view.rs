@@ -67,7 +67,7 @@ pub fn move_page(state: Arc<State>, ctx: CommandContext, positive: bool) {
     select_cursor_pos(&state);
 }
 
-fn move_dir(state: Arc<State>, path: &Path) {
+pub fn move_dir(state: Arc<State>, path: &Path) {
     use crate::{misc, state::Mode};
 
     state.mode.switch(Mode::Normal);

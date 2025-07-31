@@ -48,3 +48,31 @@ pub fn move_cursor_too(state: Arc<State>, positive: bool) {
         cursor.shift_n(point);
     }
 }
+
+pub fn enter(state: Arc<State>) {
+    use super::view;
+    use crate::config;
+
+    let cursor = &state.sidemenu.cursor;
+    let config = config::get();
+
+    let Some(element) = config.menu_elements.get(cursor.current()) else {
+        return;
+    };
+
+    let path = &element.path;
+
+    if !path.exists() {
+        crate::log!("'{}' is not exists", element.tag);
+
+        return;
+    }
+
+    if !path.is_dir() {
+        crate::log!("'{}' is not Directory", element.tag);
+
+        return;
+    }
+
+    view::move_dir(state, path);
+}
