@@ -1,4 +1,5 @@
 use super::{ConfigModel, KeymapConfig, KeymapRegistry, theme};
+use crate::state::Mode;
 use std::io;
 use viks::Keymap;
 
@@ -40,97 +41,58 @@ pub async fn setup_local() -> io::Result<()> {
 }
 
 macro_rules! nmap {
-    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Normal, Keymap::new($keys), $exec) }};
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register_raw(Mode::Normal, Keymap::new($keys), $exec) }};
 }
 
 macro_rules! vmap {
-    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Visual, Keymap::new($keys), $exec) }};
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register_raw(Mode::Visual, Keymap::new($keys), $exec) }};
 }
 
 macro_rules! imap {
-    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Input, Keymap::new($keys), $exec) }};
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register_raw(Mode::Input, Keymap::new($keys), $exec) }};
 }
 
 macro_rules! smap {
-    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Search, Keymap::new($keys), $exec) }};
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register_raw(Mode::Search, Keymap::new($keys), $exec) }};
 }
 
 macro_rules! mmap {
-    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register(Mode::Menu, Keymap::new($keys), $exec) }};
+    ($registry:expr, $keys:expr, $exec:expr $(,)?) => {{ $registry.register_raw(Mode::Menu, Keymap::new($keys), $exec) }};
+}
+
+fn register_remap(registry: &mut KeymapRegistry, mode: Mode, maps: Vec<(Keymap, Keymap)>) {
+    use crate::proc::Command;
+
+    maps.into_iter().for_each(|(from, expand)| {
+        registry.register(
+            mode,
+            from,
+            Command(move |state, _| {
+                let keymaps = &super::get().keymaps;
+                let mut cmds = keymaps.eval_keys(mode, expand.as_vec().clone()).into_iter();
+
+                while let Some(Ok((cmd, ctx))) = cmds.next() {
+                    cmd.run(state.clone(), ctx);
+                }
+            }),
+        )
+    })
 }
 
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
-    use crate::{proc::Command, state::Mode};
-
     init_builtin_keymaps(registry);
 
     if let Some(keyconf) = keyconf {
         if let Some(ref normal) = keyconf.normal {
-            normal
-                .0
-                .iter()
-                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
-                .for_each(|(key, value)| {
-                    registry.register(
-                        Mode::Normal,
-                        key,
-                        Command(move |state, _| {
-                            let keymaps = &super::get().keymaps;
-                            let mut cmds = keymaps
-                                .eval_keys(Mode::Normal, value.as_vec().clone())
-                                .into_iter();
-
-                            while let Some(Ok((cmd, ctx))) = cmds.next() {
-                                cmd.run(state.clone(), ctx);
-                            }
-                        }),
-                    )
-                });
+            register_remap(registry, Mode::Normal, normal.collect_maps());
         }
 
         if let Some(ref visual) = keyconf.visual {
-            visual
-                .0
-                .iter()
-                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
-                .for_each(|(key, value)| {
-                    registry.register(
-                        Mode::Visual,
-                        key,
-                        Command(move |state, _| {
-                            let keymaps = &super::get().keymaps;
-                            let mut cmds = keymaps
-                                .eval_keys(Mode::Visual, value.as_vec().clone())
-                                .into_iter();
-
-                            while let Some(Ok((cmd, ctx))) = cmds.next() {
-                                cmd.run(state.clone(), ctx);
-                            }
-                        }),
-                    )
-                });
+            register_remap(registry, Mode::Visual, visual.collect_maps());
         }
 
         if let Some(ref menu) = keyconf.menu {
-            menu.0
-                .iter()
-                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
-                .for_each(|(key, value)| {
-                    registry.register(
-                        Mode::Menu,
-                        key,
-                        Command(move |state, _| {
-                            let keymaps = &super::get().keymaps;
-                            let mut cmds = keymaps
-                                .eval_keys(Mode::Menu, value.as_vec().clone())
-                                .into_iter();
-
-                            while let Some(Ok((cmd, ctx))) = cmds.next() {
-                                cmd.run(state.clone(), ctx);
-                            }
-                        }),
-                    )
-                });
+            register_remap(registry, Mode::Menu, menu.collect_maps());
         }
     }
 }

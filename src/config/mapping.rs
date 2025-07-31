@@ -8,19 +8,19 @@ use viks::{Key, Keymap};
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct KeymapConfig {
-    pub(super) normal: Option<NormalMaps>,
-    pub(super) visual: Option<VisualMaps>,
-    pub(super) menu: Option<MenuMaps>,
+    pub(super) normal: Option<UserDefinedMaps>,
+    pub(super) visual: Option<UserDefinedMaps>,
+    pub(super) menu: Option<UserDefinedMaps>,
 }
 
 #[derive(Deserialize, Serialize)]
-pub(super) struct NormalMaps(pub(super) BTreeMap<String, String>);
+pub(super) struct UserDefinedMaps(BTreeMap<Keymap, Keymap>);
 
-#[derive(Deserialize, Serialize)]
-pub(super) struct VisualMaps(pub(super) BTreeMap<String, String>);
-
-#[derive(Deserialize, Serialize)]
-pub(super) struct MenuMaps(pub(super) BTreeMap<String, String>);
+impl UserDefinedMaps {
+    pub(super) fn collect_maps(&self) -> Vec<(Keymap, Keymap)> {
+        self.0.iter().map(|(k, v)| (k.clone(), v.clone())).collect()
+    }
+}
 
 pub struct KeymapRegistry {
     map: HashMap<(Mode, String), Box<dyn Runnable>>,
@@ -33,21 +33,22 @@ impl KeymapRegistry {
         }
     }
 
-    pub(super) fn register<R: Runnable + 'static>(
+    pub(super) fn register<R: Runnable + 'static>(&mut self, mode: Mode, map: Keymap, cmd: R) {
+        self.map.insert((mode, map.to_string()), Box::new(cmd));
+    }
+
+    pub(super) fn register_raw<R: Runnable + 'static>(
         &mut self,
         mode: Mode,
         map: viks::Result<Keymap>,
         cmd: R,
     ) {
-        self.map.insert(
-            (
-                mode,
-                map.unwrap_or_else(|e| {
-                    panic!("Invalid mapping found: '{}' is {}", e.format(), e.cause())
-                })
-                .to_string(),
-            ),
-            Box::new(cmd),
+        self.register(
+            mode,
+            map.unwrap_or_else(|e| {
+                panic!("Invalid mapping found: '{}' is {}", e.format(), e.cause())
+            }),
+            cmd,
         );
     }
 
