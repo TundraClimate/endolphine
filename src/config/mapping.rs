@@ -10,6 +10,7 @@ use viks::{Key, Keymap};
 pub(super) struct KeymapConfig {
     pub(super) normal: Option<NormalMaps>,
     pub(super) visual: Option<VisualMaps>,
+    pub(super) menu: Option<MenuMaps>,
 }
 
 #[derive(Deserialize, Serialize)]
@@ -17,6 +18,9 @@ pub(super) struct NormalMaps(pub(super) BTreeMap<String, String>);
 
 #[derive(Deserialize, Serialize)]
 pub(super) struct VisualMaps(pub(super) BTreeMap<String, String>);
+
+#[derive(Deserialize, Serialize)]
+pub(super) struct MenuMaps(pub(super) BTreeMap<String, String>);
 
 pub struct KeymapRegistry {
     map: HashMap<(Mode, String), Box<dyn Runnable>>,

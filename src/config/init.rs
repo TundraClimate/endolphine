@@ -110,6 +110,28 @@ pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<Keyma
                     )
                 });
         }
+
+        if let Some(ref menu) = keyconf.menu {
+            menu.0
+                .iter()
+                .filter_map(|(key, value)| Some((Keymap::new(key), Keymap::new(value).ok()?)))
+                .for_each(|(key, value)| {
+                    registry.register(
+                        Mode::Menu,
+                        key,
+                        Command(move |state, _| {
+                            let keymaps = &super::get().keymaps;
+                            let mut cmds = keymaps
+                                .eval_keys(Mode::Menu, value.as_vec().clone())
+                                .into_iter();
+
+                            while let Some(Ok((cmd, ctx))) = cmds.next() {
+                                cmd.run(state.clone(), ctx);
+                            }
+                        }),
+                    )
+                });
+        }
     }
 }
 
