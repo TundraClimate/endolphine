@@ -1,4 +1,4 @@
-use crate::state::State;
+use crate::{proc::CommandContext, state::State};
 use std::sync::Arc;
 
 pub fn toggle_menu_open(state: Arc<State>) {
@@ -24,5 +24,27 @@ pub fn toggle_menu(state: Arc<State>) {
         }
     } else {
         toggle_menu_open(state);
+    }
+}
+
+pub fn move_cursor(state: Arc<State>, ctx: CommandContext, positive: bool) {
+    let cursor = &state.sidemenu.cursor;
+    let point = ctx.prenum.unwrap_or(1);
+
+    if positive {
+        cursor.shift_p(point);
+    } else {
+        cursor.shift_n(point);
+    }
+}
+
+pub fn move_cursor_too(state: Arc<State>, positive: bool) {
+    let cursor = &state.sidemenu.cursor;
+    let point = cursor.len();
+
+    if positive {
+        cursor.shift_p(point);
+    } else {
+        cursor.shift_n(point);
     }
 }

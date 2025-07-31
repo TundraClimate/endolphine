@@ -212,4 +212,8 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     mmap!(r, "ZZ", Command(|_, _| tui::close()));
     mmap!(r, "M", Command(|s, _| menu::toggle_menu_open(s)));
     mmap!(r, "m", Command(|s, _| menu::toggle_menu(s)));
+    mmap!(r, "j", Command(|s, ctx| menu::move_cursor(s, ctx, true)));
+    mmap!(r, "k", Command(|s, ctx| menu::move_cursor(s, ctx, false)));
+    mmap!(r, "G", Command(|s, _| menu::move_cursor_too(s, true)));
+    mmap!(r, "gg", Command(|s, _| menu::move_cursor_too(s, false)));
 }
