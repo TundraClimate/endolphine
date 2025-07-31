@@ -30,6 +30,8 @@ impl Sidemenu {
         let config = config::get();
         let theme = &config.theme;
 
+        let non_sep_width = rect.width.saturating_sub(1) as usize;
+
         canvas::printin(
             rect,
             (0, 0),
@@ -37,7 +39,7 @@ impl Sidemenu {
                 "{}{} Select to Cd {}",
                 SetBackgroundColor(theme.app_bg.into()),
                 SetForegroundColor(theme.app_fg.into()),
-                " ".repeat(rect.width.into()),
+                " ".repeat(non_sep_width.saturating_sub(14)),
             ),
         );
 
@@ -48,7 +50,7 @@ impl Sidemenu {
                 "{}{}{}",
                 SetBackgroundColor(theme.bar_bg.into()),
                 SetForegroundColor(theme.bar_fg.into()),
-                " ".repeat(rect.width.into()),
+                " ".repeat(non_sep_width),
             ),
         );
 
@@ -76,7 +78,7 @@ impl Sidemenu {
                             SetForegroundColor(theme.item_sidemenu.into()),
                             element.tag,
                             SetBackgroundColor(theme.app_bg.into()),
-                            " ".repeat(rect.width.into()),
+                            " ".repeat(non_sep_width.saturating_sub(element.tag.len() + 6)),
                         ),
                     );
                 }
@@ -88,7 +90,7 @@ impl Sidemenu {
                             "{}{}{}",
                             SetBackgroundColor(theme.app_bg.into()),
                             SetForegroundColor(theme.app_fg.into()),
-                            " ".repeat(rect.width.into()),
+                            " ".repeat(non_sep_width),
                         ),
                     );
                 }
@@ -102,7 +104,7 @@ impl Sidemenu {
                 "{}{}{}",
                 SetBackgroundColor(theme.bar_bg.into()),
                 SetForegroundColor(theme.bar_fg.into()),
-                " ".repeat(rect.width.into()),
+                " ".repeat(non_sep_width),
             ),
         );
 
