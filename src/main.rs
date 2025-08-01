@@ -26,6 +26,10 @@ async fn main() {
         panic!("Failed to create configure files: {}", e.kind());
     }
 
+    if let Err(e) = tui::setup_logger() {
+        panic!("{}", e);
+    }
+
     let args = args::parse_args();
 
     for arg in args.into_iter() {

@@ -1,5 +1,51 @@
 use crate::state::State;
-use std::sync::Arc;
+use flexi_logger::FlexiLoggerError;
+use std::{path::PathBuf, sync::Arc};
+
+fn local_path() -> PathBuf {
+    use std::path::Path;
+
+    let Some(home) = option_env!("HOME") else {
+        panic!("Couldn't read the $HOME");
+    };
+
+    Path::new(home)
+        .join(".local")
+        .join("share")
+        .join("endolphine")
+}
+
+pub fn setup_logger() -> Result<(), FlexiLoggerError> {
+    use flexi_logger::{Age, Cleanup, Criterion, FileSpec, Logger, Naming};
+
+    Logger::try_with_str("info")?
+        .log_to_file(
+            FileSpec::default()
+                .directory(local_path().join("log"))
+                .suppress_basename()
+                .suffix("log"),
+        )
+        .append()
+        .rotate(
+            Criterion::Age(Age::Day),
+            Naming::TimestampsCustomFormat {
+                current_infix: None,
+                format: "%Y-%m-%d",
+            },
+            Cleanup::KeepLogFiles(5),
+        )
+        .format_for_files(|w, now, record| {
+            write!(
+                w,
+                "[{}] [{}] {}",
+                now.format("%H:%M:%S"),
+                record.level(),
+                record.args()
+            )
+        })
+        .start()
+        .map(|_| ())
+}
 
 pub fn set_panic_hook() {
     use std::{panic, process};
