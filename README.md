@@ -304,7 +304,6 @@ cargo uninstall endolphine
 - Improve input mode
 - Impl the .log output-system
 - Impl the plugin-system
-- Add check to keymap config on numeric keys
 - Add mode views to statebar on left side
 - Improve Visual-selection(pick select, multiple area)
 

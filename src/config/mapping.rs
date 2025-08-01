@@ -13,8 +13,29 @@ pub(super) struct KeymapConfig {
     pub(super) menu: Option<UserDefinedMaps>,
 }
 
-#[derive(Deserialize, Serialize)]
+#[derive(Serialize)]
 pub(super) struct UserDefinedMaps(BTreeMap<Keymap, Keymap>);
+
+impl<'de> Deserialize<'de> for UserDefinedMaps {
+    fn deserialize<D>(deserializer: D) -> Result<Self, D::Error>
+    where
+        D: serde::Deserializer<'de>,
+    {
+        let de = BTreeMap::<Keymap, Keymap>::deserialize(deserializer)?;
+
+        for key in de.keys() {
+            if let Some(first) = key.as_vec().first()
+                && first.is_digit()
+            {
+                return Err(serde::de::Error::custom(
+                    "Keys starting with numbers cannot be specified",
+                ));
+            }
+        }
+
+        Ok(UserDefinedMaps(de))
+    }
+}
 
 impl UserDefinedMaps {
     pub(super) fn collect_maps(&self) -> Vec<(Keymap, Keymap)> {
