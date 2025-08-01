@@ -300,12 +300,11 @@ cargo uninstall endolphine
 
 # TODO
 
-- Impl for the realtime displaying system
-- Improve input mode
 - Impl the .log output-system
 - Impl the plugin-system
 - Add mode views to statebar on left side
 - Improve Visual-selection(pick select, multiple area)
+- Rewrite README
 
 ## LICENSE
 
