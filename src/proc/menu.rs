@@ -7,9 +7,11 @@ pub fn toggle_menu_open(state: Arc<State>) {
     if state.flag.is_sidemenu_opened.get() {
         state.flag.is_sidemenu_opened.down();
         state.mode.switch(Mode::Normal);
+        log::info!("The sidemenu is closed");
     } else {
         state.flag.is_sidemenu_opened.up();
         state.mode.switch(Mode::Menu);
+        log::info!("The sidemenu is opened");
     }
 }
 
@@ -19,8 +21,10 @@ pub fn toggle_menu(state: Arc<State>) {
     if state.flag.is_sidemenu_opened.get() {
         if state.mode.get() == Mode::Normal {
             state.mode.switch(Mode::Menu);
+            log::info!("The sidemenu is enabled");
         } else {
             state.mode.switch(Mode::Normal);
+            log::info!("The sidemenu is disabled");
         }
     } else {
         toggle_menu_open(state);
@@ -64,12 +68,16 @@ pub fn enter(state: Arc<State>) {
 
     if !path.exists() {
         crate::log!("'{}' is not exists", element.tag);
+        log::warn!("The sidemenu item '{}' is not exists", element.tag);
+        log::warn!("{}:{}", element.tag, element.path.to_string_lossy());
 
         return;
     }
 
     if !path.is_dir() {
         crate::log!("'{}' is not Directory", element.tag);
+        log::warn!("The sidemenu item '{}' is not Directory", element.tag);
+        log::warn!("{}:{}", element.tag, element.path.to_string_lossy());
 
         return;
     }

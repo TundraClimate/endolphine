@@ -4,11 +4,15 @@ use std::{path::Path, sync::Arc};
 pub fn refresh(state: Arc<State>) {
     initialize(&state);
 
+    log::info!("Cleanup the app rendering cache");
+
     state.canvas_hashes.refresh();
 }
 
 pub fn initialize(state: &State) {
     use crate::{misc, state::Mode};
+
+    log::info!("Reset the viewer enviroment to init");
 
     state.file_view.selection.disable();
     state.mode.switch(Mode::Normal);
@@ -69,6 +73,10 @@ pub fn move_page(state: Arc<State>, ctx: CommandContext, positive: bool) {
 
 pub fn move_dir(state: Arc<State>, path: &Path) {
     use crate::{misc, state::Mode};
+
+    log::info!("Change working path");
+    log::info!("Before: {}", state.work_dir.get().to_string_lossy());
+    log::info!("After: {}", path.to_string_lossy());
 
     state.mode.switch(Mode::Normal);
     state.work_dir.store(path);
@@ -148,6 +156,8 @@ pub fn attach_child(state: Arc<State>) {
         let hijack_tui = info.hijack;
         let exec = &info.cmd;
 
+        log::info!("Attach '{}'", target_path.to_string_lossy());
+
         if hijack_tui {
             tui::disable();
 
@@ -189,8 +199,10 @@ pub fn toggle_vis(state: Arc<State>) {
     if selection.is_enable() {
         selection.disable();
         state.mode.switch(Mode::Normal);
+        log::info!("The visual selector is disabled");
     } else {
         selection.enable(state.file_view.cursor.current());
         state.mode.switch(Mode::Visual);
+        log::info!("The visual selector is enabled");
     }
 }

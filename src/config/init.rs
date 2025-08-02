@@ -80,7 +80,11 @@ fn register_remap(registry: &mut KeymapRegistry, mode: Mode, maps: Vec<(Keymap, 
 }
 
 pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
+    log::info!("Initialize builtin keymaps");
+
     init_builtin_keymaps(registry);
+
+    log::info!("Initialize user-defined keymaps");
 
     if let Some(keyconf) = keyconf {
         if let Some(ref normal) = keyconf.normal {

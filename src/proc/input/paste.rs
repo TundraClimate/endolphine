@@ -13,11 +13,30 @@ pub(super) fn restore_paste(state: Arc<State>) {
 }
 
 pub(super) fn complete_paste(state: &State, content: &str) {
+    use crate::{clipboard, config};
+
     let overwrite = content.to_ascii_lowercase().starts_with("y");
 
+    log::info!("Paste from clipboard");
+
     match paste_from_cb(&state.work_dir.get(), overwrite) {
-        Ok(count) => crate::log!("{count} items paste successful"),
-        Err(e) => crate::log!("Failed to paste from the clipboard: {}", e.kind()),
+        Ok(count) => {
+            log::info!(
+                "Successfully paste from clipboard: \n{}",
+                if config::get().native_cb {
+                    clipboard::read_native("text/uri-list")
+                        .unwrap_or("Cannot read clipboard".to_string())
+                } else {
+                    clipboard::read().unwrap_or("Cannot read clipboard".to_string())
+                }
+            );
+            crate::log!("{count} items paste successful");
+        }
+        Err(e) => {
+            log::warn!("Paste from clipboard is failed");
+            log::warn!("Failed kind: {}", e.kind());
+            crate::log!("Failed to paste from the clipboard: {}", e.kind());
+        }
     }
 }
 

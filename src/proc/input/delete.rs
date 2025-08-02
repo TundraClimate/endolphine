@@ -33,13 +33,22 @@ pub(super) fn complete_delete(state: &State, content: &str) {
     if let Some(path) = path {
         let name = misc::entry_name(path);
 
+        log::info!("Delete a '{name}'");
+
         match delete_item(path) {
-            Ok(_) => crate::log!("'{name}' delete successful"),
-            Err(e) => crate::log!(
-                "Failed to delete the '{}': {}",
-                misc::entry_name(path),
-                e.kind()
-            ),
+            Ok(_) => {
+                log::info!("The '{name}' was successfully deleted");
+                crate::log!("'{name}' delete successful");
+            }
+            Err(e) => {
+                log::warn!("Delete a '{name}' is failed");
+                log::warn!("Failed kind: {}", e.kind());
+                crate::log!(
+                    "Failed to delete the '{}': {}",
+                    misc::entry_name(path),
+                    e.kind()
+                );
+            }
         }
     }
 }
@@ -101,9 +110,19 @@ pub(super) fn complete_delete_selects(state: &State, content: &str) {
         .map(|path| path.as_path())
         .collect::<Vec<_>>();
 
+    log::info!("Delete files: \n{paths:?}");
+
     match delete_items(paths.clone()) {
-        Ok(_) => crate::log!("{} items delete successful", paths.len()),
-        Err(e) => crate::log!("Failed to delete items: {}", e.kind()),
+        Ok(_) => {
+            log::info!("Files was successfully deleted");
+            log::info!("{paths:?}");
+            crate::log!("{} items delete successful", paths.len());
+        }
+        Err(e) => {
+            log::warn!("Delete files is failed");
+            log::warn!("Failed kind: {}", e.kind());
+            crate::log!("Failed to delete items: {}", e.kind());
+        }
     }
 }
 

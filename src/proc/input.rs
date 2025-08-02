@@ -20,6 +20,8 @@ fn input_start(state: &State, tag: &str) {
     input.enable(tag);
     input.input.take();
 
+    log::info!("Input start: {tag}");
+
     state.file_view.selection.disable();
     state.mode.switch(Mode::Input);
 }
@@ -31,6 +33,8 @@ fn input_start_with_select(state: &State, tag: &str) {
 
     input.enable(tag);
     input.input.take();
+
+    log::info!("Input start: {tag}");
 
     state.mode.switch(Mode::Input);
 }
@@ -57,6 +61,7 @@ pub fn complete_input(state: Arc<State>) {
         _ => panic!("Unknown input tag found: {tag}"),
     }
 
+    log::info!("Input end: {tag}");
     view::initialize(&state);
 }
 
@@ -90,6 +95,8 @@ pub fn restore(state: Arc<State>) {
 
         _ => panic!("Unknown input tag found: {tag}"),
     }
+
+    log::info!("Input cancelled: {tag};{ctx}");
 }
 
 fn is_logging_tag(tag: &str) -> bool {

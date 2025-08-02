@@ -56,6 +56,8 @@ pub fn handle_parse_err(config_read: String, e: toml::de::Error) {
         })
         .collect::<String>();
 
+    log::error!("The new configuration was unsuccessfully parsed");
+
     eprintln!(
         "{}{}",
         SetForegroundColor(Color::DarkCyan),
@@ -72,6 +74,8 @@ pub fn print_success_message() {
     use crossterm::style::{Attribute, Color, SetAttribute, SetForegroundColor};
 
     let path = file_path();
+
+    log::info!("The new configuration was successfully parsed");
 
     println!(
         "{}{}",
@@ -109,11 +113,25 @@ pub fn get() -> &'static Config {
     use std::{fs, sync::LazyLock};
 
     static CONFIG: LazyLock<Config> = LazyLock::new(|| {
-        let model = fs::read_to_string(file_path())
+        log::info!("The config initialize");
+
+        log::info!("Load config file");
+
+        let model = match fs::read_to_string(file_path())
             .ok()
             .and_then(|config| toml::from_str::<ConfigModel>(&config).ok())
-            .unwrap_or_default();
+        {
+            Some(config) => config,
+            None => {
+                log::warn!("The configuration cannot load");
+                log::warn!("Instead default configuration");
+                ConfigModel::default()
+            }
+        };
         let theme_path = theme::dir_path().join(format!("{}.toml", model.theme));
+
+        log::info!("Load application theme");
+
         let Some(theme) = fs::read_to_string(theme_path)
             .ok()
             .and_then(|theme| toml::from_str::<Theme>(&theme).ok())
@@ -125,11 +143,15 @@ pub fn get() -> &'static Config {
 
         let mut keymaps = KeymapRegistry::new();
 
+        log::info!("Initialize keymaps");
+
         init::init_keymaps(&mut keymaps, &model.keymap);
 
         let hijack = HijackMapping::new(model.edit);
 
         let menu_elements = model.menu.items;
+
+        log::info!("Initialize success");
 
         Config {
             theme,

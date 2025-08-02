@@ -8,7 +8,11 @@ pub fn ask_create(state: Arc<State>) {
     let wd = state.work_dir.get();
     let dummy = wd.join(".ep.ed");
 
-    if fs::write(&dummy, b"").is_err() {
+    log::info!("Create a dummy file");
+
+    if let Err(e) = fs::write(&dummy, b"") {
+        log::warn!("Create a dummy file is failed");
+        log::warn!("Failed kind: {}", e.kind());
         crate::log!("Failed to generate a dummy file");
 
         return;
@@ -29,7 +33,11 @@ pub(super) fn restore_create(state: Arc<State>, start_idx: usize) {
     use crate::proc::view;
     use std::fs;
 
-    if fs::remove_file(state.work_dir.get().join(".ep.ed")).is_err() {
+    log::info!("Remove a dummy file");
+
+    if let Err(e) = fs::remove_file(state.work_dir.get().join(".ep.ed")) {
+        log::warn!("Remove a dummy file is failed");
+        log::warn!("Failed kind: {}", e.kind());
         crate::log!("Failed to remove a dummy file");
     }
 
@@ -46,9 +54,15 @@ pub(super) fn complete_create(state: &State, content: &str) {
     let is_dir = content.ends_with("/");
     let path = state.work_dir.get().join(content);
 
+    log::info!("Create the '{content}'");
+
     match create_item(&path, is_dir) {
         Ok(_) => {
-            if fs::remove_file(state.work_dir.get().join(".ep.ed")).is_err() {
+            log::info!("Remove a dummy file");
+
+            if let Err(e) = fs::remove_file(state.work_dir.get().join(".ep.ed")) {
+                log::warn!("Remove a dummy file is failed");
+                log::warn!("Failed kind: {}", e.kind());
                 crate::log!("Failed to remove a dummy file");
             }
 
@@ -64,9 +78,12 @@ pub(super) fn complete_create(state: &State, content: &str) {
                 cursor.shift_p(pos);
             }
 
+            log::info!("The '{content}' was successfully created");
             crate::log!("'{content}' create successful");
         }
         Err(e) => {
+            log::warn!("Create a '{content}' is failed");
+            log::warn!("Failed kind: {}", e.kind());
             crate::log!(
                 "Failed to create the '{}': {}",
                 misc::entry_name(&path),

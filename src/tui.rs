@@ -82,6 +82,9 @@ pub fn set_dbg_hook() {
 fn terminate<D: std::fmt::Display>(e: D) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
+    log::error!("{e}");
+    log::error!("\n---\nEndolphine terminated\n---");
+
     eprintln!(
         "{}{}",
         SetForegroundColor(crossterm::style::Color::Red),
@@ -96,6 +99,15 @@ fn dbg_terminate<D: std::fmt::Display>(msg: D, e: &std::panic::PanicHookInfo) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
     let location = e.location().unwrap();
+
+    log::error!("{msg}");
+    log::error!(
+        "Termination from '{}' at {}:{}",
+        location.file(),
+        location.line(),
+        location.column()
+    );
+    log::error!("\n---\nEndolphine terminated\n---");
 
     eprintln!(
         "{}{}",
@@ -118,6 +130,8 @@ pub fn close() -> ! {
 
     disable();
 
+    log::info!("Endolphine closed");
+
     process::exit(0);
 }
 
@@ -129,6 +143,7 @@ pub fn enable() {
     use std::io;
 
     let _ = terminal::enable_raw_mode().and_then(|_| {
+        log::info!("Enter alternate screen");
         crossterm::execute!(io::stdout(), EnterAlternateScreen, DisableLineWrap, Hide)
     });
 }
@@ -141,6 +156,7 @@ pub fn disable() {
     use std::io;
 
     let _ = terminal::disable_raw_mode().and_then(|_| {
+        log::info!("Leave alternate screen");
         crossterm::execute!(io::stdout(), LeaveAlternateScreen, Show, EnableLineWrap,)
     });
 }

@@ -19,24 +19,39 @@ pub fn clip_files<P: AsRef<Path>>(files: &[P]) -> io::Result<()> {
 }
 
 pub fn yank(state: Arc<State>) {
-    use crate::misc;
+    use crate::{config, misc};
 
     let child_files = misc::sorted_child_files(&state.work_dir.get());
 
     if let Some(target) = child_files.get(state.file_view.cursor.current()) {
+        let native = config::get().native_cb;
+
+        if native {
+            log::info!("Clipping by native command");
+        } else {
+            log::info!("Clipping by endolphine");
+        }
+
         match clip_files(&[target]) {
-            Ok(_) => crate::log!("Yanked '{}'", misc::entry_name(target)),
-            Err(e) => crate::log!(
-                "Failed to yank the '{}': {}",
-                target.to_string_lossy(),
-                e.kind()
-            ),
+            Ok(_) => {
+                log::info!("Now clipboard: \n{}", target.to_string_lossy());
+                crate::log!("Yanked '{}'", misc::entry_name(target));
+            }
+            Err(e) => {
+                log::warn!("Clip the '{}' is failed", target.to_string_lossy());
+                log::warn!("Failed kind: {}", e.kind());
+                crate::log!(
+                    "Failed to yank the '{}': {}",
+                    target.to_string_lossy(),
+                    e.kind()
+                );
+            }
         }
     }
 }
 
 pub fn yank_selects(state: Arc<State>) {
-    use crate::{misc, proc::view};
+    use crate::{config, misc, proc::view};
 
     let child_files = misc::sorted_child_files(&state.work_dir.get());
     let selected = state.file_view.selection.collect();
@@ -47,9 +62,28 @@ pub fn yank_selects(state: Arc<State>) {
         .filter_map(|(i, c)| selected.contains(&i).then_some(c))
         .collect::<Vec<_>>();
 
+    let native = config::get().native_cb;
+
+    if native {
+        log::info!("Clipping by native command");
+    } else {
+        log::info!("Clipping by endolphine");
+    }
+
     match clip_files(&targets) {
-        Ok(_) => crate::log!("Yanked {} items", targets.len()),
-        Err(e) => crate::log!("Failed to yank {} files: {}", targets.len(), e.kind()),
+        Ok(_) => {
+            log::info!("Now clipboard: \n{targets:?}");
+            crate::log!("Yanked {} items", targets.len());
+        }
+        Err(e) => {
+            log::warn!("Clip files is failed");
+            log::warn!(
+                "\n{}",
+                toml::to_string_pretty(&targets).unwrap_or("Files cannot read".to_string())
+            );
+            log::warn!("Failed kind: {}", e.kind());
+            crate::log!("Failed to yank {} files: {}", targets.len(), e.kind());
+        }
     }
 
     if !selected.is_empty() {

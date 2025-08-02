@@ -78,6 +78,8 @@ pub struct Theme {
 pub async fn download_official_theme(name: &str) -> io::Result<()> {
     use std::fs;
 
+    log::info!("The official theme downloading");
+
     let dest_path = dir_path().join(format!("{name}.toml"));
 
     if dest_path.exists() {
@@ -109,6 +111,8 @@ pub async fn download_official_theme(name: &str) -> io::Result<()> {
 pub async fn download_unofficial_theme(url: &str) -> io::Result<()> {
     use std::fs;
 
+    log::info!("The unofficial theme downloading");
+
     let Some(name) = url
         .split('/')
         .next_back()
@@ -129,7 +133,7 @@ pub async fn download_unofficial_theme(url: &str) -> io::Result<()> {
     };
 
     if res.status().is_client_error() {
-        panic!("\"{name}\" is invalid url");
+        panic!("'{name}' is invalid url");
     }
 
     let Ok(bytes) = res.bytes().await else {

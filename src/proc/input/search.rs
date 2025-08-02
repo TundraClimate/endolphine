@@ -62,6 +62,18 @@ pub(super) fn complete_search(state: &State, content: &str) {
             .map(|pos| pos + 1)
             .unwrap_or(0);
 
+        if first_match != 0 {
+            log::info!(
+                "The '{content}' was matched to '{}'",
+                child_files[cursor_pos + 1..]
+                    .iter()
+                    .chain(child_files[..cursor_pos].iter())
+                    .find(|f| reg.is_match(&misc::entry_name(f)))
+                    .map(|f| f.to_string_lossy().to_string())
+                    .unwrap_or("NaN".to_string())
+            );
+        }
+
         cursor.shift_loop_p(first_match);
         log_buffer(state);
     }

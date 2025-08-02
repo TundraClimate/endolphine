@@ -27,7 +27,7 @@ async fn main() {
     }
 
     if let Err(e) = tui::setup_logger() {
-        panic!("{}", e);
+        panic!("{e}");
     }
 
     let args = args::parse_args();
@@ -37,6 +37,8 @@ async fn main() {
             Ok(expected) => match expected {
                 Expected::OpenEndolphine(path) => {
                     tui::enable();
+
+                    log::info!("\n---\nLaunch endolphine: Success\n---");
 
                     let state = Arc::new(State::new(path));
                     let handle = event::spawn_reader(state.clone());
@@ -53,11 +55,15 @@ async fn main() {
                         panic!("$EDITOR not initialized");
                     };
 
+                    log::info!("\n---\nLaunch config editor: Success\n---");
+
                     Command::new(editor)
                         .arg(config::file_path())
                         .status()
                         .await
                         .ok();
+
+                    log::info!("New configuration saved");
 
                     let Some(config_read) = fs::read_to_string(config::file_path()).ok() else {
                         panic!("Broken configure detected: Unable to read file");
@@ -70,16 +76,19 @@ async fn main() {
                 }
                 Expected::EnableDebugMode => {
                     tui::set_dbg_hook();
+                    log::info!("Debug mode enabled");
                 }
                 Expected::DownloadUnofficialTheme(url) => {
-                    if let Err(e) = config::download_unofficial_theme(&url).await {
-                        panic!("The theme downloading failed: {}", e.kind());
-                    };
+                    match config::download_unofficial_theme(&url).await {
+                        Ok(_) => log::info!("The theme download successful"),
+                        Err(e) => panic!("The theme download failed: {}", e.kind()),
+                    }
                 }
                 Expected::DownloadOfficialTheme(name) => {
-                    if let Err(e) = config::download_official_theme(&name).await {
-                        panic!("The theme downloading failed: {}", e.kind());
-                    };
+                    match config::download_official_theme(&name).await {
+                        Ok(_) => log::info!("The theme download successful"),
+                        Err(e) => panic!("The theme download failed: {}", e.kind()),
+                    }
                 }
             },
             Err(cause) => match cause {
