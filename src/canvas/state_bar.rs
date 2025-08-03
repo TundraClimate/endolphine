@@ -1,15 +1,16 @@
 use super::Rect;
-use crate::canvas;
+use crate::{canvas, state::Mode};
 
 pub(super) struct StateBar {
+    mode: Mode,
     procs: usize,
 }
 
 impl StateBar {
     pub(super) const ID: u8 = 4;
 
-    pub(super) fn new(procs: usize) -> Self {
-        Self { procs }
+    pub(super) fn new(mode: Mode, procs: usize) -> Self {
+        Self { mode, procs }
     }
 
     pub(super) fn make_hash(&self, layout_hash: u64) -> u64 {
@@ -18,6 +19,7 @@ impl StateBar {
         let mut hasher = DefaultHasher::new();
 
         layout_hash.hash(&mut hasher);
+        self.mode.hash(&mut hasher);
         self.procs.hash(&mut hasher);
 
         hasher.finish()
@@ -29,13 +31,22 @@ impl StateBar {
 
         let theme = &config::get().theme;
 
+        let current_mode = match self.mode {
+            Mode::Normal => format!("{} NORMAL ", SetBackgroundColor(theme.mode_normal.into())),
+            Mode::Visual => format!("{} VISUAL ", SetBackgroundColor(theme.mode_visual.into())),
+            Mode::Input => format!("{} INPUT ", SetBackgroundColor(theme.mode_input.into())),
+            Mode::Search => format!("{} SEARCH ", SetBackgroundColor(theme.mode_search.into())),
+            Mode::Menu => format!("{} MENU ", SetBackgroundColor(theme.mode_menu.into())),
+        };
+
         canvas::printin(
             rect,
             (0, 0),
             format!(
-                "{}{} {} procs running{}",
-                SetBackgroundColor(theme.bar_bg.into()),
+                "{}{}{} {} procs running{}",
                 SetForegroundColor(theme.bar_fg.into()),
+                current_mode,
+                SetBackgroundColor(theme.bar_bg.into()),
                 self.procs,
                 " ".repeat(rect.width.into())
             ),

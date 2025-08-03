@@ -73,6 +73,11 @@ pub struct Theme {
     pub pwd_view: HexColor,
     pub pwd_pickouted: HexColor,
     pub search_surround: HexColor,
+    pub mode_normal: HexColor,
+    pub mode_visual: HexColor,
+    pub mode_input: HexColor,
+    pub mode_search: HexColor,
+    pub mode_menu: HexColor,
 }
 
 pub async fn download_official_theme(name: &str) -> io::Result<()> {

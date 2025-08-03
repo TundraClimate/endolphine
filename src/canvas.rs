@@ -63,7 +63,7 @@ pub fn draw(state: Arc<State>) {
         viewer.draw(layout.get(Viewer::ID));
     }
 
-    let statebar = StateBar::new(state.proc_counter.now());
+    let statebar = StateBar::new(state.mode.get(), state.proc_counter.now());
     let statebar_hash = statebar.make_hash(layout_key);
 
     if hashes.update(StateBar::ID, statebar_hash) != Some(statebar_hash) {
