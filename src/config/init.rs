@@ -229,12 +229,17 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
 
 fn override_builtin(model: &ConfigModel, r: &mut KeymapRegistry) {
     use crate::{
-        proc::{Acommand, input::delete},
+        proc::{Acommand, input::delete, input::paste},
         state::Mode,
     };
 
     if !model.delete.listen_yes {
         nmap!(r, "dd", Acommand(|s, _| delete::delete_just(s)));
         vmap!(r, "d", Acommand(|s, _| delete::delete_selects_just(s)));
+    }
+
+    if !model.paste.listen_overwrite {
+        nmap!(r, "p", Acommand(|s, _| paste::paste_just(s)));
+        vmap!(r, "p", Acommand(|s, _| paste::paste_just(s)));
     }
 }

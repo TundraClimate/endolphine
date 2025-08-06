@@ -116,6 +116,8 @@ pub struct Config {
     pub hijack: HijackMapping,
     pub delete_to_temp: bool,
     pub delete_with_yank: bool,
+    pub paste_similar_suffix: String,
+    pub paste_is_overwrite: bool,
     pub menu_elements: Vec<MenuElement>,
 }
 
@@ -164,6 +166,9 @@ pub fn get() -> &'static Config {
         let delete_to_temp = model.delete.put_to_temp;
         let delete_with_yank = model.delete.with_yank;
 
+        let paste_similar_suffix = model.paste.copied_suffix;
+        let paste_is_overwrite = model.paste.is_overwrite;
+
         log::info!("Initialize success");
 
         Config {
@@ -173,6 +178,8 @@ pub fn get() -> &'static Config {
             hijack,
             delete_to_temp,
             delete_with_yank,
+            paste_similar_suffix,
+            paste_is_overwrite,
             menu_elements,
         }
     });

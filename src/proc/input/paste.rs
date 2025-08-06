@@ -12,6 +12,21 @@ pub(super) fn restore_paste(state: Arc<State>) {
     view::refresh(state.clone());
 }
 
+pub fn paste_just(state: Arc<State>) {
+    use crate::{config, proc::view};
+
+    complete_paste(
+        &state,
+        if config::get().paste_is_overwrite {
+            "y"
+        } else {
+            "n"
+        },
+    );
+
+    view::initialize(&state);
+}
+
 pub(super) fn complete_paste(state: &State, content: &str) {
     use crate::{clipboard, config};
 
@@ -80,7 +95,7 @@ fn paste_from_cb(dir: &Path, overwrite: bool) -> io::Result<usize> {
 }
 
 fn copy_item<P: AsRef<Path>>(from: P, to: P, overwrite: bool) -> usize {
-    use crate::misc;
+    use crate::{config, misc};
     use std::{fs, os::unix};
     use walkdir::WalkDir;
 
@@ -91,7 +106,7 @@ fn copy_item<P: AsRef<Path>>(from: P, to: P, overwrite: bool) -> usize {
         let mut entry = misc::entry_name(from);
         let parent = from.parent().unwrap_or(Path::new("/"));
 
-        recursive_suffix(parent, &mut entry, "_COPY");
+        recursive_suffix(parent, &mut entry, &config::get().paste_similar_suffix);
 
         to = parent.join(entry);
     }
