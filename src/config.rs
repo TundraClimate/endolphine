@@ -3,12 +3,14 @@ mod edit;
 mod init;
 mod mapping;
 mod menu;
+mod paste;
 mod theme;
 
 use delete::DeleteConfig;
 use edit::{EditConfig, HijackMapping};
 use mapping::{KeymapConfig, KeymapRegistry};
 use menu::{MenuConfig, MenuElement};
+use paste::PasteConfig;
 use serde::{Deserialize, Serialize};
 use std::path::{Path, PathBuf};
 
@@ -32,6 +34,7 @@ struct ConfigModel {
     native_cb: bool,
     keymap: Option<KeymapConfig>,
     delete: DeleteConfig,
+    paste: PasteConfig,
     edit: EditConfig,
     menu: MenuConfig,
 }
@@ -99,6 +102,7 @@ impl Default for ConfigModel {
             native_cb: false,
             keymap: None,
             delete: DeleteConfig::default(),
+            paste: PasteConfig::default(),
             edit: EditConfig::default(),
             menu: MenuConfig::default(),
         }
