@@ -300,9 +300,8 @@ cargo uninstall endolphine
 
 # TODO
 
-- Impl the .log output-system
 - Impl the plugin-system
-- Add mode views to statebar on left side
+- Improve viewer sort algorithm
 - Improve Visual-selection(pick select, multiple area)
 - Rewrite README
 
