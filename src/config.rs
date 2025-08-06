@@ -110,6 +110,8 @@ pub struct Config {
     pub native_cb: bool,
     pub keymaps: KeymapRegistry,
     pub hijack: HijackMapping,
+    pub delete_to_temp: bool,
+    pub delete_with_yank: bool,
     pub menu_elements: Vec<MenuElement>,
 }
 
@@ -155,6 +157,9 @@ pub fn get() -> &'static Config {
 
         let menu_elements = model.menu.items;
 
+        let delete_to_temp = model.delete.put_to_temp;
+        let delete_with_yank = model.delete.with_yank;
+
         log::info!("Initialize success");
 
         Config {
@@ -162,6 +167,8 @@ pub fn get() -> &'static Config {
             native_cb,
             keymaps,
             hijack,
+            delete_to_temp,
+            delete_with_yank,
             menu_elements,
         }
     });
