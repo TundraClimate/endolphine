@@ -20,6 +20,14 @@ pub(super) fn restore_delete(state: Arc<State>) {
     view::refresh(state.clone());
 }
 
+pub fn delete_just(state: Arc<State>) {
+    use crate::proc::view;
+
+    complete_delete(&state, "y");
+
+    view::initialize(&state);
+}
+
 pub(super) fn complete_delete(state: &State, content: &str) {
     use crate::misc;
 
@@ -91,6 +99,14 @@ pub(super) fn restore_delete_selects(state: Arc<State>, start_idx: usize) {
     cursor.shift_p(start_idx);
 
     view::refresh(state.clone());
+}
+
+pub fn delete_selects_just(state: Arc<State>) {
+    use crate::proc::view;
+
+    complete_delete_selects(&state, "y");
+
+    view::initialize(&state);
 }
 
 pub(super) fn complete_delete_selects(state: &State, content: &str) {

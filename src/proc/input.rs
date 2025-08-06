@@ -1,5 +1,5 @@
 mod create;
-mod delete;
+pub mod delete;
 mod paste;
 mod rename;
 pub mod search;

@@ -149,7 +149,7 @@ pub fn get() -> &'static Config {
 
         log::info!("Initialize keymaps");
 
-        init::init_keymaps(&mut keymaps, &model.keymap);
+        init::init_keymaps(&model, &mut keymaps, &model.keymap);
 
         let hijack = HijackMapping::new(model.edit);
 

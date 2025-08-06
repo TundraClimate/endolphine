@@ -79,10 +79,18 @@ fn register_remap(registry: &mut KeymapRegistry, mode: Mode, maps: Vec<(Keymap, 
     })
 }
 
-pub(super) fn init_keymaps(registry: &mut KeymapRegistry, keyconf: &Option<KeymapConfig>) {
+pub(super) fn init_keymaps(
+    model: &ConfigModel,
+    registry: &mut KeymapRegistry,
+    keyconf: &Option<KeymapConfig>,
+) {
     log::info!("Initialize builtin keymaps");
 
     init_builtin_keymaps(registry);
+
+    log::info!("Override builtin keymaps");
+
+    override_builtin(model, registry);
 
     log::info!("Initialize user-defined keymaps");
 
@@ -205,4 +213,16 @@ fn init_builtin_keymaps(r: &mut KeymapRegistry) {
     mmap!(r, "G", Command(|s, _| menu::move_cursor_too(s, true)));
     mmap!(r, "gg", Command(|s, _| menu::move_cursor_too(s, false)));
     mmap!(r, "l", Command(|s, _| menu::enter(s)));
+}
+
+fn override_builtin(model: &ConfigModel, r: &mut KeymapRegistry) {
+    use crate::{
+        proc::{Acommand, input::delete},
+        state::Mode,
+    };
+
+    if !model.delete.listen_yes {
+        nmap!(r, "dd", Acommand(|s, _| delete::delete_just(s)));
+        vmap!(r, "d", Acommand(|s, _| delete::delete_selects_just(s)));
+    }
 }
