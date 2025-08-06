@@ -37,6 +37,18 @@ pub async fn setup_local() -> io::Result<()> {
         fs::create_dir_all(&tmp_dir)?;
     }
 
+    let local_cb = tmp_dir.join("cb.txt");
+
+    if !local_cb.exists() {
+        fs::write(local_cb, b"")?;
+    }
+
+    let trash = tmp_dir.join("Trash");
+
+    if !trash.exists() {
+        fs::create_dir_all(&trash)?;
+    }
+
     Ok(())
 }
 

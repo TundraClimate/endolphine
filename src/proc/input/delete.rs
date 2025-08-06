@@ -62,6 +62,8 @@ pub(super) fn complete_delete(state: &State, content: &str) {
 }
 
 fn delete_item(path: &Path) -> io::Result<()> {
+    use crate::{config, misc, proc::yank};
+
     if !path.exists() {
         return Ok(());
     }
@@ -70,7 +72,24 @@ fn delete_item(path: &Path) -> io::Result<()> {
         return Ok(());
     };
 
-    if metadata.is_symlink() || metadata.is_file() {
+    let config = config::get();
+
+    if config.delete_to_temp {
+        let trash = Path::new("/tmp/endolphine/Trash");
+        let trashed = trash.join(misc::entry_name(path));
+
+        if trashed.is_symlink() || trashed.is_file() {
+            fs::remove_file(&trashed)?;
+        } else if trashed.is_dir() {
+            fs::remove_dir_all(&trashed)?;
+        }
+
+        if config.delete_with_yank {
+            yank::clip_files(&[&trashed])?;
+        }
+
+        fs::rename(path, trashed)
+    } else if metadata.is_symlink() || metadata.is_file() {
         fs::remove_file(path)
     } else {
         fs::remove_dir_all(path)
@@ -143,5 +162,15 @@ pub(super) fn complete_delete_selects(state: &State, content: &str) {
 }
 
 fn delete_items(paths: Vec<&Path>) -> io::Result<()> {
-    paths.iter().try_for_each(|path| delete_item(path))
+    use crate::{config, proc::yank};
+
+    paths.iter().try_for_each(|path| delete_item(path))?;
+
+    let config = config::get();
+
+    if config.delete_to_temp && config.delete_with_yank {
+        yank::clip_files(&paths)?;
+    }
+
+    Ok(())
 }

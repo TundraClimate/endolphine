@@ -12,6 +12,15 @@ pub fn clip_files<P: AsRef<Path>>(files: &[P]) -> io::Result<()> {
     let conf = config::get();
 
     if conf.native_cb {
+        if !clipboard::is_cmd_installed() {
+            crate::log!(
+                "Failed to paste from the clipboard: {} is not installed",
+                clipboard::command()
+            );
+
+            return Ok(());
+        }
+
         clipboard::clip_native(files, "text/uri-list")
     } else {
         clipboard::clip(files)
