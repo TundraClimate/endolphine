@@ -1,9 +1,11 @@
+mod delete;
 mod edit;
 mod init;
 mod mapping;
 mod menu;
 mod theme;
 
+use delete::DeleteConfig;
 use edit::{EditConfig, HijackMapping};
 use mapping::{KeymapConfig, KeymapRegistry};
 use menu::{MenuConfig, MenuElement};
@@ -29,6 +31,7 @@ struct ConfigModel {
     theme: String,
     native_cb: bool,
     keymap: Option<KeymapConfig>,
+    delete: DeleteConfig,
     edit: EditConfig,
     menu: MenuConfig,
 }
@@ -95,6 +98,7 @@ impl Default for ConfigModel {
             theme: "dark".to_string(),
             native_cb: false,
             keymap: None,
+            delete: DeleteConfig::default(),
             edit: EditConfig::default(),
             menu: MenuConfig::default(),
         }
