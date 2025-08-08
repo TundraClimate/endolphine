@@ -303,6 +303,7 @@ cargo uninstall endolphine
 - Impl the plugin-system
 - Improve viewer sort algorithm
 - Improve Visual-selection(pick select, multiple area)
+- Show key buffer
 - Rewrite README
 
 ## LICENSE
