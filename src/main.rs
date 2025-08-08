@@ -79,15 +79,20 @@ async fn main() {
                     log::info!("Debug mode enabled");
                 }
                 Expected::DownloadUnofficialTheme(url) => {
+                    let name = url
+                        .split_terminator(&['\\', '/'][..])
+                        .next_back()
+                        .unwrap_or("unknown");
+
                     match config::download_unofficial_theme(&url).await {
-                        Ok(_) => log::info!("The theme download successful"),
-                        Err(e) => panic!("The theme download failed: {}", e.kind()),
+                        Ok(_) => log::info!("The '{name}' download successful",),
+                        Err(e) => panic!("The '{name}' download failed: {}", e.kind()),
                     }
                 }
                 Expected::DownloadOfficialTheme(name) => {
                     match config::download_official_theme(&name).await {
-                        Ok(_) => log::info!("The theme download successful"),
-                        Err(e) => panic!("The theme download failed: {}", e.kind()),
+                        Ok(_) => log::info!("The '{name}' download successful"),
+                        Err(e) => panic!("The '{name}' download failed: {}", e.kind()),
                     }
                 }
             },
