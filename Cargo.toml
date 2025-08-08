@@ -11,12 +11,12 @@ readme = "README.md"
 [dependencies]
 chrono = "0.4.38"
 clap = { version = "4.5.7", features = ["derive"] }
-crossterm = "0.28.1"
+crossterm = "0.29.0"
 tokio = { version = "1.38.0", features = ["full"] }
 thiserror = "2.0.8"
 si-scale = "0.2.3"
 walkdir = "2.5.0"
-toml = "0.8.19"
+toml = "0.9.5"
 serde = { version = "1.0.217", features = ["derive"] }
 regex = "1.11.1"
 unicode-width = "0.2.0"
