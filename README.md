@@ -12,12 +12,23 @@ required [Cargo](https://www.rust-lang.org/tools/install):
 cargo install endolphine
 ```
 
-exec:
+help:
 
 ```
-$ ep [PATH]
+TUI file explorer
 
-[PATH]: default "."
+Usage: ep [OPTIONS] [PATH]
+
+Arguments:
+  [PATH]  Endolphine opens in this directory, This path must be a directory [default: .]
+
+Options:
+  -e, --edit-config  Open config file with $EDITOR
+      --dbg          Enable debug mode
+  -T <URL>           Download an unofficial theme from URL
+  -t <NAME>          Download an official theme. The theme list is in the README#Official-themes
+  -h, --help         Print help
+  -V, --version      Print version
 ```
 
 # Usage
@@ -36,160 +47,135 @@ Cannot open a **NOT** directory items.
 Open config file:
 
 ```sh
-ep -e
+$ ep -e
 
 # or
 
-vim ~/.config/endolphine/config.toml
+$ ${EDITOR} ~/.config/endolphine/config.toml
 ```
 
 Default config:
 
 ```toml
-# Editor to use
-editor = ["vim"]
+# Theme name to use.
+# Theme files found on '${HOME}/.config/endolphine/theme/'.
+# 'dark' theme is default installed.
+# Official theme: #Official-themes
+theme = "dark"
 
-# theme to use (look "#Available themes")
-theme = "Dark"
-
-# OPTIONAL
-# file path of user-defined theme
-# Can't use variables
-# if need the theme syntax, look the "#Example user theme"
-user_theme_path = "foo/bar/anyname.toml"
-
-# Item sort priority
-# 0: Prefix is lowercase (ex: "dotfiles/", "main.rs")
-# 1: Prefix is uppercase (ex: "Desktop/", "Cargo.toml")
-# 2: The "dotfiles" (ex: ".local/", ".git/")
-# 3: Other files
-sort_by_priority = [
-    0,
-    1,
-    2,
-    3,
-]
+# The using clipboard on window system.
+# Access to the clipboard uses native command.
+# Macos: Not enough support
+# Wayland: wl-copy, wl-paste
+# X11: xclip
+native_cb = false
 
 [delete]
-# Whether to ask again when you enter the delete key
-ask = true
+# If true, Ask to delete file or not.
+listen_yes = true
 
-# Will yank the file if the rm command runs
-# This config disabled when "for_tmp" is disabled
-yank = true
+# Instead of deleting the file, the process is changed to moving it to the '/tmp/endolphine/Trash/'.
+put_to_temp = false
 
-# Instead of deleting the item, the action is changed to moving it to the tmp_dir
-for_tmp = true
+# Only enable if put_to_temp is true.
+# Yank the deleted file after this process.
+with_yank = false
 
 [paste]
-# A suffix that is added for collision avoidance when pasting into the same dir
-copied_suffix = "_Copy"
+# Suffix when pasting the same file.
+copied_suffix = "_COPY"
 
-# Won't ask "overwrite the same files?" when the paste command runs
-force_mode = true
+# Whether to overwrite files.
+is_overwrite = false
 
-# Default answer to the "overwrite the same files?" question
-default_overwrite = true
+# If true, Ask to overwrite file or not.
+listen_overwrite = true
 
-# Menu shortcuts
-# Scheme: "Tag:Path"
+# On press 'l' key, file opens by specified command.
+# Syntax: ".{extension}" = { cmd = "{command}" | ["{command}", {arg1}, {arg2}, ..], hijack = {hijack} }
+# extension - e.g. png, jpeg, mp4
+# command - e.g. gimp, vlc
+# hijack - Whether to hijack on endolphine's tui, require the true if command is tui to using
 #
-# Tag: Name of be displaying on menu
-# Path: Shortcut path (directory only)
+# [edit]
+# default = { cmd = "vim", hijack = true }
+# ".md" = { cmd = "code", hijack = false }
 #
-# Important: **Can't** use the VARIABLE ($USER is example)
+[edit.default]
+cmd = "vim"
+hijack = true
+
 [menu]
+# Menu items.
+# Syntax: "{tag}:{path}"
+# tag - Displaying name
+# path - Corresponding path (only directory)
+#
 items = [
     "Home:/home/${USER}",
     "Downloads:/home/${USER}/Downloads",
     "Desktop:/home/${USER}/Desktop",
 ]
 
-# User-defined keymapping
-
-# In normal mode mapping
-# Normal mode is default mode, the basic operation is available
-# OPTIONAL
-[keymap.normal]
-
-# Examples
-# K = "10k"
-# J = "10j"
-# Q = "ZZ"
-# "<c-e>" = "ZZ"
-
-# In visual mode mapping
-# Visual mode is area-selecting mode, move cursor to change selected area
-# OPTIONAL
-[keymap.visual]
-
-# Example
-# "<c-v>" = "ggVG"
-
-# In input mode mapping
-# Input mode is focus input area
-# OPTIONAL
-[keymap.input]
-
-# Example
-# "<c-e>" = "<ESC>"
-
-# Override the file open command by extension
-# OPTIONAL
-[open]
-
-# Format:
-# EXTENSION = { cmd = ["command"], in_term = bool }
+# Keymapping section.
+# So similar to the vim-keymap.
+# Syntax:
+# [keymap.{mode}]
+# "{from}" = "{to}"
 #
-# cmd = ["COMMAND", "ARGS1", "ARGS2", ...]
-# in_term: if command processing in the terminal
-# in_term is OPTIONAL (default: true)
-
-# Example:
-# txt = { cmd = ["nvim"] }
+# mode - Application mode
+# from - Keymap you type in
+# to - Keymap of remapped
+#
+# [keymap.normal]
+# "<C-c>" = "ZZ"
+# [keymap.visual]
+# [keymap.menu]
+#
+# List of keymaps: #Keymapping
+# Keymap syntax: https://github.com/TundraClimate/viks/README.md
 ```
 
 ### Keymapping
 
-| Mode                 | Keymap       | Desc                                                                       |
-| -------------------- | ------------ | -------------------------------------------------------------------------- |
-| Normal, Visual       | `ZZ`         | Exit application                                                           |
-| Normal               | `<ESC>`      | Some reset                                                                 |
-| Visual               | `<ESC>`      | Change to normal mode                                                      |
-| Normal, Menu         | `k`          | Move cursor up                                                             |
-| Visual               | `k`          | Move cursor up and select item                                             |
-| Normal, Menu         | `j`          | Move cursor down                                                           |
-| Visual               | `j`          | Move cursor down and select item                                           |
-| Menu                 | `K`          | Move cursor to top                                                         |
-| Menu                 | `J`          | Move cursor to bottom                                                      |
-| Normal, Visual       | `h`          | Open parent directory and change to normal mode                            |
-| Normal, Visual       | `gg`         | Move cursor to top                                                         |
-| Normal, Visual       | `G`          | Move cursor to bottom                                                      |
-| Normal, Visual       | `gk`         | Move cursor up per page                                                    |
-| Normal, Visual       | `gj`         | Move cursor down per page                                                  |
-| Normal, Visual       | `l`          | Open under cursor item                                                     |
-| Normal, Visual       | `V`          | Toggle Normal and Visual mode                                              |
-| Normal, Visual, Menu | `M`          | Toggle Menu widget                                                         |
-| Normal, Visual, Menu | `m`          | Toggle Menu focus                                                          |
-| Normal, Visual       | `a`          | Ask create item and change to normal mode                                  |
-| Normal, Visual       | `d`          | (if config delete.ask = true) Ask delete file(s) and change to normal mode |
-| Normal               | `dd`         | Delete under cursor item                                                   |
-| Visual               | `d`          | Delete selected items                                                      |
-| Normal, Visual       | `r`          | Ask rename item and change to normal mode                                  |
-| Normal               | `yy`         | Yank under cursor item                                                     |
-| Visual               | `y`          | Yank selected items                                                        |
-| Normal, Visual       | `p`          | Paste from clipboard                                                       |
-| Normal, Visual       | `/`          | Open search input and change to normal mode                                |
-| Normal, Visual       | `n`          | Move cursor to next by search                                              |
-| Input                | `a`..`Z`, .. | Push key to input                                                          |
-| Input                | `<c-h>`      | Move cursor to previous                                                    |
-| Input                | `<c-l>`      | Move cursor to next                                                        |
-| Input                | `<BS>`       | Delete current char in input                                               |
-| Input                | `<s-BS>`     | Delete next char in input                                                  |
-| Input                | `<CR>`       | Complete input                                                             |
-| Input                | `<ESC>`      | Espace from input                                                          |
+| Mode                 | Keymap       | Desc                                            |
+| -------------------- | ------------ | ----------------------------------------------- |
+| Normal, Visual, Menu | `ZZ`         | Exit application                                |
+| Normal               | `<ESC>`      | Some reset                                      |
+| Visual               | `<ESC>`      | Change to normal mode                           |
+| Normal, Menu         | `k`          | Move cursor up                                  |
+| Visual               | `k`          | Move cursor up and select item                  |
+| Normal, Menu         | `j`          | Move cursor down                                |
+| Visual               | `j`          | Move cursor down and select item                |
+| Menu                 | `gg`         | Move cursor to top                              |
+| Menu                 | `G`          | Move cursor to bottom                           |
+| Normal, Visual       | `h`          | Open parent directory and change to normal mode |
+| Normal, Visual       | `gg`         | Move cursor to top                              |
+| Normal, Visual       | `G`          | Move cursor to bottom                           |
+| Normal, Visual       | `gk`         | Move cursor up per page                         |
+| Normal, Visual       | `gj`         | Move cursor down per page                       |
+| Normal, Visual, Menu | `l`          | Open under cursor item                          |
+| Normal, Visual       | `V`          | Toggle Normal and Visual mode                   |
+| Normal, Visual, Menu | `M`          | Toggle Menu widget                              |
+| Normal, Visual, Menu | `m`          | Toggle Menu focus                               |
+| Normal, Visual       | `a`          | Ask create item and change to normal mode       |
+| Normal               | `dd`         | Delete under cursor item                        |
+| Visual               | `d`          | Delete selected items                           |
+| Normal, Visual       | `r`          | Ask rename item and change to normal mode       |
+| Normal               | `yy`         | Yank under cursor item                          |
+| Visual               | `y`          | Yank selected items                             |
+| Normal, Visual       | `p`          | Paste from clipboard                            |
+| Normal, Visual       | `/`          | Open search input and change to normal mode     |
+| Normal, Visual       | `n`          | Move cursor to next by search                   |
+| Input                | `a`..`Z`, .. | Push key to input                               |
+| Input                | `<c-h>`      | Move cursor to previous                         |
+| Input                | `<c-l>`      | Move cursor to next                             |
+| Input                | `<BS>`       | Delete current char in input                    |
+| Input                | `<DEL>`      | Delete next char in input                       |
+| Input                | `<CR>`       | Complete input                                  |
+| Input                | `<ESC>`      | Espace from input                               |
 
-### Available themes
+### Official themes
 
 | Name       | Description                        |
 | ---------- | ---------------------------------- |
@@ -261,31 +247,32 @@ items = [
 <details><summary>Example user theme</summary>
 
 ```toml
-fg_focused = "#FFFFFF"
-fg_unfocused = "#FFFFFF"
-bg_focused = "#505050"
-bg_unfocused = "#3C3C3C"
-label = "#646464"
-bar = "#AF2020"
-bar_dark = "#8F0000"
-unnecessary_text = "#8F4040"
-bar_text = "#282828"
-bar_text_light = "#3F3F3F"
-perm_ty = "#FFFFFF"
-perm_r = "#60EF06"
-perm_w = "#EF4040"
-perm_e = "#FFFFFF"
-row_file = "#FF2010"
-row_dir = "#FFFFFF"
-row_symlink = "#C828C8"
-row_broken = "#200000"
-row_cursor = "#888888"
-row_bsize = "#FFFFFF"
-row_mod_time = "#40FF60"
-select = "#F2F2F2"
-input = "Reset"
-menu_tag = "#60F050"
-search_surround = "#60F050"
+app_fg            = "#FFFFFF"
+app_bg            = "#505050"
+bar_fg            = "#282828"
+bar_fg_light      = "#3F3F3F"
+bar_bg            = "#AF2020"
+item_bg_cursor    = "#888888"
+item_bg_select    = "#F2F2F2"
+item_broken       = "#200000"
+item_dir          = "#FFFFFF"
+item_file         = "#FF2010"
+item_symlink      = "#C828C8"
+item_sidemenu     = "#60F050"
+item_parts_bsize  = "#FFFFFF"
+item_parts_lmd    = "#40FF60"
+perm_ty           = "#FFFFFF"
+perm_r            = "#60EF60"
+perm_w            = "#EF4040"
+perm_x            = "#FFFFFF"
+pwd_view          = "#FFFFFF"
+pwd_pickouted     = "#8F4040"
+search_surround   = "#60F050"
+mode_normal       = "#686868"
+mode_visual       = "#F2F2F2"
+mode_input        = "#FF2010"
+mode_search       = "#60F050"
+mode_menu         = "#FF2010"
 ```
 
 </details>
@@ -304,7 +291,6 @@ cargo uninstall endolphine
 - Improve viewer sort algorithm
 - Improve Visual-selection(pick select, multiple area)
 - Show key buffer
-- Rewrite README
 
 ## LICENSE
 
