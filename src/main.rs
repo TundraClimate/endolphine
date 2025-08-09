@@ -1,216 +1,106 @@
-mod app;
-mod builtin;
+mod args;
 mod canvas;
 mod clipboard;
 mod component;
 mod config;
-mod cursor;
-mod hook;
-mod input;
-mod key;
-mod menu;
+mod event;
 mod misc;
-mod theme;
-
-use clap::Parser;
-
-#[derive(Parser)]
-#[command(version, about, long_about = None)]
-struct Args {
-    #[arg(default_value = ".", value_parser = clap::value_parser!(std::path::PathBuf))]
-    pub path: std::path::PathBuf,
-
-    #[arg(short = 'e')]
-    pub edit_config: bool,
-}
+mod proc;
+mod state;
+mod tui;
 
 #[tokio::main]
 async fn main() {
-    start().await.unwrap_or_else(|e| e.handle());
-}
+    use args::{Expected, TerminationCause};
+    use state::State;
+    use std::{fs, sync::Arc};
+    use tokio::process::Command;
 
-fn terminate<D: std::fmt::Display>(e: D) {
-    eprintln!(
-        "{}{}",
-        crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
-        crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-    );
-    eprintln!("{:-^41}", "Endolphine terminated");
-    eprintln!(" {}", e);
-    eprintln!("{}", "-".repeat(41));
-    crate::sys_log!("e", "Endolphine terminated\n{}", e);
-}
+    tui::set_panic_hook();
 
-fn check_config() -> ! {
-    if let Err((e, lines)) = config::check() {
-        eprintln!(
-            "{}{}",
-            crossterm::style::SetForegroundColor(crossterm::style::Color::DarkCyan),
-            crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-        );
-        eprintln!("{:-^39}", "Invalid syntax detected");
-        eprintln!("{}", e.message());
-        eprintln!();
-        eprintln!("{}", lines);
-        eprintln!();
-        eprintln!("{}", "-".repeat(39));
-
-        std::process::exit(1)
-    } else {
-        std::process::exit(0)
-    }
-}
-
-fn setup_conf() -> Result<(), Error> {
-    let conf_path = crate::config::file_path();
-    if let Some(conf_path) = conf_path {
-        if !conf_path.exists() {
-            let parent = crate::misc::parent(&conf_path);
-
-            if !parent.exists() {
-                std::fs::create_dir_all(parent).map_err(|e| {
-                    crate::sys_log!("e", "Couldn't create the configration dir");
-                    crate::Error::FilesystemError(e.kind().to_string())
-                })?;
-            }
-
-            let config_default = toml::to_string_pretty(&crate::config::Config::default())
-                .map_err(|e| {
-                    crate::sys_log!("e", "Couldn't generate the default configration");
-                    crate::Error::TomlParseFailed(e.to_string())
-                })?;
-
-            if !conf_path.exists() {
-                std::fs::write(&conf_path, config_default).map_err(|e| {
-                    crate::sys_log!("e", "Couldn't create the configration file");
-                    crate::Error::FilesystemError(e.kind().to_string())
-                })?;
-            }
-        }
-    }
-
-    Ok(())
-}
-
-async fn start() -> Result<(), Error> {
     if cfg!(windows) {
         panic!("Endolphine is not supported in Windows")
     }
 
-    std::panic::set_hook(Box::new(|e| {
-        app::disable_tui().ok();
-
-        if let Some(e) = e.payload().downcast_ref::<String>() {
-            terminate(e);
-        } else if let Some(e) = e.payload().downcast_ref::<&str>() {
-            terminate(e);
-        }
-        std::process::exit(1);
-    }));
-
-    setup_conf()?;
-
-    let args = Args::parse();
-
-    if args.edit_config {
-        config::edit().await;
-        check_config();
+    if let Err(e) = config::setup_local().await {
+        panic!("Failed to create configure files: {}", e.kind());
     }
 
-    app::launch(&args.path).await?;
+    if let Err(e) = tui::setup_logger() {
+        panic!("{e}");
+    }
 
-    Ok(())
-}
+    let args = args::parse_args();
 
-#[derive(thiserror::Error, Debug)]
-pub enum Error {
-    #[error("Unable to change the screen mode")]
-    ScreenModeChangeFailed,
+    for arg in args.into_iter() {
+        match arg {
+            Ok(expected) => match expected {
+                Expected::OpenEndolphine(path) => {
+                    tui::enable();
 
-    #[error("filesystem error: {0}")]
-    #[allow(clippy::enum_variant_names)]
-    FilesystemError(String),
+                    log::info!("\n---\nLaunch endolphine: Success\n---");
 
-    #[error("The struct parsing failed: {0}")]
-    TomlParseFailed(String),
+                    let state = Arc::new(State::new(path));
+                    let handle = event::spawn_reader(state.clone());
 
-    #[error("invalid argument: {0}")]
-    InvalidArgument(String),
+                    tui::tick_loop(state, 60, |state| {
+                        canvas::draw(state);
+                    })
+                    .await;
 
-    #[error("Found error in running \"{0}\": {1}")]
-    CommandExecutionFailed(String, String),
+                    handle.await.ok();
+                }
+                Expected::OpenConfigEditor => {
+                    let Some(editor) = option_env!("EDITOR") else {
+                        panic!("$EDITOR not initialized");
+                    };
 
-    #[error("Display the log failed")]
-    LogDisplayFailed,
+                    log::info!("\n---\nLaunch config editor: Success\n---");
 
-    #[error("The row rendering failed")]
-    RowRenderingFailed,
+                    Command::new(editor)
+                        .arg(config::file_path())
+                        .status()
+                        .await
+                        .ok();
 
-    #[error("The input-area rendering failed")]
-    InputRenderingFailed,
+                    log::info!("New configuration saved");
 
-    #[error("Found platform error: {0}")]
-    #[allow(clippy::enum_variant_names)]
-    PlatformError(String),
+                    let Some(config_read) = fs::read_to_string(config::file_path()).ok() else {
+                        panic!("Broken configure detected: Unable to read file");
+                    };
 
-    #[error("Screen flush failed: {0}")]
-    ScreenFlushFailed(String),
+                    match config::parse_check(&config_read) {
+                        Ok(_) => config::print_success_message(),
+                        Err(e) => config::handle_parse_err(config_read, e),
+                    }
+                }
+                Expected::EnableDebugMode => {
+                    tui::set_dbg_hook();
+                    log::info!("Debug mode enabled");
+                }
+                Expected::DownloadUnofficialTheme(url) => {
+                    let name = url
+                        .split_terminator(&['\\', '/'][..])
+                        .next_back()
+                        .unwrap_or("unknown");
 
-    #[error("out log failed: {0}")]
-    OutLogToFileFailed(String),
-
-    #[error("found incorrect program code: {0}:{1}")]
-    IncorrectProgram(String, String),
-
-    #[error("parse keys from string failed")]
-    ParseKeyFailed(String),
-}
-
-impl Error {
-    pub fn handle(self) {
-        match self {
-            Self::CommandExecutionFailed(cmd, kind) => {
-                crate::sys_log!("w", "Can't be execute \"{}\": {}", cmd, kind);
-                crate::log!("Failed to run \"{}\": {}", cmd, kind);
-            }
-            Self::ScreenModeChangeFailed => {
-                crate::sys_log!(
-                    "e",
-                    "Couldn't change the screen mode: disabled the mode in terminal or operation system"
-                );
-
-                panic!("{}", self);
-            }
-            Self::LogDisplayFailed | Self::RowRenderingFailed | Self::InputRenderingFailed => {
-                crate::sys_log!("e", "Rendering failed");
-
-                panic!("{}", self);
-            }
-            Self::ScreenFlushFailed(_) => {
-                crate::sys_log!("e", "The stdout can't flush");
-
-                panic!("{}", self);
-            }
-            Self::IncorrectProgram(loc, info) => {
-                crate::sys_log!("e", "Found incorrect program");
-
-                app::disable_tui().ok();
-
-                eprintln!(
-                    "{}{}",
-                    crossterm::style::SetForegroundColor(crossterm::style::Color::Red),
-                    crossterm::style::SetAttribute(crossterm::style::Attribute::Bold),
-                );
-                eprintln!("{:-^41}", "FOUND INCORRECT PROGRAM");
-                let issue_url = "https://github.com/TundraClimate/endolphine/issues";
-                eprintln!(" Please report here: {}", issue_url);
-                eprintln!(" The error was found: {}", loc);
-                eprintln!(" Error infomation: {}", info);
-                eprintln!("{}", "-".repeat(41));
-
-                std::process::exit(1)
-            }
-            _ => panic!("{}", self),
+                    match config::download_unofficial_theme(&url).await {
+                        Ok(_) => log::info!("The '{name}' download successful",),
+                        Err(e) => panic!("The '{name}' download failed: {}", e.kind()),
+                    }
+                }
+                Expected::DownloadOfficialTheme(name) => {
+                    match config::download_official_theme(&name).await {
+                        Ok(_) => log::info!("The '{name}' download successful"),
+                        Err(e) => panic!("The '{name}' download failed: {}", e.kind()),
+                    }
+                }
+            },
+            Err(cause) => match cause {
+                TerminationCause::InvalidPath(path) => {
+                    panic!("Invalid path detected: {}", path.to_string_lossy())
+                }
+            },
         }
     }
 }
