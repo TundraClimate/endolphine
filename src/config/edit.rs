@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::{collections::BTreeMap, path::Path};
 
-#[derive(Serialize)]
 pub struct Exec {
     pub cmd: String,
     pub args: Vec<String>,
@@ -68,6 +67,29 @@ impl<'de> Deserialize<'de> for Exec {
         }
 
         deserializer.deserialize_any(StrOrVec)
+    }
+}
+
+impl Serialize for Exec {
+    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+    where
+        S: serde::Serializer,
+    {
+        use serde::ser::SerializeSeq;
+
+        if self.args.is_empty() {
+            serializer.serialize_str(&self.cmd)
+        } else {
+            let mut seq = serializer.serialize_seq(Some(self.args.len() + 1))?;
+
+            seq.serialize_element(&self.cmd)?;
+
+            for elem in self.args.iter() {
+                seq.serialize_element(elem)?;
+            }
+
+            seq.end()
+        }
     }
 }
 
