@@ -91,9 +91,8 @@ pub async fn download_official_theme(name: &str) -> io::Result<()> {
         panic!("{name} is already exists");
     }
 
-    // TODO FIX URL to master
     let official_url = format!(
-        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/feature/render/theme/{name}.toml",
+        "https://raw.githubusercontent.com/TundraClimate/endolphine/refs/heads/master/theme/{name}.toml",
     );
 
     let Ok(res) = reqwest::get(official_url).await else {
