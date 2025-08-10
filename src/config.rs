@@ -4,6 +4,7 @@ mod init;
 mod mapping;
 mod menu;
 mod paste;
+mod sort;
 mod theme;
 
 use delete::DeleteConfig;
@@ -12,6 +13,7 @@ use mapping::{KeymapConfig, KeymapRegistry};
 use menu::{MenuConfig, MenuElement};
 use paste::PasteConfig;
 use serde::{Deserialize, Serialize};
+use sort::SortConfig;
 use std::path::{Path, PathBuf};
 
 pub use init::setup_local;
@@ -32,6 +34,7 @@ pub fn file_path() -> PathBuf {
 struct ConfigModel {
     theme: String,
     native_cb: bool,
+    sort: SortConfig,
     keymap: Option<KeymapConfig>,
     delete: DeleteConfig,
     paste: PasteConfig,
@@ -100,6 +103,7 @@ impl Default for ConfigModel {
         Self {
             theme: "dark".to_string(),
             native_cb: false,
+            sort: SortConfig::default(),
             keymap: None,
             delete: DeleteConfig::default(),
             paste: PasteConfig::default(),
@@ -112,6 +116,7 @@ impl Default for ConfigModel {
 pub struct Config {
     pub theme: Theme,
     pub native_cb: bool,
+    pub sort_func: fn(&mut [PathBuf]),
     pub keymaps: KeymapRegistry,
     pub hijack: HijackMapping,
     pub delete_to_temp: bool,
@@ -153,6 +158,8 @@ pub fn get() -> &'static Config {
 
         let native_cb = model.native_cb;
 
+        let sort_func = model.sort.sort_func();
+
         let mut keymaps = KeymapRegistry::new();
 
         log::info!("Initialize keymaps");
@@ -174,6 +181,7 @@ pub fn get() -> &'static Config {
         Config {
             theme,
             native_cb,
+            sort_func,
             keymaps,
             hijack,
             delete_to_temp,
