@@ -77,8 +77,31 @@ impl WindowSystem {
 fn read_macos(ty: &str) -> io::Result<String> {
     use std::process::{Command, Stdio};
 
-    let output = Command::new("clipboard")
-        .args(["-pboard", "general", "-type", ty])
+    let script = format!(
+        r#"""
+        ObjC.import("CoreServices");
+        ObjC.import("AppKit");
+        function mimeToUTI(m) {{
+            return $.UTTypeCreatePreferredIdentifierForTag(
+                $.kUTTagClassMIMEType,
+                m,
+                null
+            ).takeRetainedValue().toString();
+        }}
+        let pb = $.NSPasteboard.generalPasteboard;
+        let str = pb.stringForType(mimeToUTI("{}"));
+        if (str) {{
+            console.log(ObjC.unwrap(str));
+        }} else {{
+            console.log("");
+        }}
+        """#,
+        ty
+    );
+
+    let output = Command::new("osascript")
+        .args(["-l", "JavaScript", "-e"])
+        .arg(script)
         .stderr(Stdio::null())
         .output()?;
     let output = String::from_utf8_lossy(output.stdout.as_slice());
@@ -111,21 +134,32 @@ fn read_x11(ty: &str) -> io::Result<String> {
 }
 
 fn clip_macos<S: AsRef<str>>(s: S, ty: &str) -> io::Result<()> {
-    use std::{
-        io::Write,
-        process::{Command, Stdio},
-    };
+    use std::process::{Command, Stdio};
 
-    let cmd = Command::new("clipboard")
-        .args(["-pboard", "general", "-type", ty])
+    let script = format!(
+        r#"""
+        ObjC.import("CoreServices");
+        ObjC.import("AppKit");
+        function mimeToUTI(m) {{
+          return $.UTTypeCreatePreferredIdentifierForTag($.kUTTagClassMIMEType, m, null)
+            .takeRetainedValue()
+            .toString();
+        }}
+        let pb = $.NSPasteboard.generalPasteboard;
+        pb.clearContents;
+        let str = $(ObjC.unwrap("{}"));
+        pb.setStringForType(str, mimeToUTI("{}"));
+        """#,
+        s.as_ref(),
+        ty
+    );
+
+    Command::new("osascript")
+        .args(["-l", "JavaScript", "-e"])
+        .arg(script)
         .stdout(Stdio::null())
         .stderr(Stdio::null())
-        .stdin(Stdio::piped())
         .spawn()?;
-
-    if let Some(mut stdin) = cmd.stdin {
-        write!(&mut stdin, "{}", s.as_ref())?;
-    }
 
     Ok(())
 }
@@ -171,14 +205,7 @@ fn clip_x11<S: AsRef<str>>(s: S, ty: &str) -> io::Result<()> {
 }
 
 fn is_macos_cmd_installed() -> bool {
-    use std::process::{Command, Stdio};
-
-    Command::new("clipboard")
-        .arg("--version")
-        .stdout(Stdio::null())
-        .stderr(Stdio::null())
-        .status()
-        .is_ok_and(|s| s.success())
+    true
 }
 
 fn is_wayland_cmd_installed() -> bool {

@@ -65,7 +65,7 @@ theme = "dark"
 
 # The using clipboard on window system.
 # Access to the clipboard uses native command.
-# Macos: Not enough support
+# Macos: osascript
 # Wayland: wl-copy, wl-paste
 # X11: xclip
 native_cb = false
