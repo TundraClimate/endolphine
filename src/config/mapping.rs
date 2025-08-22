@@ -138,7 +138,6 @@ impl KeymapRegistry {
             })
     }
 
-    #[allow(clippy::type_complexity)]
     pub fn eval_keys(
         &self,
         mode: Mode,

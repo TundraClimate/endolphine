@@ -116,7 +116,7 @@ impl Default for ConfigModel {
 pub struct Config {
     pub theme: Theme,
     pub native_cb: bool,
-    pub sort_func: fn(&mut [PathBuf]),
+    pub sort_func: Box<dyn Fn(&mut [PathBuf]) + Send + Sync>,
     pub keymaps: KeymapRegistry,
     pub hijack: HijackMapping,
     pub delete_to_temp: bool,

@@ -36,30 +36,13 @@ pub fn child_files(path: &Path) -> Vec<PathBuf> {
     }
 }
 
-fn sort_files(files: &mut [PathBuf]) {
-    files.sort_by_key(|path| {
-        let entry_name = entry_name(path);
-
-        if &entry_name == ".ep.ed" {
-            return (9999, entry_name.to_owned());
-        }
-
-        (
-            match entry_name.chars().next() {
-                Some(c) if c.is_lowercase() => 0,
-                Some(c) if c.is_uppercase() => 1,
-                Some('.') => 2,
-                _ => 3,
-            },
-            entry_name.to_owned(),
-        )
-    })
-}
-
 pub fn sorted_child_files(path: &Path) -> Vec<PathBuf> {
-    let mut child_files = child_files(path);
+    use crate::config;
 
-    sort_files(&mut child_files);
+    let mut child_files = child_files(path);
+    let config = config::get();
+
+    (config.sort_func)(&mut child_files);
 
     child_files
 }
