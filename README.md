@@ -143,17 +143,17 @@ items = [
 | Normal, Visual, Menu | `ZZ`         | Exit application                                |
 | Normal               | `<ESC>`      | Some reset                                      |
 | Visual               | `<ESC>`      | Change to normal mode                           |
-| Normal, Menu         | `k`          | Move cursor up                                  |
-| Visual               | `k`          | Move cursor up and select item                  |
-| Normal, Menu         | `j`          | Move cursor down                                |
-| Visual               | `j`          | Move cursor down and select item                |
+| Normal, Menu         | `{val}k`     | Move cursor up to {val} rows                    |
+| Visual               | `{val}k`     | Move cursor up to {val} rows and select item    |
+| Normal, Menu         | `{val}j`     | Move cursor down to {val} rows                  |
+| Visual               | `{val}j`     | Move cursor down to {val} rows and select item  |
 | Menu                 | `gg`         | Move cursor to top                              |
 | Menu                 | `G`          | Move cursor to bottom                           |
 | Normal, Visual       | `h`          | Open parent directory and change to normal mode |
 | Normal, Visual       | `gg`         | Move cursor to top                              |
 | Normal, Visual       | `G`          | Move cursor to bottom                           |
-| Normal, Visual       | `gk`         | Move cursor up per page                         |
-| Normal, Visual       | `gj`         | Move cursor down per page                       |
+| Normal, Visual       | `{val}gk`    | Move cursor to up {val} page                    |
+| Normal, Visual       | `{val}gj`    | Move cursor to down {val} page                  |
 | Normal, Visual, Menu | `l`          | Open under cursor item                          |
 | Normal, Visual       | `V`          | Toggle Normal and Visual mode                   |
 | Normal, Visual, Menu | `M`          | Toggle Menu widget                              |
