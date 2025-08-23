@@ -3,6 +3,7 @@ use std::path::{Path, PathBuf};
 
 #[derive(Deserialize, Serialize, Default)]
 pub(super) struct SortConfig {
+    reverse: bool,
     types: Types,
     groups: Groups,
 }
@@ -13,6 +14,7 @@ impl SortConfig {
 
         let ty = self.types;
         let group = self.groups;
+        let is_reverse = self.reverse;
 
         Box::new(move |files| {
             files.sort_by_key(|path| {
@@ -27,7 +29,11 @@ impl SortConfig {
                     group.parse_group(&entry_name),
                     entry_name.to_owned(),
                 )
-            })
+            });
+
+            if is_reverse {
+                files.reverse()
+            }
         })
     }
 }
