@@ -4,7 +4,7 @@ authors = ["Tundra_Climate <tundra.tundere@gmail.com>"]
 description = "TUI file explorer"
 repository = "https://github.com/TundraClimate/endolphine"
 license = "MIT"
-version = "2.0.2"
+version = "2.0.3"
 edition = "2024"
 readme = "README.md"
 
