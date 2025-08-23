@@ -4,6 +4,7 @@ use std::path::{Path, PathBuf};
 #[derive(Deserialize, Serialize, Default)]
 pub(super) struct SortConfig {
     types: Types,
+    groups: Groups,
 }
 
 impl SortConfig {
@@ -11,23 +12,19 @@ impl SortConfig {
         use crate::misc;
 
         let ty = self.types;
+        let group = self.groups;
 
         Box::new(move |files| {
             files.sort_by_key(|path| {
                 let entry_name = misc::entry_name(path);
 
                 if &entry_name == ".ep.ed" {
-                    return (255, 9999, entry_name.to_owned());
+                    return (255, 255, entry_name.to_owned());
                 }
 
                 (
                     ty.parse_type(path),
-                    match entry_name.chars().next() {
-                        Some(c) if c.is_lowercase() => 0,
-                        Some(c) if c.is_uppercase() => 1,
-                        Some('.') => 2,
-                        _ => 3,
-                    },
+                    group.parse_group(&entry_name),
                     entry_name.to_owned(),
                 )
             })
@@ -51,6 +48,36 @@ impl Types {
             path if path.is_symlink() && path.is_dir() => self.symlink_dir,
             path if path.is_dir() => self.directory,
             path if path.is_file() => self.file,
+            _ => self.other,
+        }
+    }
+}
+
+#[derive(Deserialize, Serialize, Clone, Copy)]
+struct Groups {
+    dotfiles: u8,
+    first_lower: u8,
+    first_upper: u8,
+    other: u8,
+}
+
+impl Default for Groups {
+    fn default() -> Self {
+        Self {
+            dotfiles: 0,
+            first_lower: 1,
+            first_upper: 2,
+            other: 3,
+        }
+    }
+}
+
+impl Groups {
+    fn parse_group(&self, entry_name: &str) -> u8 {
+        match entry_name.chars().next() {
+            Some(c) if c.is_lowercase() => self.first_lower,
+            Some(c) if c.is_uppercase() => self.first_upper,
+            Some('.') => self.dotfiles,
             _ => self.other,
         }
     }
