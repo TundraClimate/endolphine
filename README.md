@@ -70,6 +70,29 @@ theme = "dark"
 # X11: xclip
 native_cb = false
 
+# Sorting priority.
+# The most small value is top side.
+# The most big value is bottom side.
+[sort]
+
+# Whether to viewer reverse.
+reverse = false
+
+# Priorities of file type.
+[sort.types]
+file = 0
+directory = 0
+symlink_file = 0
+symlink_dir = 0
+other = 0
+
+# Priorities of file groups.
+[sort.groups]
+dotfiles = 0
+first_lower = 1
+first_upper = 2
+other = 3
+
 [delete]
 # If true, Ask to delete file or not.
 listen_yes = true
