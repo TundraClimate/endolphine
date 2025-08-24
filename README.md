@@ -311,9 +311,16 @@ cargo uninstall endolphine
 # TODO
 
 - Impl the plugin-system
-- Improve viewer sort algorithm
 - Improve Visual-selection(pick select, multiple area)
-- Show key buffer
+- Impl interact action
+- Numeric ids instead to String id
+- Impl logic of change a terminal name
+- Split endolphine to rendering and processing
+- Impl layer-rendering system
+- Add floating menu
+- Impl dynamic-configuration
+- Create the raw default configuration with comment
+- Impl undo and redo
 
 ## LICENSE
 
