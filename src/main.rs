@@ -46,6 +46,12 @@ async fn main() {
                     let handle = event::spawn_reader(state.clone());
 
                     tui::tick_loop(state, 60, |state| {
+                        if crossterm::terminal::is_raw_mode_enabled().is_ok_and(|c| c) {
+                            tui::update_title(format!(
+                                "Endolphine - {}",
+                                state.work_dir.get().to_string_lossy()
+                            ));
+                        }
                         canvas::draw(state);
                     })
                     .await;

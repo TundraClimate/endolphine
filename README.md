@@ -314,7 +314,6 @@ cargo uninstall endolphine
 - Improve Visual-selection(pick select, multiple area)
 - Impl interact action
 - Numeric ids instead to String id
-- Impl logic of change a terminal name
 - Split endolphine to rendering and processing
 - Impl layer-rendering system
 - Add floating menu

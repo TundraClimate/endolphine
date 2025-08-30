@@ -135,6 +135,13 @@ pub fn close() -> ! {
     process::exit(0);
 }
 
+pub fn update_title<D: AsRef<str>>(title: D) {
+    use crossterm::terminal::SetTitle;
+    use std::io;
+
+    crossterm::execute!(io::stdout(), SetTitle(title.as_ref())).ok();
+}
+
 pub fn enable() {
     use crossterm::{
         cursor::Hide,
@@ -151,13 +158,19 @@ pub fn enable() {
 pub fn disable() {
     use crossterm::{
         cursor::Show,
-        terminal::{self, EnableLineWrap, LeaveAlternateScreen},
+        terminal::{self, EnableLineWrap, LeaveAlternateScreen, SetTitle},
     };
     use std::io;
 
     let _ = terminal::disable_raw_mode().and_then(|_| {
         log::info!("Leave alternate screen");
-        crossterm::execute!(io::stdout(), LeaveAlternateScreen, Show, EnableLineWrap,)
+        crossterm::execute!(
+            io::stdout(),
+            LeaveAlternateScreen,
+            Show,
+            EnableLineWrap,
+            SetTitle("")
+        )
     });
 }
 
