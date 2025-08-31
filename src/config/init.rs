@@ -9,44 +9,70 @@ pub async fn setup_local() -> io::Result<()> {
     let config_path = super::file_path();
 
     if !config_path.exists() {
+        log::info!("Configuration files is couldn't find");
+
         let parent = config_path.parent().unwrap();
 
         if !parent.exists() {
+            log::info!("Create the config dir...");
             fs::create_dir_all(parent)?;
+            log::info!("The config dir is successfully created");
         }
 
         let default_config = toml::to_string_pretty(&ConfigModel::default())
             .expect("Wrong default config: code bug");
 
+        log::info!("Create the config.toml...");
         fs::write(config_path, default_config)?;
+        log::info!("The config.toml is successfully created");
     }
 
     let theme_dir = theme::dir_path();
 
     if !theme_dir.exists() {
+        log::info!("Theme directory is couldn't find");
+
+        log::info!("Create the theme dir...");
         fs::create_dir_all(&theme_dir)?;
+        log::info!("The theme dir is successfully created");
     }
 
     if theme_dir.read_dir().is_ok_and(|dir| dir.count() == 0) {
+        log::info!("Usable theme is not installed");
+
+        log::info!("Download the dark theme...");
         theme::download_official_theme("dark").await?;
+        log::info!("The dark theme successfully downloaded");
     }
 
     let tmp_dir = Path::new("/tmp").join("endolphine");
 
     if !tmp_dir.exists() {
+        log::info!("Temp directory is couldn't find");
+
+        log::info!("Create the temp dir...");
         fs::create_dir_all(&tmp_dir)?;
+        log::info!("The temp dir successfully created");
     }
 
     let local_cb = tmp_dir.join("cb.txt");
 
     if !local_cb.exists() {
+        log::info!("Local clipboard is couldn't find");
+
+        log::info!("Create the local clipboard...");
         fs::write(local_cb, b"")?;
+        log::info!("The local clipboard successfully created");
     }
 
     let trash = tmp_dir.join("Trash");
 
     if !trash.exists() {
+        log::info!("App trash is couldn't find");
+
+        log::info!("Create the app trash...");
         fs::create_dir_all(&trash)?;
+        log::info!("The app trash successfully created");
     }
 
     Ok(())

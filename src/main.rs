@@ -24,12 +24,12 @@ async fn main() {
         panic!("Endolphine is not supported in Windows")
     }
 
-    if let Err(e) = config::setup_local().await {
-        panic!("Failed to create configure files: {}", e.kind());
-    }
-
     if let Err(e) = tui::setup_logger() {
         panic!("{e}");
+    }
+
+    if let Err(e) = config::setup_local().await {
+        panic!("Failed to create configure files: {}", e.kind());
     }
 
     let args = args::parse_args();
