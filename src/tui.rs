@@ -1,6 +1,6 @@
 use crate::state::State;
 use flexi_logger::FlexiLoggerError;
-use std::{path::PathBuf, sync::Arc};
+use std::{io, path::PathBuf, sync::Arc};
 
 fn local_path() -> PathBuf {
     use std::path::Path;
@@ -13,6 +13,42 @@ fn local_path() -> PathBuf {
         .join(".local")
         .join("share")
         .join("endolphine")
+}
+
+pub fn setup_local() -> io::Result<()> {
+    use std::{fs, path::Path};
+
+    let tmp_dir = Path::new("/tmp").join("endolphine");
+
+    if !tmp_dir.exists() {
+        log::info!("Temp directory is couldn't find");
+
+        log::info!("Create the temp dir...");
+        fs::create_dir_all(&tmp_dir)?;
+        log::info!("The temp dir successfully created");
+    }
+
+    let local_cb = tmp_dir.join("cb.txt");
+
+    if !local_cb.exists() {
+        log::info!("Local clipboard is couldn't find");
+
+        log::info!("Create the local clipboard...");
+        fs::write(local_cb, b"")?;
+        log::info!("The local clipboard successfully created");
+    }
+
+    let trash = tmp_dir.join("Trash");
+
+    if !trash.exists() {
+        log::info!("App trash is couldn't find");
+
+        log::info!("Create the app trash...");
+        fs::create_dir_all(&trash)?;
+        log::info!("The app trash successfully created");
+    }
+
+    Ok(())
 }
 
 pub fn setup_logger() -> Result<(), FlexiLoggerError> {

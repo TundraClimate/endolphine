@@ -32,6 +32,10 @@ async fn main() {
         panic!("Failed to create configure files: {}", e.kind());
     }
 
+    if let Err(e) = tui::setup_local() {
+        panic!("Failed to create local files: {}", e.kind());
+    }
+
     let args = args::parse_args();
 
     for arg in args.into_iter() {

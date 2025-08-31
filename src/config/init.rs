@@ -4,7 +4,7 @@ use std::io;
 use viks::Keymap;
 
 pub async fn setup_local() -> io::Result<()> {
-    use std::{fs, path::Path};
+    use std::fs;
 
     let config_path = super::file_path();
 
@@ -43,36 +43,6 @@ pub async fn setup_local() -> io::Result<()> {
         log::info!("Download the dark theme...");
         theme::download_official_theme("dark").await?;
         log::info!("The dark theme successfully downloaded");
-    }
-
-    let tmp_dir = Path::new("/tmp").join("endolphine");
-
-    if !tmp_dir.exists() {
-        log::info!("Temp directory is couldn't find");
-
-        log::info!("Create the temp dir...");
-        fs::create_dir_all(&tmp_dir)?;
-        log::info!("The temp dir successfully created");
-    }
-
-    let local_cb = tmp_dir.join("cb.txt");
-
-    if !local_cb.exists() {
-        log::info!("Local clipboard is couldn't find");
-
-        log::info!("Create the local clipboard...");
-        fs::write(local_cb, b"")?;
-        log::info!("The local clipboard successfully created");
-    }
-
-    let trash = tmp_dir.join("Trash");
-
-    if !trash.exists() {
-        log::info!("App trash is couldn't find");
-
-        log::info!("Create the app trash...");
-        fs::create_dir_all(&trash)?;
-        log::info!("The app trash successfully created");
     }
 
     Ok(())
