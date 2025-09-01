@@ -49,8 +49,7 @@ pub(super) fn complete_rename(state: &State, content: &str) {
                 );
             }
             Err(e) => {
-                log::warn!("Rename a file is failed");
-                log::warn!("Failed kind: {}", e.kind());
+                log::warn!("Rename a file is failed\n\t{}", e.kind());
                 crate::log!("Failed to rename item: {}", e.kind());
             }
         }
@@ -59,6 +58,12 @@ pub(super) fn complete_rename(state: &State, content: &str) {
 
 fn rename_item(path: &Path, into: &Path) -> io::Result<()> {
     if !path.exists() || into.exists() {
+        log::warn!(
+            "File rename failed, path = {}, into = {}",
+            path.exists(),
+            into.exists()
+        );
+
         return Ok(());
     }
 

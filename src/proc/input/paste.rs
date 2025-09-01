@@ -48,8 +48,7 @@ pub(super) fn complete_paste(state: &State, content: &str) {
             crate::log!("{count} items paste successful");
         }
         Err(e) => {
-            log::warn!("Paste from clipboard is failed");
-            log::warn!("Failed kind: {}", e.kind());
+            log::warn!("Paste from clipboard is failed\n\t{}", e.kind());
             crate::log!("Failed to paste from the clipboard: {}", e.kind());
         }
     }
@@ -60,10 +59,16 @@ fn paste_from_cb(dir: &Path, overwrite: bool) -> io::Result<usize> {
 
     let config = config::get();
 
+    log::info!("Read the paths from clipboard");
+
     let files = if config.native_cb {
         if !clipboard::is_cmd_installed() {
             crate::log!(
                 "Failed to paste from the clipboard: {} is not installed",
+                clipboard::command()
+            );
+            log::warn!(
+                "Paste from clipboard failed\n\t{} is not installed",
                 clipboard::command()
             );
 
@@ -74,6 +79,8 @@ fn paste_from_cb(dir: &Path, overwrite: bool) -> io::Result<usize> {
     } else {
         clipboard::read()
     }?;
+
+    log::info!("Clipboard paths successfully readed");
 
     let files = files
         .lines()
@@ -86,6 +93,12 @@ fn paste_from_cb(dir: &Path, overwrite: bool) -> io::Result<usize> {
         .iter()
         .map(|from| {
             let to = dir.join(misc::entry_name(from));
+
+            log::info!(
+                "Copy {} to {}",
+                from.to_string_lossy(),
+                to.to_string_lossy()
+            );
 
             copy_item(*from, &to, overwrite)
         })
@@ -106,7 +119,12 @@ fn copy_item<P: AsRef<Path>>(from: P, to: P, overwrite: bool) -> usize {
         let mut entry = misc::entry_name(from);
         let parent = from.parent().unwrap_or(Path::new("/"));
 
-        recursive_suffix(parent, &mut entry, &config::get().paste_similar_suffix);
+        let suffix = config::get().paste_similar_suffix.clone();
+
+        log::info!("FROM == TO");
+        log::info!("Add a suffix, now => {}", &suffix);
+
+        recursive_suffix(parent, &mut entry, &suffix);
 
         to = parent.join(entry);
     }

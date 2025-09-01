@@ -22,28 +22,54 @@ fn log_buffer(state: &State) {
 }
 
 pub fn put(state: Arc<State>, c: char) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.put(c);
     state.grep.update(state.input.input.buf_clone());
+
+    log::info!("Put a {c} to current search");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     log_buffer(&state);
 }
 
 pub fn pop(state: Arc<State>) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.pop();
     state.grep.update(state.input.input.buf_clone());
+
+    log::info!("Pop from current search");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     log_buffer(&state);
 }
 
 pub fn pop_front(state: Arc<State>) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.pop_front();
     state.grep.update(state.input.input.buf_clone());
+
+    log::info!("Pop front from current input");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     log_buffer(&state);
 }
 
 pub fn search_next(state: Arc<State>) {
     complete_search(&state, &state.grep.load());
+
+    log::info!("Move to next matches");
 }
 
 pub(super) fn complete_search(state: &State, content: &str) {
@@ -51,6 +77,8 @@ pub(super) fn complete_search(state: &State, content: &str) {
     use regex::Regex;
 
     if let Ok(reg) = Regex::new(content) {
+        log::info!("{content} is valid regex");
+
         let child_files = misc::sorted_child_files(&state.work_dir.get());
         let cursor = &state.file_view.cursor;
         let cursor_pos = cursor.current();
@@ -76,6 +104,8 @@ pub(super) fn complete_search(state: &State, content: &str) {
 
         cursor.shift_loop_p(first_match);
         log_buffer(state);
+
+        log::info!("Cursor move down by {first_match}(loop)");
     }
 }
 

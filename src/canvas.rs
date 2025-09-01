@@ -25,6 +25,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(Sidemenu::ID, sidemenu_hash) != Some(sidemenu_hash) {
         sidemenu.draw(layout.get(Sidemenu::ID));
+        log::info!("Render the {}", Sidemenu::ID);
     }
 
     let working = Working::new(state.work_dir.get());
@@ -32,6 +33,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(Working::ID, working_hash) != Some(working_hash) {
         working.draw(layout.get(Working::ID));
+        log::info!("Render the {}", Working::ID);
     }
 
     let infobar = InfoBar::new(
@@ -43,6 +45,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(InfoBar::ID, infobar_hash) != Some(infobar_hash) {
         infobar.draw(layout.get(InfoBar::ID));
+        log::info!("Render the {}", InfoBar::ID);
     }
 
     let viewer = Viewer::new(
@@ -61,6 +64,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(Viewer::ID, viewer_hash) != Some(viewer_hash) {
         viewer.draw(layout.get(Viewer::ID));
+        log::info!("Render the {}", Viewer::ID);
     }
 
     let statebar = StateBar::new(state.mode.get(), state.proc_counter.now());
@@ -68,6 +72,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(StateBar::ID, statebar_hash) != Some(statebar_hash) {
         statebar.draw(layout.get(StateBar::ID));
+        log::info!("Render the {}", StateBar::ID);
     }
 
     let logarea = LogArea::new();
@@ -75,6 +80,7 @@ pub fn draw(state: Arc<State>) {
 
     if hashes.update(LogArea::ID, logarea_hash) != Some(logarea_hash) {
         logarea.draw(layout.get(LogArea::ID));
+        log::info!("Render the {}", LogArea::ID);
     }
 
     io::stdout().flush().ok();

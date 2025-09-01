@@ -17,6 +17,10 @@ pub fn clip_files<P: AsRef<Path>>(files: &[P]) -> io::Result<()> {
                 "Failed to paste from the clipboard: {} is not installed",
                 clipboard::command()
             );
+            log::warn!(
+                "Paste from clipboard failed\n\t{} is not installed",
+                clipboard::command()
+            );
 
             return Ok(());
         }
@@ -47,8 +51,11 @@ pub fn yank(state: Arc<State>) {
                 crate::log!("Yanked '{}'", misc::entry_name(target));
             }
             Err(e) => {
-                log::warn!("Clip the '{}' is failed", target.to_string_lossy());
-                log::warn!("Failed kind: {}", e.kind());
+                log::warn!(
+                    "Clip the '{}' is failed\n\t{}",
+                    target.to_string_lossy(),
+                    e.kind()
+                );
                 crate::log!(
                     "Failed to yank the '{}': {}",
                     target.to_string_lossy(),
@@ -85,12 +92,11 @@ pub fn yank_selects(state: Arc<State>) {
             crate::log!("Yanked {} items", targets.len());
         }
         Err(e) => {
-            log::warn!("Clip files is failed");
+            log::warn!("Clip files is failed\n\t{}", e.kind());
             log::warn!(
                 "\n{}",
                 toml::to_string_pretty(&targets).unwrap_or("Files cannot read".to_string())
             );
-            log::warn!("Failed kind: {}", e.kind());
             crate::log!("Failed to yank {} files: {}", targets.len(), e.kind());
         }
     }
@@ -103,5 +109,6 @@ pub fn yank_selects(state: Arc<State>) {
 
         cursor.reset();
         cursor.shift_p(first);
+        log::info!("Cursor reset to {first}");
     }
 }

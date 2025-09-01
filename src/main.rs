@@ -14,6 +14,7 @@ mod tui;
 #[tokio::main]
 async fn main() {
     use args::{Expected, TerminationCause};
+    use crossterm::terminal;
     use state::State;
     use std::{fs, sync::Arc};
     use tokio::process::Command;
@@ -42,15 +43,20 @@ async fn main() {
         match arg {
             Ok(expected) => match expected {
                 Expected::OpenEndolphine(path) => {
-                    tui::enable();
+                    log::info!("Start endolphine initialize");
 
-                    log::info!("\n---\nLaunch endolphine: Success\n---");
+                    tui::enable();
+                    config::get();
+
+                    log::info!("Complete endolphine initialize");
 
                     let state = Arc::new(State::new(path));
                     let handle = event::spawn_reader(state.clone());
 
+                    log::info!("Endolphine successfully opened");
+
                     tui::tick_loop(state, 60, |state| {
-                        if crossterm::terminal::is_raw_mode_enabled().is_ok_and(|c| c) {
+                        if terminal::is_raw_mode_enabled().is_ok_and(|c| c) {
                             tui::update_title(format!(
                                 "Endolphine - {}",
                                 state.work_dir.get().to_string_lossy()
@@ -67,13 +73,15 @@ async fn main() {
                         panic!("$EDITOR not initialized");
                     };
 
-                    log::info!("\n---\nLaunch config editor: Success\n---");
+                    log::info!("Start configuration editor");
 
                     Command::new(editor)
                         .arg(config::file_path())
                         .status()
                         .await
                         .ok();
+
+                    log::info!("Configuration editor closed");
 
                     log::info!("New configuration saved");
 
@@ -91,6 +99,9 @@ async fn main() {
                     log::info!("Debug mode enabled");
                 }
                 Expected::DownloadUnofficialTheme(url) => {
+                    log::info!("Download the new theme from {}", url);
+                    log::info!("Downloading...");
+
                     let name = url
                         .split_terminator(&['\\', '/'][..])
                         .next_back()
@@ -102,6 +113,9 @@ async fn main() {
                     }
                 }
                 Expected::DownloadOfficialTheme(name) => {
+                    log::info!("Download the {name} theme from official");
+                    log::info!("Downloading...");
+
                     match config::download_official_theme(&name).await {
                         Ok(_) => log::info!("The '{name}' download successful"),
                         Err(e) => panic!("The '{name}' download failed: {}", e.kind()),

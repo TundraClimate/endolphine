@@ -132,7 +132,7 @@ pub fn get() -> &'static Config {
     static CONFIG: LazyLock<Config> = LazyLock::new(|| {
         log::info!("The config initialize");
 
-        log::info!("Load config file");
+        log::info!("Load the config.toml...");
 
         let model = match fs::read_to_string(file_path())
             .ok()
@@ -145,9 +145,12 @@ pub fn get() -> &'static Config {
                 ConfigModel::default()
             }
         };
-        let theme_path = theme::dir_path().join(format!("{}.toml", model.theme));
 
-        log::info!("Load application theme");
+        log::info!("The config.toml successfully loaded");
+
+        log::info!("Load the {} theme...", model.theme);
+
+        let theme_path = theme::dir_path().join(format!("{}.toml", model.theme));
 
         let Some(theme) = fs::read_to_string(theme_path)
             .ok()
@@ -156,13 +159,15 @@ pub fn get() -> &'static Config {
             panic!("Failed to load theme file");
         };
 
+        log::info!("The {} theme successfully loaded", model.theme);
+
         let native_cb = model.native_cb;
 
         let sort_func = model.sort.sort_func();
 
         let mut keymaps = KeymapRegistry::new();
 
-        log::info!("Initialize keymaps");
+        log::info!("Initialize keymaps...");
 
         init::init_keymaps(&model, &mut keymaps, &model.keymap);
 
@@ -176,7 +181,9 @@ pub fn get() -> &'static Config {
         let paste_similar_suffix = model.paste.copied_suffix;
         let paste_is_overwrite = model.paste.is_overwrite;
 
-        log::info!("Initialize success");
+        log::info!("Keymaps successfully initialized");
+
+        log::info!("The config successfully initialized");
 
         Config {
             theme,

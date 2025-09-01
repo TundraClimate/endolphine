@@ -37,8 +37,10 @@ pub fn move_cursor(state: Arc<State>, ctx: CommandContext, positive: bool) {
 
     if positive {
         cursor.shift_p(point);
+        log::info!("Menu cursor move down by {point}");
     } else {
         cursor.shift_n(point);
+        log::info!("Menu cursor move up by {point}");
     }
 }
 
@@ -48,8 +50,10 @@ pub fn move_cursor_too(state: Arc<State>, positive: bool) {
 
     if positive {
         cursor.shift_p(point);
+        log::info!("Menu cursor move to bottom");
     } else {
         cursor.shift_n(point);
+        log::info!("Menu cursor move to top");
     }
 }
 
@@ -63,6 +67,8 @@ pub fn enter(state: Arc<State>) {
     let Some(element) = config.menu_elements.get(cursor.current()) else {
         return;
     };
+
+    log::info!("Entering {} from Menu", element.tag);
 
     let path = &element.path;
 

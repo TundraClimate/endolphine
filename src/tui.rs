@@ -61,14 +61,13 @@ pub fn setup_logger() -> Result<(), FlexiLoggerError> {
                 .suppress_basename()
                 .suffix("log"),
         )
-        .append()
         .rotate(
             Criterion::Age(Age::Day),
             Naming::TimestampsCustomFormat {
                 current_infix: None,
-                format: "%Y-%m-%d",
+                format: "%Y-%m-%d_%H-%M-%S",
             },
-            Cleanup::KeepLogFiles(5),
+            Cleanup::KeepLogFiles(10),
         )
         .format_for_files(|w, now, record| {
             write!(
@@ -79,6 +78,7 @@ pub fn setup_logger() -> Result<(), FlexiLoggerError> {
                 record.args()
             )
         })
+        .create_symlink(local_path().join("log").join("latest.log"))
         .start()
         .map(|_| ())
 }
@@ -118,8 +118,7 @@ pub fn set_dbg_hook() {
 fn terminate<D: std::fmt::Display>(e: D) {
     use crossterm::style::{SetAttribute, SetForegroundColor};
 
-    log::error!("{e}");
-    log::error!("\n---\nEndolphine terminated\n---");
+    log::error!("\nEndolphine terminated\n\t{e}");
 
     eprintln!(
         "{}{}",
@@ -136,14 +135,12 @@ fn dbg_terminate<D: std::fmt::Display>(msg: D, e: &std::panic::PanicHookInfo) {
 
     let location = e.location().unwrap();
 
-    log::error!("{msg}");
     log::error!(
-        "Termination from '{}' at {}:{}",
+        "\nEndolphine terminated\n\tCause: {msg}\n\tFrom: {}\n\tAt: {}:{}",
         location.file(),
         location.line(),
         location.column()
     );
-    log::error!("\n---\nEndolphine terminated\n---");
 
     eprintln!(
         "{}{}",

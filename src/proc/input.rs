@@ -130,19 +130,43 @@ fn logging_input(state: &State) {
 }
 
 pub fn put(state: Arc<State>, c: char) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.put(c);
+
+    log::info!("Put a {c} to current input");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     logging_input(&state);
 }
 
 pub fn pop(state: Arc<State>) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.pop();
+
+    log::info!("Pop from current input");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     logging_input(&state);
 }
 
 pub fn pop_front(state: Arc<State>) {
+    let previous = state.input.input.buf_clone();
+
     state.input.input.pop_front();
+
+    log::info!("Pop front from current input");
+    log::info!(
+        "Previous: {previous}, Current: {}",
+        state.input.input.buf_clone()
+    );
 
     logging_input(&state);
 }
@@ -157,6 +181,8 @@ pub fn answer_or_put(state: Arc<State>, c: char) {
     let (tag, _) = tag.split_once(":").unwrap_or((tag.as_str(), ""));
 
     if is_logging_tag(tag) {
+        log::info!("Answer y/n");
+
         complete_input(state);
     }
 }

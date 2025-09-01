@@ -11,8 +11,7 @@ pub fn ask_create(state: Arc<State>) {
     log::info!("Create a dummy file");
 
     if let Err(e) = fs::write(&dummy, b"") {
-        log::warn!("Create a dummy file is failed");
-        log::warn!("Failed kind: {}", e.kind());
+        log::warn!("Create a dummy file is failed\n\t{}", e.kind());
         crate::log!("Failed to generate a dummy file");
 
         return;
@@ -36,8 +35,7 @@ pub(super) fn restore_create(state: Arc<State>, start_idx: usize) {
     log::info!("Remove a dummy file");
 
     if let Err(e) = fs::remove_file(state.work_dir.get().join(".ep.ed")) {
-        log::warn!("Remove a dummy file is failed");
-        log::warn!("Failed kind: {}", e.kind());
+        log::warn!("Remove a dummy file is failed\n\t{}", e.kind());
         crate::log!("Failed to remove a dummy file");
     }
 
@@ -61,8 +59,7 @@ pub(super) fn complete_create(state: &State, content: &str) {
             log::info!("Remove a dummy file");
 
             if let Err(e) = fs::remove_file(state.work_dir.get().join(".ep.ed")) {
-                log::warn!("Remove a dummy file is failed");
-                log::warn!("Failed kind: {}", e.kind());
+                log::warn!("Remove a dummy file is failed\n\t{}", e.kind());
                 crate::log!("Failed to remove a dummy file");
             }
 
@@ -76,14 +73,14 @@ pub(super) fn complete_create(state: &State, content: &str) {
                 .position(|item| misc::entry_name(item) == content)
             {
                 cursor.shift_p(pos);
+                log::info!("Cursor reset to {pos}");
             }
 
             log::info!("The '{content}' was successfully created");
             crate::log!("'{content}' create successful");
         }
         Err(e) => {
-            log::warn!("Create a '{content}' is failed");
-            log::warn!("Failed kind: {}", e.kind());
+            log::warn!("Create a '{content}' is failed\n\t{}", e.kind());
             crate::log!(
                 "Failed to create the '{}': {}",
                 misc::entry_name(&path),
@@ -94,7 +91,16 @@ pub(super) fn complete_create(state: &State, content: &str) {
 }
 
 fn create_item(path: &Path, is_dir: bool) -> io::Result<()> {
+    use crate::misc;
+
+    log::info!("Creating the {}", misc::entry_name(path));
+
     if path.exists() {
+        log::warn!(
+            "Creating the {0} failed\n\t{0} is already exists",
+            misc::entry_name(path)
+        );
+
         return Ok(());
     }
 

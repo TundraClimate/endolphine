@@ -37,8 +37,10 @@ pub fn move_cursor(state: Arc<State>, ctx: CommandContext, positive: bool) {
 
     if positive {
         cursor.shift_p(point);
+        log::info!("Viewer cursor move down by {point}");
     } else {
         cursor.shift_n(point);
+        log::info!("Viewer cursor move up by {point}");
     }
 
     select_cursor_pos(&state);
@@ -50,8 +52,10 @@ pub fn move_cursor_too(state: Arc<State>, positive: bool) {
 
     if positive {
         cursor.shift_p(point);
+        log::info!("Viewer cursor move to bottom");
     } else {
         cursor.shift_n(point);
+        log::info!("Viewer cursor move to top");
     }
 
     select_cursor_pos(&state);
@@ -64,8 +68,10 @@ pub fn move_page(state: Arc<State>, ctx: CommandContext, positive: bool) {
 
     if positive {
         cursor.shift_p(point);
+        log::info!("Viewer pages plus {point}");
     } else {
         cursor.shift_n(point);
+        log::info!("Viewer pages minus {point}");
     }
 
     select_cursor_pos(&state);
@@ -107,12 +113,14 @@ pub fn move_parent(state: Arc<State>) {
 
     if let Some(record) = recorded_path {
         state.file_view.cursor_cache.wrap_node(record);
+        log::info!("Wrap for cursor cache");
     }
 
     let child_files = misc::sorted_child_files(parent_path);
 
     if let Some(pos) = child_files.into_iter().position(|p| p == wd) {
         cursor.shift_p(pos);
+        log::info!("Cursor reset to {pos}");
     }
 }
 
@@ -143,6 +151,8 @@ pub fn attach_child(state: Arc<State>) {
         if let Some(pos) = child_files.iter().position(|e| cursor_cache.inner_equal(e)) {
             cursor.shift_p(pos);
             cursor_cache.unwrap_surface();
+            log::info!("Cursor reset to {pos}");
+            log::info!("Unwrap for cursor cache");
         } else {
             cursor_cache.reset();
         }
@@ -161,11 +171,15 @@ pub fn attach_child(state: Arc<State>) {
         if hijack_tui {
             tui::disable();
 
+            log::info!("Exec the {}", exec.cmd);
+
             Command::new(&exec.cmd)
                 .args(&exec.args)
                 .arg(target_path)
                 .status()
                 .ok();
+
+            log::info!("Back to endolphine, from {}", exec.cmd);
 
             tui::enable();
 
@@ -173,6 +187,8 @@ pub fn attach_child(state: Arc<State>) {
         } else {
             let target_path = target_path.clone();
             let state = state.clone();
+
+            log::info!("Exec the {}", exec.cmd);
 
             task::spawn_blocking(move || {
                 state.proc_counter.increment();
