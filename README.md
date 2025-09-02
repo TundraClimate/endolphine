@@ -320,7 +320,6 @@ cargo uninstall endolphine
 - Impl dynamic-configuration
 - Create the raw default configuration with comment
 - Impl undo and redo
-- Improve logging
 
 ## LICENSE
 
